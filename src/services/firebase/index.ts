@@ -21,3 +21,14 @@ export {
   batchUpdateTasks,
   getAllTasksForUser,
 } from './tasks.service';
+
+// User service functions
+export {
+  getUser,
+  createUser,
+  updateLastLogin,
+  getUserSettings,
+  updateUserSettings,
+  getOrCreateUser,
+  type FirebaseUser,
+} from './users.service';
