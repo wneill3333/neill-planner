@@ -40,3 +40,22 @@ export {
 
 // Types
 export type { TasksState, SetTasksPayload, UpdateTaskDatePayload } from './taskSlice';
+
+// Async Thunks
+export {
+  fetchTasksByDate,
+  createTask as createTaskAsync,
+  updateTaskAsync,
+  deleteTask,
+  hardDeleteTask,
+  restoreTask,
+  batchUpdateTasksAsync,
+  fetchTasksByDateRange,
+} from './taskThunks';
+
+// Thunk Types
+export type {
+  FetchTasksByDatePayload,
+  CreateTaskPayload,
+  ThunkError,
+} from './taskThunks';

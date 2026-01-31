@@ -8,6 +8,16 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { Task, SyncStatus } from '../../types';
 import type { RootState } from '../../store';
+import {
+  fetchTasksByDate,
+  createTask as createTaskThunk,
+  updateTaskAsync,
+  deleteTask,
+  hardDeleteTask,
+  restoreTask,
+  batchUpdateTasksAsync,
+  fetchTasksByDateRange,
+} from './taskThunks';
 
 // =============================================================================
 // Types
@@ -286,6 +296,218 @@ export const taskSlice = createSlice({
         state.tasks[task.id] = task;
       }
     },
+  },
+  extraReducers: (builder) => {
+    // ==========================================================================
+    // fetchTasksByDate
+    // ==========================================================================
+    builder
+      .addCase(fetchTasksByDate.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.syncStatus = 'syncing';
+      })
+      .addCase(fetchTasksByDate.fulfilled, (state, action) => {
+        const { tasks, date } = action.payload;
+        state.loading = false;
+        state.syncStatus = 'synced';
+
+        // Clear existing task IDs for this date
+        if (state.taskIdsByDate[date]) {
+          // Remove old tasks that are only indexed under this date
+          for (const taskId of state.taskIdsByDate[date]) {
+            const task = state.tasks[taskId];
+            if (task) {
+              const taskDate = getDateString(task.scheduledDate);
+              if (taskDate === date) {
+                delete state.tasks[taskId];
+              }
+            }
+          }
+        }
+        state.taskIdsByDate[date] = [];
+
+        // Add new tasks
+        for (const task of tasks) {
+          state.tasks[task.id] = task;
+          const taskDate = getDateString(task.scheduledDate);
+          addTaskToDateIndex(state.taskIdsByDate, taskDate, task.id);
+        }
+      })
+      .addCase(fetchTasksByDate.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || 'Failed to fetch tasks';
+        state.syncStatus = 'error';
+      });
+
+    // ==========================================================================
+    // createTask
+    // ==========================================================================
+    builder
+      .addCase(createTaskThunk.pending, (state) => {
+        state.syncStatus = 'syncing';
+      })
+      .addCase(createTaskThunk.fulfilled, (state, action) => {
+        const task = action.payload;
+        state.tasks[task.id] = task;
+        const dateString = getDateString(task.scheduledDate);
+        addTaskToDateIndex(state.taskIdsByDate, dateString, task.id);
+        state.syncStatus = 'synced';
+      })
+      .addCase(createTaskThunk.rejected, (state, action) => {
+        state.error = action.payload?.message || 'Failed to create task';
+        state.syncStatus = 'error';
+      });
+
+    // ==========================================================================
+    // updateTaskAsync
+    // ==========================================================================
+    builder
+      .addCase(updateTaskAsync.pending, (state) => {
+        state.syncStatus = 'syncing';
+      })
+      .addCase(updateTaskAsync.fulfilled, (state, action) => {
+        const updatedTask = action.payload;
+        const existingTask = state.tasks[updatedTask.id];
+
+        if (existingTask) {
+          // Handle date change
+          const oldDate = getDateString(existingTask.scheduledDate);
+          const newDate = getDateString(updatedTask.scheduledDate);
+
+          if (oldDate !== newDate) {
+            removeTaskFromDateIndex(state.taskIdsByDate, oldDate, updatedTask.id);
+            addTaskToDateIndex(state.taskIdsByDate, newDate, updatedTask.id);
+          }
+        }
+
+        state.tasks[updatedTask.id] = updatedTask;
+        state.syncStatus = 'synced';
+      })
+      .addCase(updateTaskAsync.rejected, (state, action) => {
+        state.error = action.payload?.message || 'Failed to update task';
+        state.syncStatus = 'error';
+      });
+
+    // ==========================================================================
+    // deleteTask (soft delete)
+    // ==========================================================================
+    builder
+      .addCase(deleteTask.pending, (state) => {
+        state.syncStatus = 'syncing';
+      })
+      .addCase(deleteTask.fulfilled, (state, action) => {
+        const taskId = action.payload;
+        const task = state.tasks[taskId];
+
+        if (task) {
+          const dateString = getDateString(task.scheduledDate);
+          removeTaskFromDateIndex(state.taskIdsByDate, dateString, taskId);
+          delete state.tasks[taskId];
+        }
+
+        state.syncStatus = 'synced';
+      })
+      .addCase(deleteTask.rejected, (state, action) => {
+        state.error = action.payload?.message || 'Failed to delete task';
+        state.syncStatus = 'error';
+      });
+
+    // ==========================================================================
+    // hardDeleteTask (permanent delete)
+    // ==========================================================================
+    builder
+      .addCase(hardDeleteTask.pending, (state) => {
+        state.syncStatus = 'syncing';
+      })
+      .addCase(hardDeleteTask.fulfilled, (state, action) => {
+        const taskId = action.payload;
+        const task = state.tasks[taskId];
+
+        if (task) {
+          const dateString = getDateString(task.scheduledDate);
+          removeTaskFromDateIndex(state.taskIdsByDate, dateString, taskId);
+          delete state.tasks[taskId];
+        }
+
+        state.syncStatus = 'synced';
+      })
+      .addCase(hardDeleteTask.rejected, (state, action) => {
+        state.error = action.payload?.message || 'Failed to permanently delete task';
+        state.syncStatus = 'error';
+      });
+
+    // ==========================================================================
+    // restoreTask
+    // ==========================================================================
+    builder
+      .addCase(restoreTask.pending, (state) => {
+        state.syncStatus = 'syncing';
+      })
+      .addCase(restoreTask.fulfilled, (state, action) => {
+        const task = action.payload;
+        state.tasks[task.id] = task;
+        const dateString = getDateString(task.scheduledDate);
+        addTaskToDateIndex(state.taskIdsByDate, dateString, task.id);
+        state.syncStatus = 'synced';
+      })
+      .addCase(restoreTask.rejected, (state, action) => {
+        state.error = action.payload?.message || 'Failed to restore task';
+        state.syncStatus = 'error';
+      });
+
+    // ==========================================================================
+    // batchUpdateTasksAsync
+    // ==========================================================================
+    builder
+      .addCase(batchUpdateTasksAsync.pending, (state) => {
+        state.syncStatus = 'syncing';
+      })
+      .addCase(batchUpdateTasksAsync.fulfilled, (state, action) => {
+        // Apply the updates to local state
+        for (const update of action.payload) {
+          const existingTask = state.tasks[update.id];
+          if (existingTask) {
+            // Merge updates into existing task
+            state.tasks[update.id] = {
+              ...existingTask,
+              ...update,
+              updatedAt: new Date(),
+            } as Task;
+          }
+        }
+        state.syncStatus = 'synced';
+      })
+      .addCase(batchUpdateTasksAsync.rejected, (state, action) => {
+        state.error = action.payload?.message || 'Failed to batch update tasks';
+        state.syncStatus = 'error';
+      });
+
+    // ==========================================================================
+    // fetchTasksByDateRange
+    // ==========================================================================
+    builder
+      .addCase(fetchTasksByDateRange.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.syncStatus = 'syncing';
+      })
+      .addCase(fetchTasksByDateRange.fulfilled, (state, action) => {
+        state.loading = false;
+        state.syncStatus = 'synced';
+
+        // Add all fetched tasks to state
+        for (const task of action.payload) {
+          state.tasks[task.id] = task;
+          const dateString = getDateString(task.scheduledDate);
+          addTaskToDateIndex(state.taskIdsByDate, dateString, task.id);
+        }
+      })
+      .addCase(fetchTasksByDateRange.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || 'Failed to fetch tasks for date range';
+        state.syncStatus = 'error';
+      });
   },
 });
 

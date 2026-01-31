@@ -13,7 +13,7 @@
 | Phase | Status | Progress |
 |-------|--------|----------|
 | Phase 1: Foundation | ✅ Complete | 25/25 |
-| Phase 2: Data Layer | 🟡 In Progress | 6/18 |
+| Phase 2: Data Layer | 🟡 In Progress | 17/22 |
 | Phase 3: Core Tasks | ⬜ Not Started | 0/35 |
 | Phase 4: Date & Daily View | ⬜ Not Started | 0/18 |
 | Phase 5: Categories | ⬜ Not Started | 0/15 |
@@ -24,7 +24,7 @@
 | Phase 10: Reminders | ⬜ Not Started | 0/12 |
 | Phase 11: Offline Support | ⬜ Not Started | 0/12 |
 | Phase 12: Polish & Deploy | ⬜ Not Started | 0/18 |
-| **TOTAL** | | **31/225** |
+| **TOTAL** | | **42/229** |
 
 ---
 
@@ -573,82 +573,102 @@
 
 ### Step 2.2.1: Task Slice - Basic State
 
-- [ ] **Create task slice file**
-  - [ ] Create `src/features/tasks/taskSlice.ts`
+- [x] **Create task slice file** ✅ Completed 2026-01-31
+  - [x] Create `src/features/tasks/taskSlice.ts`
 
-- [ ] **Define TasksState interface**
-  - [ ] Add tasks: Record<string, Task> (normalized)
-  - [ ] Add taskIdsByDate: Record<string, string[]>
-  - [ ] Add selectedDate: string
-  - [ ] Add loading: boolean
-  - [ ] Add error: string | null
-  - [ ] Add syncStatus: SyncStatus
+- [x] **Define TasksState interface** ✅ Completed 2026-01-31
+  - [x] Add tasks: Record<string, Task> (normalized)
+  - [x] Add taskIdsByDate: Record<string, string[]>
+  - [x] Add selectedDate: string
+  - [x] Add loading: boolean
+  - [x] Add error: string | null
+  - [x] Add syncStatus: SyncStatus
 
-- [ ] **Define initial state**
-  - [ ] Initialize all fields with defaults
-  - [ ] Set selectedDate to today
+- [x] **Define initial state** ✅ Completed 2026-01-31
+  - [x] Initialize all fields with defaults
+  - [x] Set selectedDate to today
 
-- [ ] **Create taskSlice with createSlice**
-  - [ ] Implement setTasks reducer
-  - [ ] Implement addTask reducer
-  - [ ] Implement updateTask reducer
-  - [ ] Implement removeTask reducer
-  - [ ] Implement setSelectedDate reducer
-  - [ ] Implement setLoading reducer
-  - [ ] Implement setError reducer
-  - [ ] Implement setSyncStatus reducer
+- [x] **Create taskSlice with createSlice** ✅ Completed 2026-01-31
+  - [x] Implement setTasks reducer
+  - [x] Implement addTask reducer
+  - [x] Implement updateTask reducer
+  - [x] Implement removeTask reducer
+  - [x] Implement setSelectedDate reducer
+  - [x] Implement setLoading reducer
+  - [x] Implement setError reducer
+  - [x] Implement setSyncStatus reducer
+  - [x] Implement clearTasks reducer
+  - [x] Implement reorderTasksLocal reducer
+  - [x] Implement batchUpdateTasks reducer
 
-- [ ] **Create selectors**
-  - [ ] Create selectAllTasks
-  - [ ] Create selectTaskById
-  - [ ] Create selectTasksByDate
-  - [ ] Create selectTasksForSelectedDate
-  - [ ] Create selectSelectedDate
-  - [ ] Create selectTasksLoading
-  - [ ] Create selectTasksError
+- [x] **Create selectors** ✅ Completed 2026-01-31
+  - [x] Create selectAllTasks
+  - [x] Create selectTaskById
+  - [x] Create selectTasksByDate
+  - [x] Create selectTasksForSelectedDate
+  - [x] Create selectSelectedDate
+  - [x] Create selectTasksLoading
+  - [x] Create selectTasksError
+  - [x] Create selectTasksSyncStatus
+  - [x] Create selectTasksByPriorityForDate
+  - [x] Create selectTaskCountForDate
+  - [x] Create selectCompletedTaskCountForDate
+  - [x] Create selectTasksLoadedForDate
 
-- [ ] **Export and add to store**
-  - [ ] Export actions and reducer
-  - [ ] Add taskReducer to store
+- [x] **Export and add to store** ✅ Completed 2026-01-31
+  - [x] Export actions and reducer
+  - [x] Add taskReducer to store
 
-- [ ] **Write slice tests**
-  - [ ] Create `src/features/tasks/__tests__/taskSlice.test.ts`
-  - [ ] Test initial state
-  - [ ] Test setTasks normalizes correctly
-  - [ ] Test addTask adds to correct date
-  - [ ] Test updateTask handles date changes
-  - [ ] Test removeTask cleans up
-  - [ ] Test all selectors
+- [x] **Write slice tests** ✅ Completed 2026-01-31 (930 lines of comprehensive tests)
+  - [x] Create `src/features/tasks/__tests__/taskSlice.test.ts`
+  - [x] Test initial state
+  - [x] Test setTasks normalizes correctly
+  - [x] Test addTask adds to correct date
+  - [x] Test updateTask handles date changes
+  - [x] Test removeTask cleans up
+  - [x] Test all selectors
 
 ---
 
 ### Step 2.2.2: Task Async Thunks
 
-- [ ] **Create async thunks**
-  - [ ] Create fetchTasksByDate thunk
-  - [ ] Create createTask thunk
-  - [ ] Create updateTaskAsync thunk
-  - [ ] Create deleteTask thunk
+- [x] **Create async thunks** ✅ Completed 2026-01-31
+  - [x] Create fetchTasksByDate thunk
+  - [x] Create createTask thunk
+  - [x] Create updateTaskAsync thunk
+  - [x] Create deleteTask thunk
+  - [x] Create hardDeleteTask thunk
+  - [x] Create restoreTask thunk
+  - [x] Create batchUpdateTasksAsync thunk
+  - [x] Create fetchTasksByDateRange thunk
 
-- [ ] **Add extraReducers for thunk states**
-  - [ ] Handle fetchTasksByDate.pending
-  - [ ] Handle fetchTasksByDate.fulfilled
-  - [ ] Handle fetchTasksByDate.rejected
-  - [ ] Handle createTask states
-  - [ ] Handle updateTaskAsync states
-  - [ ] Handle deleteTask states
+- [x] **Add extraReducers for thunk states** ✅ Completed 2026-01-31
+  - [x] Handle fetchTasksByDate.pending
+  - [x] Handle fetchTasksByDate.fulfilled
+  - [x] Handle fetchTasksByDate.rejected
+  - [x] Handle createTask states
+  - [x] Handle updateTaskAsync states
+  - [x] Handle deleteTask states
+  - [x] Handle hardDeleteTask states
+  - [x] Handle restoreTask states
+  - [x] Handle batchUpdateTasksAsync states
+  - [x] Handle fetchTasksByDateRange states
 
-- [ ] **Export thunks**
-  - [ ] Add exports for all thunks
+- [x] **Export thunks** ✅ Completed 2026-01-31
+  - [x] Add exports for all thunks in index.ts
 
-- [ ] **Write thunk tests**
-  - [ ] Create `src/features/tasks/__tests__/taskThunks.test.ts`
-  - [ ] Mock tasksService
-  - [ ] Test fetchTasksByDate pending/fulfilled
-  - [ ] Test fetchTasksByDate rejected on error
-  - [ ] Test createTask calls service
-  - [ ] Test updateTaskAsync updates state
-  - [ ] Test deleteTask removes from state
+- [x] **Write thunk tests** ✅ Completed 2026-01-31 (33 tests)
+  - [x] Create `src/features/tasks/__tests__/taskThunks.test.ts`
+  - [x] Mock tasksService
+  - [x] Test fetchTasksByDate pending/fulfilled/rejected
+  - [x] Test createTask calls service
+  - [x] Test updateTaskAsync updates state
+  - [x] Test deleteTask removes from state
+  - [x] Test hardDeleteTask removes permanently
+  - [x] Test restoreTask adds back to state
+  - [x] Test batchUpdateTasksAsync updates multiple
+  - [x] Test fetchTasksByDateRange fetches range
+  - [x] Test integration scenarios
 
 ---
 
@@ -1959,6 +1979,8 @@ _Use this section to track progress, blockers, and decisions._
 | 2026-01-30 | Phase 1.4.2 complete - Login page, Button, Spinner components, routing with auth guards. |
 | 2026-01-31 | Phase 1 fully complete - All type definitions, Firebase config, Auth flow, and project foundation in place. |
 | 2026-01-31 | Step 2.1.1 complete - Redux store configuration with typed hooks, Provider setup, comprehensive tests (67 new tests: 21 store + 17 hooks + 29 test-utils). Total: 325 tests passing. |
+| 2026-01-31 | Step 2.2.1 complete - Task slice with normalized state, all reducers (setTasks, addTask, updateTask, removeTask, etc.), comprehensive selectors, 55 tests. |
+| 2026-01-31 | Step 2.2.2 complete - Task async thunks (fetchTasksByDate, createTask, updateTaskAsync, deleteTask, hardDeleteTask, restoreTask, batchUpdateTasksAsync, fetchTasksByDateRange), extraReducers for all thunk states, 33 thunk tests. Total: 88 task tests, overall 358+ tests passing. |
 
 ## Blockers
 
