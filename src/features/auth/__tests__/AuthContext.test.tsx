@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactElement } from 'react';
 import { AuthProvider } from '../AuthContext';
 import { useAuth } from '../useAuth';
 
@@ -28,7 +29,7 @@ vi.mock('../../../services/firebase/users.service', () => ({
 }));
 
 // Helper component to display auth state
-function AuthStateDisplay() {
+function AuthStateDisplay(): ReactElement {
   const { user, loading, error } = useAuth();
 
   return (
@@ -41,7 +42,7 @@ function AuthStateDisplay() {
 }
 
 // Helper component with sign in/out buttons
-function AuthActions() {
+function AuthActions(): ReactElement {
   const { signInWithGoogle, signOut, clearError } = useAuth();
 
   return (
@@ -63,7 +64,7 @@ describe('AuthContext', () => {
 
     // Setup onAuthStateChanged mock
     unsubscribeMock = vi.fn();
-    mockOnAuthStateChanged.mockImplementation((auth, callback) => {
+    mockOnAuthStateChanged.mockImplementation((_auth, callback) => {
       authStateCallback = callback;
       return unsubscribeMock;
     });

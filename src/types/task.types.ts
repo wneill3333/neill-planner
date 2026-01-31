@@ -167,6 +167,12 @@ export interface CreateTaskInput {
   recurrence?: RecurrencePattern | null;
   linkedNoteIds?: string[];
   linkedEventId?: string | null;
+  /** Whether this is a generated instance of a recurring task */
+  isRecurringInstance?: boolean;
+  /** Reference to parent recurring task */
+  recurringParentId?: string | null;
+  /** Date this instance represents (for recurring instances) */
+  instanceDate?: Date | null;
 }
 
 /**

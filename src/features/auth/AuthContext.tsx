@@ -11,6 +11,7 @@ import {
   useState,
   useCallback,
   type ReactNode,
+  type ReactElement,
 } from 'react';
 import {
   onAuthStateChanged,
@@ -77,7 +78,7 @@ const googleProvider = new GoogleAuthProvider();
  * Wraps the application to provide authentication state and methods.
  * Subscribes to Firebase Auth state changes and manages user data.
  */
-export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
+export function AuthProvider({ children }: AuthProviderProps): ReactElement {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

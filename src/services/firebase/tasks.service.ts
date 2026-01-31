@@ -22,7 +22,7 @@ import {
   type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { db } from './config';
-import type { Task, CreateTaskInput, UpdateTaskInput } from '../../types';
+import type { Task, TaskPriority, CreateTaskInput, UpdateTaskInput } from '../../types';
 
 /** Firestore collection name for tasks */
 const TASKS_COLLECTION = 'tasks';
@@ -122,18 +122,27 @@ function firestoreToTask(doc: QueryDocumentSnapshot<DocumentData>): Task {
 export async function createTask(input: CreateTaskInput, userId: string): Promise<Task> {
   const now = new Date();
 
+  // Build priority with default number if not provided
+  const priority: TaskPriority = {
+    letter: input.priority.letter,
+    number: input.priority.number ?? 1,
+  };
+
   const taskData: Omit<Task, 'id'> = {
-    ...input,
     userId,
+    title: input.title,
     description: input.description || '',
-    categoryId: input.categoryId || null,
-    scheduledTime: input.scheduledTime || null,
-    recurrence: input.recurrence || null,
+    categoryId: input.categoryId ?? null,
+    priority,
+    status: input.status || 'in_progress',
+    scheduledDate: input.scheduledDate ?? null,
+    scheduledTime: input.scheduledTime ?? null,
+    recurrence: input.recurrence ?? null,
     linkedNoteIds: input.linkedNoteIds || [],
-    linkedEventId: input.linkedEventId || null,
+    linkedEventId: input.linkedEventId ?? null,
     isRecurringInstance: input.isRecurringInstance || false,
-    recurringParentId: input.recurringParentId || null,
-    instanceDate: input.instanceDate || null,
+    recurringParentId: input.recurringParentId ?? null,
+    instanceDate: input.instanceDate ?? null,
     createdAt: now,
     updatedAt: now,
     deletedAt: null,
@@ -228,13 +237,26 @@ export async function getTasksByDateRange(
  * @returns The updated task
  */
 export async function updateTask(input: UpdateTaskInput): Promise<Task> {
-  const { id, ...updates } = input;
+  const { id, priority, ...otherUpdates } = input;
   const docRef = doc(db, TASKS_COLLECTION, id);
 
-  const updateData = taskToFirestore({
-    ...updates,
+  // Build update object without spreading partial priority directly
+  const updates: Record<string, unknown> = {
+    ...otherUpdates,
     updatedAt: new Date(),
-  });
+  };
+
+  // Handle priority separately to avoid partial type issues
+  if (priority) {
+    if (priority.letter !== undefined) {
+      updates['priority.letter'] = priority.letter;
+    }
+    if (priority.number !== undefined) {
+      updates['priority.number'] = priority.number;
+    }
+  }
+
+  const updateData = taskToFirestore(updates as Partial<Task>);
 
   await updateDoc(docRef, updateData);
 
@@ -296,12 +318,26 @@ export async function batchUpdateTasks(updates: UpdateTaskInput[]): Promise<void
   const now = Timestamp.fromDate(new Date());
 
   for (const update of updates) {
-    const { id, ...fields } = update;
+    const { id, priority, ...otherFields } = update;
     const docRef = doc(db, TASKS_COLLECTION, id);
-    const updateData = taskToFirestore({
-      ...fields,
+
+    // Build update object without spreading partial priority directly
+    const fields: Record<string, unknown> = {
+      ...otherFields,
       updatedAt: now.toDate(),
-    });
+    };
+
+    // Handle priority separately to avoid partial type issues
+    if (priority) {
+      if (priority.letter !== undefined) {
+        fields['priority.letter'] = priority.letter;
+      }
+      if (priority.number !== undefined) {
+        fields['priority.number'] = priority.number;
+      }
+    }
+
+    const updateData = taskToFirestore(fields as Partial<Task>);
     batch.update(docRef, updateData);
   }
 

@@ -12,7 +12,7 @@
 | Phase | Status | Progress |
 |-------|--------|----------|
 | Phase 1: Foundation | ✅ Complete | 25/25 |
-| Phase 2: Data Layer | ⬜ Not Started | 0/18 |
+| Phase 2: Data Layer | 🟡 In Progress | 6/18 |
 | Phase 3: Core Tasks | ⬜ Not Started | 0/35 |
 | Phase 4: Date & Daily View | ⬜ Not Started | 0/18 |
 | Phase 5: Categories | ⬜ Not Started | 0/15 |
@@ -23,7 +23,7 @@
 | Phase 10: Reminders | ⬜ Not Started | 0/12 |
 | Phase 11: Offline Support | ⬜ Not Started | 0/12 |
 | Phase 12: Polish & Deploy | ⬜ Not Started | 0/18 |
-| **TOTAL** | | **25/225** |
+| **TOTAL** | | **31/225** |
 
 ---
 
@@ -534,37 +534,37 @@
 
 ### Step 2.1.1: Redux Store Configuration
 
-- [ ] **Create store file**
-  - [ ] Create `src/store/store.ts`
-  - [ ] Import configureStore from @reduxjs/toolkit
-  - [ ] Create store with empty reducer initially
-  - [ ] Export store
-  - [ ] Export RootState type
-  - [ ] Export AppDispatch type
+- [x] **Create store file** ✅ Completed 2026-01-31
+  - [x] Create `src/store/store.ts`
+  - [x] Import configureStore from @reduxjs/toolkit
+  - [x] Create store with empty reducer initially
+  - [x] Export store
+  - [x] Export RootState type
+  - [x] Export AppDispatch type
 
-- [ ] **Create typed hooks**
-  - [ ] Create `src/store/hooks.ts`
-  - [ ] Create useAppDispatch hook
-  - [ ] Create useAppSelector hook
+- [x] **Create typed hooks** ✅ Completed 2026-01-31
+  - [x] Create `src/store/hooks.ts`
+  - [x] Create useAppDispatch hook
+  - [x] Create useAppSelector hook
 
-- [ ] **Create store index**
-  - [ ] Create `src/store/index.ts`
-  - [ ] Export store, RootState, AppDispatch
-  - [ ] Export useAppDispatch, useAppSelector
+- [x] **Create store index** ✅ Completed 2026-01-31
+  - [x] Create `src/store/index.ts`
+  - [x] Export store, RootState, AppDispatch
+  - [x] Export useAppDispatch, useAppSelector
 
-- [ ] **Update main.tsx**
-  - [ ] Import Provider from react-redux
-  - [ ] Wrap App with Provider, passing store
+- [x] **Update main.tsx** ✅ Completed 2026-01-31
+  - [x] Import Provider from react-redux
+  - [x] Wrap App with Provider, passing store
 
-- [ ] **Write store tests**
-  - [ ] Create `src/store/__tests__/store.test.ts`
-  - [ ] Test store initializes without errors
-  - [ ] Test getState returns expected shape
-  - [ ] Test dispatch accepts actions
+- [x] **Write store tests** ✅ Completed 2026-01-31 (67 tests: 21 store + 17 hooks + 29 test-utils)
+  - [x] Create `src/store/__tests__/store.test.ts`
+  - [x] Test store initializes without errors
+  - [x] Test getState returns expected shape
+  - [x] Test dispatch accepts actions
 
-- [ ] **Update test utilities**
-  - [ ] Update `src/test/test-utils.tsx` to include Redux Provider
-  - [ ] Update existing tests to use new render utility
+- [x] **Update test utilities** ✅ Completed 2026-01-31
+  - [x] Update `src/test/test-utils.tsx` to include Redux Provider
+  - [x] Update existing tests to use new render utility
 
 ---
 
@@ -1953,6 +1953,7 @@ _Use this section to track progress, blockers, and decisions._
 | 2026-01-25 | Phase 1.2.1 complete - Task type definitions created with comprehensive tests (30 tests). |
 | 2026-01-25 | Phase 1.2.2 complete - Event, Category, Note, User, and Common type definitions created with tests (154 total tests passing). |
 | 2026-01-31 | Phase 1 fully complete - All type definitions and project foundation in place. Ready to begin Phase 2: Data Layer & State Management. |
+| 2026-01-31 | Step 2.1.1 complete - Redux store configuration with typed hooks, Provider setup, comprehensive tests (67 new tests: 21 store + 17 hooks + 29 test-utils). Total: 270 tests passing. |
 
 ## Blockers
 
