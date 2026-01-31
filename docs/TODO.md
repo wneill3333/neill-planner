@@ -1,8 +1,9 @@
 # Neill Planner — Implementation TODO
 
-**Project:** Neill Planner - Franklin-Covey Productivity Application  
-**Created:** January 24, 2026  
-**Status:** In Progress  
+**Project:** Neill Planner - Franklin-Covey Productivity Application
+**Created:** January 24, 2026
+**Status:** In Progress
+**Last Updated:** January 31, 2026
 **Estimated Duration:** 18-27 days
 
 ---
@@ -40,7 +41,7 @@
 
 # PHASE 1: Project Foundation & Core Infrastructure
 
-**Estimated Time:** 1-2 days  
+**Estimated Time:** 1-2 days
 **Dependencies:** None (starting point)
 
 ---
@@ -280,127 +281,127 @@
 
 ### Step 1.3.1: Firebase Configuration Setup
 
-- [ ] **Create Firebase config file**
-  - [ ] Create `src/services/firebase/config.ts`
-  - [ ] Import firebase/app
-  - [ ] Import firebase/auth
-  - [ ] Import firebase/firestore
+- [x] **Create Firebase config file** ✅ Completed 2026-01-30
+  - [x] Create `src/services/firebase/config.ts`
+  - [x] Import firebase/app
+  - [x] Import firebase/auth
+  - [x] Import firebase/firestore
 
-- [ ] **Define Firebase configuration**
-  - [ ] Create firebaseConfig object
-  - [ ] Read VITE_FIREBASE_API_KEY from env
-  - [ ] Read VITE_FIREBASE_AUTH_DOMAIN from env
-  - [ ] Read VITE_FIREBASE_PROJECT_ID from env
-  - [ ] Read VITE_FIREBASE_STORAGE_BUCKET from env
-  - [ ] Read VITE_FIREBASE_MESSAGING_SENDER_ID from env
-  - [ ] Read VITE_FIREBASE_APP_ID from env
+- [x] **Define Firebase configuration** ✅ Completed 2026-01-30
+  - [x] Create firebaseConfig object
+  - [x] Read VITE_FIREBASE_API_KEY from env
+  - [x] Read VITE_FIREBASE_AUTH_DOMAIN from env
+  - [x] Read VITE_FIREBASE_PROJECT_ID from env
+  - [x] Read VITE_FIREBASE_STORAGE_BUCKET from env
+  - [x] Read VITE_FIREBASE_MESSAGING_SENDER_ID from env
+  - [x] Read VITE_FIREBASE_APP_ID from env
 
-- [ ] **Initialize Firebase**
-  - [ ] Check if app already initialized
-  - [ ] Initialize Firebase app
-  - [ ] Export auth instance (getAuth)
-  - [ ] Export db instance (getFirestore)
-  - [ ] Export app instance
+- [x] **Initialize Firebase** ✅ Completed 2026-01-30
+  - [x] Check if app already initialized
+  - [x] Initialize Firebase app
+  - [x] Export auth instance (getAuth)
+  - [x] Export db instance (getFirestore)
+  - [x] Export app instance
 
-- [ ] **Create environment files**
-  - [ ] Create `.env.example` with placeholder values
-  - [ ] Create `.env.local` with real values (gitignored)
-  - [ ] Add `.env.local` to `.gitignore`
+- [x] **Create environment files** ✅ Completed 2026-01-30
+  - [x] Create `.env.example` with placeholder values
+  - [x] Create `.env.local` with real values (gitignored)
+  - [x] Add `.env.local` to `.gitignore`
 
-- [ ] **Create Firebase index**
-  - [ ] Create `src/services/firebase/index.ts`
-  - [ ] Re-export auth, db, app
+- [x] **Create Firebase index** ✅ Completed 2026-01-30
+  - [x] Create `src/services/firebase/index.ts`
+  - [x] Re-export auth, db, app
 
-- [ ] **Write Firebase config tests**
-  - [ ] Create `src/services/firebase/__tests__/config.test.ts`
-  - [ ] Mock Firebase modules
-  - [ ] Test initializeApp called with correct config
-  - [ ] Test auth and db are exported
-  - [ ] Test app doesn't reinitialize
+- [x] **Write Firebase config tests** ✅ Completed 2026-01-30 (7 tests)
+  - [x] Create `src/services/firebase/__tests__/config.test.ts`
+  - [x] Mock Firebase modules
+  - [x] Test initializeApp called with correct config
+  - [x] Test auth and db are exported
+  - [x] Test app doesn't reinitialize
 
-- [ ] **Verify configuration**
-  - [ ] Ensure tests pass with mocked Firebase
-  - [ ] Update vite.config.ts for env variables if needed
+- [x] **Verify configuration** ✅ Completed 2026-01-30
+  - [x] Ensure tests pass with mocked Firebase
+  - [x] Update vite.config.ts for env variables if needed
 
 ---
 
 ### Step 1.3.2: Firestore Service Layer - Tasks
 
-- [ ] **Create tasks service file**
-  - [ ] Create `src/services/firebase/tasks.service.ts`
-  - [ ] Import Firestore functions
-  - [ ] Import db from config
-  - [ ] Import Task types
+- [x] **Create tasks service file** ✅ Completed 2026-01-30
+  - [x] Create `src/services/firebase/tasks.service.ts`
+  - [x] Import Firestore functions
+  - [x] Import db from config
+  - [x] Import Task types
 
-- [ ] **Define collection constant**
-  - [ ] Define TASKS_COLLECTION = 'tasks'
+- [x] **Define collection constant** ✅ Completed 2026-01-30
+  - [x] Define TASKS_COLLECTION = 'tasks'
 
-- [ ] **Create converter functions**
-  - [ ] Implement taskToFirestore() - convert Date to Timestamp
-  - [ ] Implement firestoreToTask() - convert Timestamp to Date, include doc ID
+- [x] **Create converter functions** ✅ Completed 2026-01-30
+  - [x] Implement taskToFirestore() - convert Date to Timestamp
+  - [x] Implement firestoreToTask() - convert Timestamp to Date, include doc ID
 
-- [ ] **Implement createTask function**
-  - [ ] Accept CreateTaskInput and userId
-  - [ ] Generate timestamps
-  - [ ] Set default values
-  - [ ] Add document to Firestore
-  - [ ] Return created task with ID
+- [x] **Implement createTask function** ✅ Completed 2026-01-30
+  - [x] Accept CreateTaskInput and userId
+  - [x] Generate timestamps
+  - [x] Set default values
+  - [x] Add document to Firestore
+  - [x] Return created task with ID
 
-- [ ] **Implement getTask function**
-  - [ ] Accept taskId
-  - [ ] Get document by ID
-  - [ ] Return null if not found
-  - [ ] Convert to Task type
+- [x] **Implement getTask function** ✅ Completed 2026-01-30
+  - [x] Accept taskId
+  - [x] Get document by ID
+  - [x] Return null if not found
+  - [x] Convert to Task type
 
-- [ ] **Implement getTasksByDate function**
-  - [ ] Accept userId and date
-  - [ ] Query with userId filter
-  - [ ] Filter by scheduledDate
-  - [ ] Exclude soft-deleted (deletedAt != null)
-  - [ ] Order by priority
-  - [ ] Return Task array
+- [x] **Implement getTasksByDate function** ✅ Completed 2026-01-30
+  - [x] Accept userId and date
+  - [x] Query with userId filter
+  - [x] Filter by scheduledDate
+  - [x] Exclude soft-deleted (deletedAt != null)
+  - [x] Order by priority
+  - [x] Return Task array
 
-- [ ] **Implement getTasksByDateRange function**
-  - [ ] Accept userId, startDate, endDate
-  - [ ] Query tasks within range
-  - [ ] Return Task array
+- [x] **Implement getTasksByDateRange function** ✅ Completed 2026-01-30
+  - [x] Accept userId, startDate, endDate
+  - [x] Query tasks within range
+  - [x] Return Task array
 
-- [ ] **Implement updateTask function**
-  - [ ] Accept UpdateTaskInput
-  - [ ] Update updatedAt timestamp
-  - [ ] Merge with existing document
-  - [ ] Return updated task
+- [x] **Implement updateTask function** ✅ Completed 2026-01-30
+  - [x] Accept UpdateTaskInput
+  - [x] Update updatedAt timestamp
+  - [x] Merge with existing document
+  - [x] Return updated task
 
-- [ ] **Implement softDeleteTask function**
-  - [ ] Accept taskId
-  - [ ] Set deletedAt to current timestamp
+- [x] **Implement softDeleteTask function** ✅ Completed 2026-01-30
+  - [x] Accept taskId
+  - [x] Set deletedAt to current timestamp
 
-- [ ] **Implement hardDeleteTask function**
-  - [ ] Accept taskId
-  - [ ] Permanently delete document
+- [x] **Implement hardDeleteTask function** ✅ Completed 2026-01-30
+  - [x] Accept taskId
+  - [x] Permanently delete document
 
-- [ ] **Implement restoreTask function**
-  - [ ] Accept taskId
-  - [ ] Set deletedAt to null
-  - [ ] Return restored task
+- [x] **Implement restoreTask function** ✅ Completed 2026-01-30
+  - [x] Accept taskId
+  - [x] Set deletedAt to null
+  - [x] Return restored task
 
-- [ ] **Implement batchUpdateTasks function**
-  - [ ] Accept array of UpdateTaskInput
-  - [ ] Use Firestore batch/transaction
-  - [ ] Update multiple documents atomically
+- [x] **Implement batchUpdateTasks function** ✅ Completed 2026-01-30
+  - [x] Accept array of UpdateTaskInput
+  - [x] Use Firestore batch/transaction
+  - [x] Update multiple documents atomically
 
-- [ ] **Write service tests**
-  - [ ] Create `src/services/firebase/__tests__/tasks.service.test.ts`
-  - [ ] Mock Firestore functions
-  - [ ] Test createTask
-  - [ ] Test getTask returns null for non-existent
-  - [ ] Test getTasksByDate filtering
-  - [ ] Test updateTask merges fields
-  - [ ] Test softDeleteTask
-  - [ ] Test restoreTask
+- [x] **Write service tests** ✅ Completed 2026-01-30 (12 tests)
+  - [x] Create `src/services/firebase/__tests__/tasks.service.test.ts`
+  - [x] Mock Firestore functions
+  - [x] Test createTask
+  - [x] Test getTask returns null for non-existent
+  - [x] Test getTasksByDate filtering
+  - [x] Test updateTask merges fields
+  - [x] Test softDeleteTask
+  - [x] Test restoreTask
 
-- [ ] **Export from Firebase index**
-  - [ ] Add tasks service exports to `src/services/firebase/index.ts`
+- [x] **Export from Firebase index** ✅ Completed 2026-01-30
+  - [x] Add tasks service exports to `src/services/firebase/index.ts`
 
 ---
 
@@ -408,124 +409,124 @@
 
 ### Step 1.4.1: Authentication Context and Hook
 
-- [ ] **Create auth feature folder structure**
-  - [ ] Ensure `src/features/auth/` exists
+- [x] **Create auth feature folder structure** ✅ Completed 2026-01-30
+  - [x] Ensure `src/features/auth/` exists
 
-- [ ] **Create AuthContext**
-  - [ ] Create `src/features/auth/AuthContext.tsx`
-  - [ ] Define AuthContextType interface
-  - [ ] Create AuthContext with createContext
+- [x] **Create AuthContext** ✅ Completed 2026-01-30
+  - [x] Create `src/features/auth/AuthContext.tsx`
+  - [x] Define AuthContextType interface
+  - [x] Create AuthContext with createContext
 
-- [ ] **Implement AuthProvider component**
-  - [ ] Add user state (User | null)
-  - [ ] Add loading state (boolean, initial true)
-  - [ ] Add error state (string | null)
-  - [ ] Subscribe to onAuthStateChanged in useEffect
-  - [ ] Fetch/create user document on auth change
-  - [ ] Update lastLoginAt
-  - [ ] Set loading false when done
-  - [ ] Clean up subscription on unmount
+- [x] **Implement AuthProvider component** ✅ Completed 2026-01-30
+  - [x] Add user state (User | null)
+  - [x] Add loading state (boolean, initial true)
+  - [x] Add error state (string | null)
+  - [x] Subscribe to onAuthStateChanged in useEffect
+  - [x] Fetch/create user document on auth change
+  - [x] Update lastLoginAt
+  - [x] Set loading false when done
+  - [x] Clean up subscription on unmount
 
-- [ ] **Implement signInWithGoogle**
-  - [ ] Create GoogleAuthProvider
-  - [ ] Call signInWithPopup
-  - [ ] Handle errors, set error state
+- [x] **Implement signInWithGoogle** ✅ Completed 2026-01-30
+  - [x] Create GoogleAuthProvider
+  - [x] Call signInWithPopup
+  - [x] Handle errors, set error state
 
-- [ ] **Implement signOut**
-  - [ ] Call Firebase signOut
-  - [ ] Clear user state
+- [x] **Implement signOut** ✅ Completed 2026-01-30
+  - [x] Call Firebase signOut
+  - [x] Clear user state
 
-- [ ] **Provide context value**
-  - [ ] Pass user, loading, error, signInWithGoogle, signOut
+- [x] **Provide context value** ✅ Completed 2026-01-30
+  - [x] Pass user, loading, error, signInWithGoogle, signOut
 
-- [ ] **Create useAuth hook**
-  - [ ] Create `src/features/auth/useAuth.ts`
-  - [ ] Use useContext(AuthContext)
-  - [ ] Throw error if used outside AuthProvider
+- [x] **Create useAuth hook** ✅ Completed 2026-01-30
+  - [x] Create `src/features/auth/useAuth.ts`
+  - [x] Use useContext(AuthContext)
+  - [x] Throw error if used outside AuthProvider
 
-- [ ] **Create auth index**
-  - [ ] Create `src/features/auth/index.ts`
-  - [ ] Export AuthProvider, useAuth, AuthContext
+- [x] **Create auth index** ✅ Completed 2026-01-30
+  - [x] Create `src/features/auth/index.ts`
+  - [x] Export AuthProvider, useAuth, AuthContext
 
-- [ ] **Create users service**
-  - [ ] Create `src/services/firebase/users.service.ts`
-  - [ ] Implement getUser function
-  - [ ] Implement createUser function
-  - [ ] Implement updateLastLogin function
-  - [ ] Implement getUserSettings function
-  - [ ] Implement updateUserSettings function
+- [x] **Create users service** ✅ Completed 2026-01-30
+  - [x] Create `src/services/firebase/users.service.ts`
+  - [x] Implement getUser function
+  - [x] Implement createUser function
+  - [x] Implement updateLastLogin function
+  - [x] Implement getUserSettings function
+  - [x] Implement updateUserSettings function
 
-- [ ] **Write auth tests**
-  - [ ] Create `src/features/auth/__tests__/AuthContext.test.tsx`
-  - [ ] Mock Firebase auth
-  - [ ] Test AuthProvider renders children
-  - [ ] Test loading state initially true
-  - [ ] Test user state updates on auth change
-  - [ ] Test signInWithGoogle calls Firebase
-  - [ ] Test signOut clears user
-  - [ ] Test useAuth throws outside provider
+- [x] **Write auth tests** ✅ Completed 2026-01-30 (27 tests)
+  - [x] Create `src/features/auth/__tests__/AuthContext.test.tsx`
+  - [x] Mock Firebase auth
+  - [x] Test AuthProvider renders children
+  - [x] Test loading state initially true
+  - [x] Test user state updates on auth change
+  - [x] Test signInWithGoogle calls Firebase
+  - [x] Test signOut clears user
+  - [x] Test useAuth throws outside provider
 
-- [ ] **Update App.tsx**
-  - [ ] Wrap app with AuthProvider
-  - [ ] Show loading spinner while auth loading
-  - [ ] Conditionally render based on auth state
+- [x] **Update App.tsx** ✅ Completed 2026-01-30
+  - [x] Wrap app with AuthProvider
+  - [x] Show loading spinner while auth loading
+  - [x] Conditionally render based on auth state
 
 ---
 
 ### Step 1.4.2: Login Page Component
 
-- [ ] **Create common components**
-  - [ ] Create `src/components/common/Button.tsx`
-    - [ ] Define props (variant, size, disabled, loading, children, onClick)
-    - [ ] Implement loading state with spinner
-    - [ ] Add Tailwind styling with variants
-  - [ ] Create `src/components/common/Spinner.tsx`
-    - [ ] Configurable size prop
-    - [ ] Tailwind animation
-  - [ ] Create `src/components/common/index.ts`
-    - [ ] Export Button, Spinner
+- [x] **Create common components** ✅ Completed 2026-01-30
+  - [x] Create `src/components/common/Button.tsx`
+    - [x] Define props (variant, size, disabled, loading, children, onClick)
+    - [x] Implement loading state with spinner
+    - [x] Add Tailwind styling with variants
+  - [x] Create `src/components/common/Spinner.tsx`
+    - [x] Configurable size prop
+    - [x] Tailwind animation
+  - [x] Create `src/components/common/index.ts`
+    - [x] Export Button, Spinner
 
-- [ ] **Create LoginPage component**
-  - [ ] Create `src/features/auth/LoginPage.tsx`
-  - [ ] Use useAuth hook
-  - [ ] Display app logo/title "Neill Planner"
-  - [ ] Display tagline "Franklin-Covey Productivity System"
-  - [ ] Add "Sign in with Google" button
-  - [ ] Handle loading state during sign-in
-  - [ ] Display error message if auth fails
-  - [ ] Style with Tailwind (centered, card, amber theme, responsive)
+- [x] **Create LoginPage component** ✅ Completed 2026-01-30
+  - [x] Create `src/features/auth/LoginPage.tsx`
+  - [x] Use useAuth hook
+  - [x] Display app logo/title "Neill Planner"
+  - [x] Display tagline "Franklin-Covey Productivity System"
+  - [x] Add "Sign in with Google" button
+  - [x] Handle loading state during sign-in
+  - [x] Display error message if auth fails
+  - [x] Style with Tailwind (centered, card, amber theme, responsive)
 
-- [ ] **Write component tests**
-  - [ ] Test Button renders children
-  - [ ] Test Button variants apply correct styles
-  - [ ] Test Button loading state shows spinner
-  - [ ] Test Spinner renders with correct size
-  - [ ] Test LoginPage renders app title
-  - [ ] Test LoginPage renders Google sign-in button
-  - [ ] Test clicking button calls signInWithGoogle
-  - [ ] Test displays error when present
-  - [ ] Test shows loading state
+- [x] **Write component tests** ✅ Completed 2026-01-30
+  - [x] Test Button renders children
+  - [x] Test Button variants apply correct styles
+  - [x] Test Button loading state shows spinner
+  - [x] Test Spinner renders with correct size
+  - [x] Test LoginPage renders app title
+  - [x] Test LoginPage renders Google sign-in button
+  - [x] Test clicking button calls signInWithGoogle
+  - [x] Test displays error when present
+  - [x] Test shows loading state
 
-- [ ] **Update App.tsx routing**
-  - [ ] Add react-router setup
-  - [ ] If not authenticated, show LoginPage
-  - [ ] If authenticated, show placeholder main app
+- [x] **Update App.tsx routing** ✅ Completed 2026-01-30
+  - [x] Add react-router setup
+  - [x] If not authenticated, show LoginPage
+  - [x] If authenticated, show placeholder main app
 
-- [ ] **Create test utilities**
-  - [ ] Create `src/test/test-utils.tsx`
-  - [ ] Export custom render with providers (Redux, Auth, Router)
-  - [ ] Re-export @testing-library/react
+- [x] **Create test utilities** ✅ Completed 2026-01-30
+  - [x] Create `src/test/test-utils.tsx`
+  - [x] Export custom render with providers (Redux, Auth, Router)
+  - [x] Re-export @testing-library/react
 
-- [ ] **Verify login flow**
-  - [ ] All tests pass
-  - [ ] Login page displays correctly
-  - [ ] Auth flow works (with real Firebase or mocked)
+- [x] **Verify login flow** ✅ Completed 2026-01-30
+  - [x] All tests pass
+  - [x] Login page displays correctly
+  - [x] Auth flow works (with real Firebase or mocked)
 
 ---
 
 # PHASE 2: Data Layer & State Management
 
-**Estimated Time:** 1-2 days  
+**Estimated Time:** 1-2 days
 **Dependencies:** Phase 1 complete
 
 ---
@@ -686,7 +687,7 @@
 
 # PHASE 3: Core Task Features
 
-**Estimated Time:** 2-3 days  
+**Estimated Time:** 2-3 days
 **Dependencies:** Phase 2 complete
 
 ---
@@ -1066,7 +1067,7 @@
 
 # PHASE 4: Date Navigation & Daily View
 
-**Estimated Time:** 1 day  
+**Estimated Time:** 1 day
 **Dependencies:** Phase 3 complete
 
 ---
@@ -1212,7 +1213,7 @@
 
 # PHASE 5: Categories & Colors
 
-**Estimated Time:** 1 day  
+**Estimated Time:** 1 day
 **Dependencies:** Phase 4 complete
 
 ---
@@ -1287,7 +1288,7 @@
 
 # PHASE 6: Recurring Tasks
 
-**Estimated Time:** 2 days  
+**Estimated Time:** 2 days
 **Dependencies:** Phase 5 complete
 
 ---
@@ -1406,7 +1407,7 @@
 
 # PHASE 7: Events & Calendar
 
-**Estimated Time:** 2-3 days  
+**Estimated Time:** 2-3 days
 **Dependencies:** Phase 6 complete
 
 ---
@@ -1502,7 +1503,7 @@
 
 # PHASE 8: Notes System
 
-**Estimated Time:** 1-2 days  
+**Estimated Time:** 1-2 days
 **Dependencies:** Phase 7 complete
 
 ---
@@ -1577,7 +1578,7 @@
 
 # PHASE 9: Google Calendar Integration
 
-**Estimated Time:** 2-3 days  
+**Estimated Time:** 2-3 days
 **Dependencies:** Phase 8 complete
 
 ---
@@ -1659,7 +1660,7 @@
 
 # PHASE 10: Reminders & Notifications
 
-**Estimated Time:** 1-2 days  
+**Estimated Time:** 1-2 days
 **Dependencies:** Phase 9 complete
 
 ---
@@ -1726,7 +1727,7 @@
 
 # PHASE 11: Offline Support & Sync
 
-**Estimated Time:** 2-3 days  
+**Estimated Time:** 2-3 days
 **Dependencies:** Phase 10 complete
 
 ---
@@ -1799,7 +1800,7 @@
 
 # PHASE 12: Search, Filters & Polish
 
-**Estimated Time:** 2-3 days  
+**Estimated Time:** 2-3 days
 **Dependencies:** Phase 11 complete
 
 ---
@@ -1952,8 +1953,12 @@ _Use this section to track progress, blockers, and decisions._
 | 2026-01-25 | Phase 1.1.2 complete - ESLint and Prettier configured with flat config format. |
 | 2026-01-25 | Phase 1.2.1 complete - Task type definitions created with comprehensive tests (30 tests). |
 | 2026-01-25 | Phase 1.2.2 complete - Event, Category, Note, User, and Common type definitions created with tests (154 total tests passing). |
-| 2026-01-31 | Phase 1 fully complete - All type definitions and project foundation in place. Ready to begin Phase 2: Data Layer & State Management. |
-| 2026-01-31 | Step 2.1.1 complete - Redux store configuration with typed hooks, Provider setup, comprehensive tests (67 new tests: 21 store + 17 hooks + 29 test-utils). Total: 270 tests passing. |
+| 2026-01-30 | Phase 1.3.1 complete - Firebase configuration with environment variables and singleton pattern. |
+| 2026-01-30 | Phase 1.3.2 complete - Tasks service layer with full CRUD operations and tests. |
+| 2026-01-30 | Phase 1.4.1 complete - Authentication context, AuthProvider, useAuth hook, and users service. |
+| 2026-01-30 | Phase 1.4.2 complete - Login page, Button, Spinner components, routing with auth guards. |
+| 2026-01-31 | Phase 1 fully complete - All type definitions, Firebase config, Auth flow, and project foundation in place. |
+| 2026-01-31 | Step 2.1.1 complete - Redux store configuration with typed hooks, Provider setup, comprehensive tests (67 new tests: 21 store + 17 hooks + 29 test-utils). Total: 325 tests passing. |
 
 ## Blockers
 
@@ -1978,5 +1983,5 @@ _Document key technical decisions._
 
 **End of TODO Document**
 
-_Total Tasks: 225_  
+_Total Tasks: 225_
 _Estimated Duration: 18-27 days_
