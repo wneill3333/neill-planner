@@ -11,7 +11,7 @@
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| Phase 1: Foundation | 🟡 In Progress | 4/25 |
+| Phase 1: Foundation | ✅ Complete | 25/25 |
 | Phase 2: Data Layer | ⬜ Not Started | 0/18 |
 | Phase 3: Core Tasks | ⬜ Not Started | 0/35 |
 | Phase 4: Date & Daily View | ⬜ Not Started | 0/18 |
@@ -23,7 +23,7 @@
 | Phase 10: Reminders | ⬜ Not Started | 0/12 |
 | Phase 11: Offline Support | ⬜ Not Started | 0/12 |
 | Phase 12: Polish & Deploy | ⬜ Not Started | 0/18 |
-| **TOTAL** | | **4/225** |
+| **TOTAL** | | **25/225** |
 
 ---
 
@@ -1948,7 +1948,11 @@ _Use this section to track progress, blockers, and decisions._
 
 | Date | Note |
 |------|------|
-| | |
+| 2026-01-24 | Phase 1.1.1 complete - Project scaffolding with Vite, React, TypeScript, Tailwind CSS, Vitest. 6 tests passing. |
+| 2026-01-25 | Phase 1.1.2 complete - ESLint and Prettier configured with flat config format. |
+| 2026-01-25 | Phase 1.2.1 complete - Task type definitions created with comprehensive tests (30 tests). |
+| 2026-01-25 | Phase 1.2.2 complete - Event, Category, Note, User, and Common type definitions created with tests (154 total tests passing). |
+| 2026-01-31 | Phase 1 fully complete - All type definitions and project foundation in place. Ready to begin Phase 2: Data Layer & State Management. |
 
 ## Blockers
 
@@ -1964,7 +1968,10 @@ _Document key technical decisions._
 
 | Decision | Rationale | Date |
 |----------|-----------|------|
-| | | |
+| Use ESLint flat config format | Vite template uses modern flat config; more maintainable than legacy .eslintrc | 2026-01-25 |
+| Store dates as ISO strings in types | Easier JSON serialization and Firestore compatibility | 2026-01-25 |
+| Use string union types for enums | Better TypeScript inference and tree-shaking | 2026-01-25 |
+| Comprehensive type testing | Ensures type contracts are maintained; catches breaking changes early | 2026-01-25 |
 
 ---
 
