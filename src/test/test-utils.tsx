@@ -9,6 +9,7 @@ import { type ReactElement, type ReactNode } from 'react';
 import { render, type RenderOptions, type RenderResult } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
+import taskReducer from '../features/tasks/taskSlice';
 import type { RootState, AppStore } from '../store';
 
 // =============================================================================
@@ -20,8 +21,7 @@ import type { RootState, AppStore } from '../store';
  * This should match the production store reducer structure
  */
 const rootReducer = combineReducers({
-  // Placeholder reducer - matches production store
-  _placeholder: (state: null = null) => state,
+  tasks: taskReducer,
 });
 
 /**
@@ -84,7 +84,7 @@ function AllProviders({
  * // With preloaded state
  * const { getByText, store } = renderWithProviders(<MyComponent />, {
  *   preloadedState: {
- *     tasks: { items: [...] }
+ *     tasks: { tasks: {...}, taskIdsByDate: {...}, ... }
  *   }
  * });
  *

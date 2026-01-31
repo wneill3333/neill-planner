@@ -6,6 +6,7 @@
  */
 
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
+import taskReducer from '../features/tasks/taskSlice';
 
 // =============================================================================
 // Root Reducer
@@ -13,12 +14,9 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit';
 
 /**
  * Root reducer combining all feature slices.
- * Initially empty, will be populated as we add feature slices.
  */
 const rootReducer = combineReducers({
-  // Placeholder reducer to prevent empty reducer error
-  // Will be replaced with actual reducers as they are created
-  _placeholder: (state: null = null) => state,
+  tasks: taskReducer,
 });
 
 // =============================================================================
@@ -36,8 +34,8 @@ export const store = configureStore({
       serializableCheck: {
         // Ignore these action types (useful for thunks with non-serializable payloads)
         ignoredActions: [],
-        // Ignore these paths in the state
-        ignoredPaths: [],
+        // Ignore these paths in the state (Date objects in tasks)
+        ignoredPaths: ['tasks.tasks'],
       },
     }),
   // Enable Redux DevTools in development

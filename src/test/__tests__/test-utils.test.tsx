@@ -27,11 +27,11 @@ function TestComponent(): ReactElement {
 
 function ReduxTestComponent(): ReactElement {
   const dispatch = useAppDispatch();
-  const placeholder = useAppSelector((state) => state._placeholder);
+  const loading = useAppSelector((state) => state.tasks.loading);
 
   return (
     <div data-testid="redux-test-component">
-      <span data-testid="placeholder-value">{placeholder === null ? 'null' : 'not null'}</span>
+      <span data-testid="loading-value">{loading ? 'loading' : 'not loading'}</span>
       <button onClick={() => dispatch({ type: 'test' })} data-testid="dispatch-button">
         Dispatch
       </button>
@@ -53,7 +53,7 @@ describe('renderWithProviders', () => {
     const { getByTestId } = renderWithProviders(<ReduxTestComponent />);
 
     expect(getByTestId('redux-test-component')).toBeInTheDocument();
-    expect(getByTestId('placeholder-value')).toHaveTextContent('null');
+    expect(getByTestId('loading-value')).toHaveTextContent('not loading');
   });
 
   it('should return the store instance', () => {
@@ -106,12 +106,15 @@ describe('createTestStore', () => {
     expect(typeof store.subscribe).toBe('function');
   });
 
-  it('should have initial state with placeholder', () => {
+  it('should have initial state with tasks slice', () => {
     const store = createTestStore();
     const state = store.getState();
 
-    expect(state).toHaveProperty('_placeholder');
-    expect(state._placeholder).toBeNull();
+    expect(state).toHaveProperty('tasks');
+    expect(state.tasks).toHaveProperty('tasks');
+    expect(state.tasks).toHaveProperty('taskIdsByDate');
+    expect(state.tasks).toHaveProperty('loading');
+    expect(state.tasks).toHaveProperty('error');
   });
 
   it('should create independent store instances', () => {

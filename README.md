@@ -1,73 +1,128 @@
-# React + TypeScript + Vite
+# Neill Planner
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A Franklin-Covey Productivity Application built with React, TypeScript, and Firebase.
 
-Currently, two official plugins are available:
+## Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Neill Planner is a task management and daily planning application based on the Franklin-Covey methodology with an A-B-C-D priority system:
 
-## React Compiler
+- **A** = Vital (must do today, serious consequences if not)
+- **B** = Important (should do today, mild consequences if not)
+- **C** = Optional (nice to do, no consequences if not)
+- **D** = Delegate (can be assigned to others or deferred)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
 
-## Expanding the ESLint configuration
+- **Frontend**: React 18+ with TypeScript
+- **State Management**: Redux Toolkit
+- **Styling**: Tailwind CSS
+- **Backend**: Firebase (Auth, Firestore)
+- **Testing**: Vitest + React Testing Library
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Project Status
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Phase 1: Project Foundation & Core Infrastructure ✅ COMPLETE
+- [x] 1.1.1: Project scaffolding with Vite + React + TypeScript
+- [x] 1.1.2: ESLint and Prettier configuration
+- [x] 1.2.1: Task type definitions
+- [x] 1.2.2: Event, Category, Note, User type definitions
+- [x] 1.3.1: Firebase configuration
+- [x] 1.3.2: Firestore Task service layer
+- [x] 1.4.1: Authentication Context and hooks
+- [x] 1.4.2: Login Page component
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Phase 2: Data Layer & State Management 🚧 IN PROGRESS
+- [x] 2.1.1: Redux Store setup with typed hooks
+- [x] 2.2.1: Task Slice - Basic State (reducers, selectors)
+- [ ] 2.2.2: Task Async Thunks
+- [ ] 2.3.1: Category Slice
+- [ ] 2.4: Firestore Integration
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Phase 3-12: Coming Soon
+See [docs/Blueprint.md](docs/Blueprint.md) for the complete implementation plan.
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/AceDZN/neill-planner.git
+
+# Install dependencies
+cd neill-planner
+npm install
+
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your Firebase config
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Development
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+# Start development server
+npm run dev
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Run tests
+npm test
+
+# Run tests with UI
+npm run test:ui
+
+# Build for production
+npm run build
+
+# Lint code
+npm run lint
 ```
+
+## Test Coverage
+
+Current test status: **325 tests passing**
+
+| Category | Tests |
+|----------|-------|
+| Type Tests | 117 |
+| Firebase Services | 12 |
+| Auth Context | 15 |
+| Common Components | 38 |
+| Store & Hooks | 38 |
+| Task Slice | 55 |
+| Test Utilities | 29 |
+| App Tests | 21 |
+
+## Project Structure
+
+```
+src/
+├── components/          # Reusable UI components
+│   ├── common/         # Button, Spinner, etc.
+│   └── tasks/          # Task-specific components (coming)
+├── features/           # Feature modules
+│   ├── auth/           # Authentication (Context, LoginPage)
+│   ├── tasks/          # Task state management
+│   ├── events/         # Events (coming)
+│   ├── notes/          # Notes (coming)
+│   └── categories/     # Categories (coming)
+├── hooks/              # Custom React hooks
+├── services/           # External service integrations
+│   └── firebase/       # Firebase config, services
+├── store/              # Redux store configuration
+├── test/               # Test utilities
+├── types/              # TypeScript type definitions
+└── utils/              # Utility functions
+```
+
+## Contributing
+
+This is a personal project, but suggestions are welcome via GitHub issues.
+
+## License
+
+Private - All rights reserved.

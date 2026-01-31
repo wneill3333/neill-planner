@@ -56,8 +56,13 @@ describe('Redux Store', () => {
     it('should return expected initial state shape', () => {
       const state = store.getState();
 
-      // Initial state should have placeholder
-      expect(state).toHaveProperty('_placeholder');
+      // Initial state should have tasks slice
+      expect(state).toHaveProperty('tasks');
+      expect(state.tasks).toHaveProperty('tasks');
+      expect(state.tasks).toHaveProperty('taskIdsByDate');
+      expect(state.tasks).toHaveProperty('loading');
+      expect(state.tasks).toHaveProperty('error');
+      expect(state.tasks).toHaveProperty('syncStatus');
     });
 
     it('should have RootState type that matches actual state', () => {
@@ -140,8 +145,10 @@ describe('Type Safety', () => {
   it('RootState should be correctly inferred', () => {
     // This is a compile-time test - if it compiles, types are correct
     const state: RootState = store.getState();
-    const placeholder: null = state._placeholder;
-    expect(placeholder).toBeNull();
+    // Verify tasks slice structure is correctly typed
+    expect(state.tasks).toBeDefined();
+    expect(typeof state.tasks.loading).toBe('boolean');
+    expect(state.tasks.error).toBeNull();
   });
 
   it('AppDispatch should be correctly typed', () => {
