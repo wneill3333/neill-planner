@@ -59,3 +59,10 @@ export type {
   CreateTaskPayload,
   ThunkError,
 } from './taskThunks';
+
+// Hooks
+export { useTasksByDate, useSelectedDateTasks } from './hooks';
+export type { UseTasksByDateResult, UseSelectedDateTasksResult } from './hooks';
+
+// Container Components
+export { TaskListContainer, type TaskListContainerProps } from './TaskListContainer';

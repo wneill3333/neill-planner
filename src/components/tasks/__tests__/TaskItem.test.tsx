@@ -4,7 +4,7 @@
  * Comprehensive tests for the TaskItem component.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { TaskItem } from '../TaskItem';
 import type { Task, Category } from '../../../types';
@@ -18,21 +18,20 @@ function createMockTask(overrides: Partial<Task> = {}): Task {
     id: 'task-1',
     userId: 'user-1',
     title: 'Test Task',
-    description: null,
-    date: '2024-01-15',
+    description: '',
+    categoryId: null,
     priority: { letter: 'A', number: 1 },
     status: 'in_progress',
-    categoryId: null,
-    estimatedMinutes: null,
-    actualMinutes: null,
-    notes: null,
+    scheduledDate: new Date('2024-01-15'),
+    scheduledTime: null,
     recurrence: null,
-    parentTaskId: null,
+    linkedNoteIds: [],
+    linkedEventId: null,
     isRecurringInstance: false,
-    originalDate: null,
+    recurringParentId: null,
+    instanceDate: null,
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
-    completedAt: null,
     deletedAt: null,
     ...overrides,
   };
@@ -123,11 +122,13 @@ describe('TaskItem', () => {
     it('should show recurrence icon for recurring tasks', () => {
       const task = createMockTask({
         recurrence: {
-          pattern: 'daily',
+          type: 'daily',
           interval: 1,
-          endDate: null,
-          daysOfWeek: null,
+          daysOfWeek: [],
           dayOfMonth: null,
+          monthOfYear: null,
+          endCondition: { type: 'never', endDate: null, maxOccurrences: null },
+          exceptions: [],
         },
       });
       render(<TaskItem task={task} />);

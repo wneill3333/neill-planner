@@ -14,7 +14,7 @@
 |-------|--------|----------|
 | Phase 1: Foundation | ✅ Complete | 25/25 |
 | Phase 2: Data Layer | ✅ Complete | 22/22 |
-| Phase 3: Core Tasks | 🔄 In Progress | 7/35 |
+| Phase 3: Core Tasks | 🔄 In Progress | 12/35 |
 | Phase 4: Date & Daily View | ⬜ Not Started | 0/18 |
 | Phase 5: Categories | ⬜ Not Started | 0/15 |
 | Phase 6: Recurring Tasks | ⬜ Not Started | 0/20 |
@@ -24,7 +24,7 @@
 | Phase 10: Reminders | ⬜ Not Started | 0/12 |
 | Phase 11: Offline Support | ⬜ Not Started | 0/12 |
 | Phase 12: Polish & Deploy | ⬜ Not Started | 0/18 |
-| **TOTAL** | | **54/229** |
+| **TOTAL** | | **59/229** |
 
 ---
 
@@ -768,37 +768,46 @@
 
 ### Step 3.1.2: Task List Integration with Redux
 
-- [ ] **Create TaskListContainer**
-  - [ ] Create `src/features/tasks/TaskListContainer.tsx`
-  - [ ] Use useAppSelector for tasks
-  - [ ] Use useAppSelector for categories
-  - [ ] Use useAppDispatch
-  - [ ] Use useAuth for current user
-  - [ ] Dispatch fetchTasksByDate on mount
-  - [ ] Handle onTaskClick
-  - [ ] Handle onStatusChange
-  - [ ] Show loading/error states
+- [x] **Create TaskListContainer** ✅ Completed 2026-01-31
+  - [x] Create `src/features/tasks/TaskListContainer.tsx`
+  - [x] Use useAppSelector for tasks
+  - [x] Use useAppSelector for categories
+  - [x] Use useAppDispatch
+  - [x] Use useAuth for current user
+  - [x] Dispatch fetchTasksByDate on mount
+  - [x] Handle onTaskClick
+  - [x] Handle onStatusChange
+  - [x] Show loading/error states
 
-- [ ] **Update TaskItem for category colors**
-  - [ ] Look up category by task.categoryId
-  - [ ] Apply category color to left border
+- [x] **Update TaskItem for category colors** ✅ Completed 2026-01-31
+  - [x] Look up category by task.categoryId
+  - [x] Apply category color to left border
 
-- [ ] **Create useTasksByDate hook**
-  - [ ] Create `src/features/tasks/hooks.ts`
-  - [ ] Implement hook that fetches and returns tasks
+- [x] **Create useTasksByDate hook** ✅ Completed 2026-01-31
+  - [x] Create `src/features/tasks/hooks.ts`
+  - [x] Implement hook that fetches and returns tasks
+  - [x] Implement useSelectedDateTasks hook
 
-- [ ] **Write integration tests**
-  - [ ] Test renders loading state
-  - [ ] Test dispatches fetch on mount
-  - [ ] Test renders tasks from store
-  - [ ] Test status change dispatches update
-  - [ ] Test shows error message
+- [x] **Write integration tests** ✅ Completed 2026-01-31
+  - [x] Test renders loading state
+  - [x] Test dispatches fetch on mount
+  - [x] Test renders tasks from store
+  - [x] Test status change dispatches update
+  - [x] Test shows error message
 
-- [ ] **Create mock data utilities**
-  - [ ] Create `src/test/mockData.ts`
-  - [ ] Implement createMockTask
-  - [ ] Implement createMockCategory
-  - [ ] Implement createMockUser
+- [x] **Create mock data utilities** ✅ Completed 2026-01-31
+  - [x] Create `src/test/mockData.ts`
+  - [x] Implement createMockTask
+  - [x] Implement createMockCategory
+  - [x] Implement createMockUser
+  - [x] Implement createMockTasksState
+  - [x] Implement createMockCategoriesState
+
+- [x] **Create status utilities** ✅ Completed 2026-01-31
+  - [x] Create `src/utils/statusUtils.ts`
+  - [x] Implement getNextStatus (status cycling)
+  - [x] Implement getStatusLabel
+  - [x] Define STATUS_ORDER constant
 
 ---
 
@@ -1987,6 +1996,7 @@ _Use this section to track progress, blockers, and decisions._
 | 2026-01-31 | Step 2.2.2 complete - Task async thunks (fetchTasksByDate, createTask, updateTaskAsync, deleteTask, hardDeleteTask, restoreTask, batchUpdateTasksAsync, fetchTasksByDateRange), extraReducers for all thunk states, 33 thunk tests. Total: 88 task tests, overall 358+ tests passing. |
 | 2026-01-31 | Step 2.3.1 complete - Category slice with full CRUD, service layer, async thunks. Added categoryReducer to store. 76 new tests (20 service + 32 slice + 24 thunk). Phase 2 complete! Total: 434 tests passing. |
 | 2026-01-31 | Step 3.1.1 complete - Task List components (TaskItem, TaskPriorityGroup, TaskList) with taskUtils. 132 new tests (43 utility + 38 TaskItem + 25 TaskPriorityGroup + 26 TaskList). Total: 566 tests passing. |
+| 2026-01-31 | Step 3.1.2 complete - TaskListContainer with Redux integration, useTasksByDate/useSelectedDateTasks hooks, statusUtils, mock data utilities. 104 new tests (36 mockData + 11 hooks + 16 TaskListContainer + 8 statusUtils + 33 existing). Total: 670 tests passing. |
 
 ## Blockers
 
