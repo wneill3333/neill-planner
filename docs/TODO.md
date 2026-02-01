@@ -13,7 +13,7 @@
 | Phase | Status | Progress |
 |-------|--------|----------|
 | Phase 1: Foundation | ✅ Complete | 25/25 |
-| Phase 2: Data Layer | 🟡 In Progress | 17/22 |
+| Phase 2: Data Layer | ✅ Complete | 22/22 |
 | Phase 3: Core Tasks | ⬜ Not Started | 0/35 |
 | Phase 4: Date & Daily View | ⬜ Not Started | 0/18 |
 | Phase 5: Categories | ⬜ Not Started | 0/15 |
@@ -24,7 +24,7 @@
 | Phase 10: Reminders | ⬜ Not Started | 0/12 |
 | Phase 11: Offline Support | ⬜ Not Started | 0/12 |
 | Phase 12: Polish & Deploy | ⬜ Not Started | 0/18 |
-| **TOTAL** | | **42/229** |
+| **TOTAL** | | **47/229** |
 
 ---
 
@@ -676,32 +676,36 @@
 
 ### Step 2.3.1: Category Slice
 
-- [ ] **Create category slice**
-  - [ ] Create `src/features/categories/categorySlice.ts`
-  - [ ] Define CategoriesState interface
-  - [ ] Create categorySlice with reducers
-  - [ ] Create async thunks (fetchCategories, createCategory, updateCategoryAsync, deleteCategory)
-  - [ ] Create selectors
+- [x] **Create category slice** ✅ Completed 2026-01-31
+  - [x] Create `src/features/categories/categorySlice.ts`
+  - [x] Define CategoriesState interface
+  - [x] Create categorySlice with reducers (setCategories, addCategory, updateCategory, removeCategory, etc.)
+  - [x] Create async thunks (fetchCategories, createCategory, updateCategoryAsync, deleteCategory, checkCategoryNameExists)
+  - [x] Create selectors (selectAllCategories, selectCategoryById, selectCategoryByName, etc.)
 
-- [ ] **Create categories service**
-  - [ ] Create `src/services/firebase/categories.service.ts`
-  - [ ] Implement createCategory
-  - [ ] Implement getCategories
-  - [ ] Implement updateCategory
-  - [ ] Implement deleteCategory
+- [x] **Create categories service** ✅ Completed 2026-01-31
+  - [x] Create `src/services/firebase/categories.service.ts`
+  - [x] Implement createCategory
+  - [x] Implement getCategory
+  - [x] Implement getCategories
+  - [x] Implement updateCategory
+  - [x] Implement deleteCategory
+  - [x] Implement getCategoryCount
+  - [x] Implement categoryNameExists (for duplicate checking)
 
-- [ ] **Add to store**
-  - [ ] Add categoryReducer to store
+- [x] **Add to store** ✅ Completed 2026-01-31
+  - [x] Add categoryReducer to store
+  - [x] Configure serializableCheck for categories
 
-- [ ] **Write tests**
-  - [ ] Test all reducers
-  - [ ] Test all thunks
-  - [ ] Test selectors
-  - [ ] Test service layer
+- [x] **Write tests** ✅ Completed 2026-01-31 (76 tests)
+  - [x] Test all reducers (32 slice tests)
+  - [x] Test all thunks (24 thunk tests)
+  - [x] Test selectors
+  - [x] Test service layer (20 service tests)
 
-- [ ] **Create categories index**
-  - [ ] Create `src/features/categories/index.ts`
-  - [ ] Export slice, actions, thunks, selectors
+- [x] **Create categories index** ✅ Completed 2026-01-31
+  - [x] Create `src/features/categories/index.ts`
+  - [x] Export slice, actions, thunks, selectors, types
 
 ---
 
@@ -1981,6 +1985,7 @@ _Use this section to track progress, blockers, and decisions._
 | 2026-01-31 | Step 2.1.1 complete - Redux store configuration with typed hooks, Provider setup, comprehensive tests (67 new tests: 21 store + 17 hooks + 29 test-utils). Total: 325 tests passing. |
 | 2026-01-31 | Step 2.2.1 complete - Task slice with normalized state, all reducers (setTasks, addTask, updateTask, removeTask, etc.), comprehensive selectors, 55 tests. |
 | 2026-01-31 | Step 2.2.2 complete - Task async thunks (fetchTasksByDate, createTask, updateTaskAsync, deleteTask, hardDeleteTask, restoreTask, batchUpdateTasksAsync, fetchTasksByDateRange), extraReducers for all thunk states, 33 thunk tests. Total: 88 task tests, overall 358+ tests passing. |
+| 2026-01-31 | Step 2.3.1 complete - Category slice with full CRUD, service layer, async thunks. Added categoryReducer to store. 76 new tests (20 service + 32 slice + 24 thunk). Phase 2 complete! Total: 434 tests passing. |
 
 ## Blockers
 

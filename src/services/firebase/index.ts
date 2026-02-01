@@ -32,3 +32,14 @@ export {
   getOrCreateUser,
   type FirebaseUser,
 } from './users.service';
+
+// Category service functions
+export {
+  createCategory,
+  getCategory,
+  getCategories,
+  updateCategory,
+  deleteCategory,
+  getCategoryCount,
+  categoryNameExists,
+} from './categories.service';
