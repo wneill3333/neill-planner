@@ -14,7 +14,7 @@
 |-------|--------|----------|
 | Phase 1: Foundation | ✅ Complete | 25/25 |
 | Phase 2: Data Layer | ✅ Complete | 22/22 |
-| Phase 3: Core Tasks | ⬜ Not Started | 0/35 |
+| Phase 3: Core Tasks | 🔄 In Progress | 7/35 |
 | Phase 4: Date & Daily View | ⬜ Not Started | 0/18 |
 | Phase 5: Categories | ⬜ Not Started | 0/15 |
 | Phase 6: Recurring Tasks | ⬜ Not Started | 0/20 |
@@ -24,7 +24,7 @@
 | Phase 10: Reminders | ⬜ Not Started | 0/12 |
 | Phase 11: Offline Support | ⬜ Not Started | 0/12 |
 | Phase 12: Polish & Deploy | ⬜ Not Started | 0/18 |
-| **TOTAL** | | **47/229** |
+| **TOTAL** | | **54/229** |
 
 ---
 
@@ -720,49 +720,49 @@
 
 ### Step 3.1.1: Task List Component - Basic Rendering
 
-- [ ] **Create TaskList component**
-  - [ ] Create `src/components/tasks/TaskList.tsx`
-  - [ ] Define TaskListProps interface
-  - [ ] Group tasks by priority letter
-  - [ ] Render TaskPriorityGroup for each group
-  - [ ] Show empty state if no tasks
+- [x] **Create TaskList component** ✅ Completed 2026-01-31
+  - [x] Create `src/components/tasks/TaskList.tsx`
+  - [x] Define TaskListProps interface
+  - [x] Group tasks by priority letter
+  - [x] Render TaskPriorityGroup for each group
+  - [x] Show empty state if no tasks
 
-- [ ] **Create TaskPriorityGroup component**
-  - [ ] Create component with priority header
-  - [ ] Apply color coding (A=red, B=orange, C=yellow, D=gray)
-  - [ ] Render TaskItem for each task
+- [x] **Create TaskPriorityGroup component** ✅ Completed 2026-01-31
+  - [x] Create component with priority header
+  - [x] Apply color coding (A=red, B=orange, C=yellow, D=gray)
+  - [x] Render TaskItem for each task
 
-- [ ] **Create TaskItem component**
-  - [ ] Display priority label (e.g., "A1")
-  - [ ] Display status symbol
-  - [ ] Display task title
-  - [ ] Display category color
-  - [ ] Show recurrence icon if applicable
-  - [ ] Apply completed styling
-  - [ ] Handle click
+- [x] **Create TaskItem component** ✅ Completed 2026-01-31
+  - [x] Display priority label (e.g., "A1")
+  - [x] Display status symbol
+  - [x] Display task title
+  - [x] Display category color
+  - [x] Show recurrence icon if applicable
+  - [x] Apply completed styling
+  - [x] Handle click
 
-- [ ] **Create task components index**
-  - [ ] Create `src/components/tasks/index.ts`
-  - [ ] Export TaskList, TaskItem, TaskPriorityGroup
+- [x] **Create task components index** ✅ Completed 2026-01-31
+  - [x] Create `src/components/tasks/index.ts`
+  - [x] Export TaskList, TaskItem, TaskPriorityGroup
 
-- [ ] **Create task utilities**
-  - [ ] Create `src/utils/taskUtils.ts`
-  - [ ] Implement groupTasksByPriority
-  - [ ] Implement sortTasksByPriority
-  - [ ] Implement getStatusSymbol
-  - [ ] Implement getPriorityColor
+- [x] **Create task utilities** ✅ Completed 2026-01-31
+  - [x] Create `src/utils/taskUtils.ts`
+  - [x] Implement groupTasksByPriority
+  - [x] Implement sortTasksByPriority
+  - [x] Implement getStatusSymbol
+  - [x] Implement getPriorityColor
 
-- [ ] **Write component tests**
-  - [ ] Test TaskList renders empty state
-  - [ ] Test TaskList groups by priority
-  - [ ] Test TaskItem renders title
-  - [ ] Test TaskItem renders status symbol
-  - [ ] Test TaskItem shows recurrence icon
+- [x] **Write component tests** ✅ Completed 2026-01-31 (89 tests)
+  - [x] Test TaskList renders empty state
+  - [x] Test TaskList groups by priority
+  - [x] Test TaskItem renders title
+  - [x] Test TaskItem renders status symbol
+  - [x] Test TaskItem shows recurrence icon
 
-- [ ] **Write utility tests**
-  - [ ] Test groupTasksByPriority
-  - [ ] Test sortTasksByPriority
-  - [ ] Test getStatusSymbol
+- [x] **Write utility tests** ✅ Completed 2026-01-31 (43 tests)
+  - [x] Test groupTasksByPriority
+  - [x] Test sortTasksByPriority
+  - [x] Test getStatusSymbol
 
 ---
 
@@ -1986,6 +1986,7 @@ _Use this section to track progress, blockers, and decisions._
 | 2026-01-31 | Step 2.2.1 complete - Task slice with normalized state, all reducers (setTasks, addTask, updateTask, removeTask, etc.), comprehensive selectors, 55 tests. |
 | 2026-01-31 | Step 2.2.2 complete - Task async thunks (fetchTasksByDate, createTask, updateTaskAsync, deleteTask, hardDeleteTask, restoreTask, batchUpdateTasksAsync, fetchTasksByDateRange), extraReducers for all thunk states, 33 thunk tests. Total: 88 task tests, overall 358+ tests passing. |
 | 2026-01-31 | Step 2.3.1 complete - Category slice with full CRUD, service layer, async thunks. Added categoryReducer to store. 76 new tests (20 service + 32 slice + 24 thunk). Phase 2 complete! Total: 434 tests passing. |
+| 2026-01-31 | Step 3.1.1 complete - Task List components (TaskItem, TaskPriorityGroup, TaskList) with taskUtils. 132 new tests (43 utility + 38 TaskItem + 25 TaskPriorityGroup + 26 TaskList). Total: 566 tests passing. |
 
 ## Blockers
 
