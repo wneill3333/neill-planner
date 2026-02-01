@@ -51,6 +51,33 @@ export const initialState: CategoriesState = {
 };
 
 // =============================================================================
+// Helper Functions
+// =============================================================================
+
+/**
+ * Sort category IDs by sortOrder, then by name alphabetically.
+ *
+ * This helper is used across multiple reducers to maintain consistent
+ * category ordering. Extracted to reduce code duplication.
+ *
+ * @param categoryIds - Array of category IDs to sort
+ * @param categories - Record of categories indexed by ID
+ */
+function sortCategoryIds(
+  categoryIds: string[],
+  categories: Record<string, Category>
+): void {
+  categoryIds.sort((a, b) => {
+    const catA = categories[a];
+    const catB = categories[b];
+    if (catA.sortOrder !== catB.sortOrder) {
+      return catA.sortOrder - catB.sortOrder;
+    }
+    return catA.name.localeCompare(catB.name);
+  });
+}
+
+// =============================================================================
 // Slice
 // =============================================================================
 
@@ -70,16 +97,7 @@ export const categorySlice = createSlice({
         state.categoryIds.push(category.id);
       }
 
-      // Sort by sortOrder, then name
-      state.categoryIds.sort((a, b) => {
-        const catA = state.categories[a];
-        const catB = state.categories[b];
-        if (catA.sortOrder !== catB.sortOrder) {
-          return catA.sortOrder - catB.sortOrder;
-        }
-        return catA.name.localeCompare(catB.name);
-      });
-
+      sortCategoryIds(state.categoryIds, state.categories);
       state.initialized = true;
     },
 
@@ -92,16 +110,7 @@ export const categorySlice = createSlice({
 
       if (!state.categoryIds.includes(category.id)) {
         state.categoryIds.push(category.id);
-
-        // Re-sort by sortOrder, then name
-        state.categoryIds.sort((a, b) => {
-          const catA = state.categories[a];
-          const catB = state.categories[b];
-          if (catA.sortOrder !== catB.sortOrder) {
-            return catA.sortOrder - catB.sortOrder;
-          }
-          return catA.name.localeCompare(catB.name);
-        });
+        sortCategoryIds(state.categoryIds, state.categories);
       }
     },
 
@@ -118,14 +127,7 @@ export const categorySlice = createSlice({
 
       // Re-sort if sortOrder or name changed
       if ('sortOrder' in updates || 'name' in updates) {
-        state.categoryIds.sort((a, b) => {
-          const catA = state.categories[a];
-          const catB = state.categories[b];
-          if (catA.sortOrder !== catB.sortOrder) {
-            return catA.sortOrder - catB.sortOrder;
-          }
-          return catA.name.localeCompare(catB.name);
-        });
+        sortCategoryIds(state.categoryIds, state.categories);
       }
     },
 

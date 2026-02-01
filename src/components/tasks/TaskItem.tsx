@@ -3,8 +3,12 @@
  *
  * Displays a single task with priority label, status symbol, title,
  * category color, and recurrence indicator.
+ *
+ * This component is memoized to prevent unnecessary re-renders when
+ * parent components update but this task's data hasn't changed.
  */
 
+import { memo, useCallback } from 'react';
 import type { Task, Category } from '../../types';
 import {
   formatPriorityLabel,
@@ -40,8 +44,15 @@ export interface TaskItemProps {
 
 /**
  * TaskItem - Displays a single task row
+ *
+ * Memoized to prevent unnecessary re-renders when parent updates
+ * but this task hasn't changed. Uses custom comparison to check
+ * only the relevant task properties.
+ *
+ * @param props - TaskItemProps
+ * @returns JSX element representing a task row
  */
-export function TaskItem({
+function TaskItemComponent({
   task,
   category,
   onClick,
@@ -56,21 +67,30 @@ export function TaskItem({
   const statusColor = getStatusColor(task.status);
   const priorityClasses = getPriorityColorClasses(task.priority.letter);
 
-  const handleClick = () => {
+  // Memoized click handler to prevent creating new function on each render
+  const handleClick = useCallback(() => {
     onClick?.(task);
-  };
+  }, [onClick, task]);
 
-  const handleStatusClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent triggering the task click
-    onStatusClick?.(task);
-  };
+  // Memoized status click handler with event propagation prevention
+  const handleStatusClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation(); // Prevent triggering the task click
+      onStatusClick?.(task);
+    },
+    [onStatusClick, task]
+  );
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onClick?.(task);
-    }
-  };
+  // Memoized keyboard handler for accessibility
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onClick?.(task);
+      }
+    },
+    [onClick, task]
+  );
 
   return (
     <div
@@ -150,5 +170,35 @@ export function TaskItem({
     </div>
   );
 }
+
+/**
+ * Custom comparison function for React.memo
+ *
+ * Only re-renders when task data that affects display has changed,
+ * ignoring changes to callback function references.
+ */
+function arePropsEqual(prevProps: TaskItemProps, nextProps: TaskItemProps): boolean {
+  // Compare task properties that affect rendering
+  const taskEqual =
+    prevProps.task.id === nextProps.task.id &&
+    prevProps.task.title === nextProps.task.title &&
+    prevProps.task.status === nextProps.task.status &&
+    prevProps.task.priority.letter === nextProps.task.priority.letter &&
+    prevProps.task.priority.number === nextProps.task.priority.number &&
+    prevProps.task.recurrence === nextProps.task.recurrence;
+
+  // Compare category (if present)
+  const categoryEqual =
+    prevProps.category?.id === nextProps.category?.id &&
+    prevProps.category?.color === nextProps.category?.color;
+
+  // Compare display options
+  const optionsEqual = prevProps.showCategoryColor === nextProps.showCategoryColor;
+
+  return taskEqual && categoryEqual && optionsEqual;
+}
+
+// Export memoized component
+export const TaskItem = memo(TaskItemComponent, arePropsEqual);
 
 export default TaskItem;

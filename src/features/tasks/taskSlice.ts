@@ -5,7 +5,7 @@
  * Handles normalized task storage, date-based indexing, and CRUD operations.
  */
 
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createSelector, type PayloadAction } from '@reduxjs/toolkit';
 import type { Task, SyncStatus } from '../../types';
 import type { RootState } from '../../store';
 import {
@@ -545,21 +545,46 @@ export const selectTaskById = (state: RootState, taskId: string): Task | undefin
   state.tasks.tasks[taskId];
 
 /**
- * Select tasks for a specific date
+ * Select tasks for a specific date.
+ *
+ * Uses createSelector for memoization to prevent unnecessary re-renders.
+ * Only recomputes when tasks or taskIdsByDate changes.
+ *
+ * @param state - Redux state
+ * @param date - ISO date string (YYYY-MM-DD)
+ * @returns Array of tasks for the specified date
  */
-export const selectTasksByDate = (state: RootState, date: string): Task[] => {
-  const taskIds = state.tasks.taskIdsByDate[date] || [];
-  return taskIds.map((id) => state.tasks.tasks[id]).filter((task): task is Task => !!task);
-};
+export const selectTasksByDate = createSelector(
+  [
+    (state: RootState) => state.tasks.tasks,
+    (state: RootState) => state.tasks.taskIdsByDate,
+    (_state: RootState, date: string) => date,
+  ],
+  (tasks, taskIdsByDate, date): Task[] => {
+    const taskIds = taskIdsByDate[date] || [];
+    return taskIds.map((id) => tasks[id]).filter((task): task is Task => !!task);
+  }
+);
 
 /**
- * Select tasks for the currently selected date
+ * Select tasks for the currently selected date.
+ *
+ * Uses createSelector for memoization to prevent unnecessary re-renders.
+ *
+ * @param state - Redux state
+ * @returns Array of tasks for the selected date
  */
-export const selectTasksForSelectedDate = (state: RootState): Task[] => {
-  const { selectedDate, taskIdsByDate, tasks } = state.tasks;
-  const taskIds = taskIdsByDate[selectedDate] || [];
-  return taskIds.map((id) => tasks[id]).filter((task): task is Task => !!task);
-};
+export const selectTasksForSelectedDate = createSelector(
+  [
+    (state: RootState) => state.tasks.tasks,
+    (state: RootState) => state.tasks.taskIdsByDate,
+    (state: RootState) => state.tasks.selectedDate,
+  ],
+  (tasks, taskIdsByDate, selectedDate): Task[] => {
+    const taskIds = taskIdsByDate[selectedDate] || [];
+    return taskIds.map((id) => tasks[id]).filter((task): task is Task => !!task);
+  }
+);
 
 /**
  * Select the currently selected date
@@ -582,29 +607,44 @@ export const selectTasksError = (state: RootState): string | null => state.tasks
 export const selectTasksSyncStatus = (state: RootState): SyncStatus => state.tasks.syncStatus;
 
 /**
- * Select tasks grouped by priority letter for a specific date
+ * Select tasks grouped by priority letter for a specific date.
+ *
+ * Uses createSelector for memoization to prevent unnecessary re-renders.
+ * Only recomputes when tasks or taskIdsByDate for the given date changes.
+ *
+ * @param state - Redux state
+ * @param date - ISO date string (YYYY-MM-DD)
+ * @returns Record with priority letters as keys and sorted task arrays as values
  */
-export const selectTasksByPriorityForDate = (
-  state: RootState,
-  date: string
-): Record<string, Task[]> => {
-  const tasks = selectTasksByDate(state, date);
-  const grouped: Record<string, Task[]> = { A: [], B: [], C: [], D: [] };
+export const selectTasksByPriorityForDate = createSelector(
+  [
+    (state: RootState) => state.tasks.tasks,
+    (state: RootState) => state.tasks.taskIdsByDate,
+    (_state: RootState, date: string) => date,
+  ],
+  (tasks, taskIdsByDate, date): Record<string, Task[]> => {
+    const taskIds = taskIdsByDate[date] || [];
+    const dateTasks = taskIds
+      .map((id) => tasks[id])
+      .filter((task): task is Task => !!task);
 
-  for (const task of tasks) {
-    const letter = task.priority.letter;
-    if (grouped[letter]) {
-      grouped[letter].push(task);
+    const grouped: Record<string, Task[]> = { A: [], B: [], C: [], D: [] };
+
+    for (const task of dateTasks) {
+      const letter = task.priority.letter;
+      if (grouped[letter]) {
+        grouped[letter].push(task);
+      }
     }
-  }
 
-  // Sort each group by priority number
-  for (const letter of Object.keys(grouped)) {
-    grouped[letter].sort((a, b) => a.priority.number - b.priority.number);
-  }
+    // Sort each group by priority number
+    for (const letter of Object.keys(grouped)) {
+      grouped[letter].sort((a, b) => a.priority.number - b.priority.number);
+    }
 
-  return grouped;
-};
+    return grouped;
+  }
+);
 
 /**
  * Select task count for a specific date
