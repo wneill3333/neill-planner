@@ -69,6 +69,7 @@ export type { UseTasksByDateResult, UseSelectedDateTasksResult } from './hooks';
 
 // Container Components
 export { TaskListContainer, type TaskListContainerProps } from './TaskListContainer';
+export { DateNavigationContainer, type DateNavigationContainerProps } from './DateNavigationContainer';
 
 // Page Components
 export { CreateTaskModal, type CreateTaskModalProps } from './CreateTaskModal';
