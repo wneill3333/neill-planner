@@ -230,7 +230,8 @@ describe('useTasksByDate', () => {
       expect.objectContaining({
         id: 'task-1',
         status: 'complete',
-      })
+      }),
+      undefined
     );
   });
 

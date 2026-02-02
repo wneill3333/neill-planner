@@ -23,9 +23,22 @@ import {
 } from 'firebase/firestore';
 import { db } from './config';
 import type { Task, TaskPriority, CreateTaskInput, UpdateTaskInput } from '../../types';
+import {
+  validateCreateTaskInput,
+  validateUpdateTaskInput,
+  validateUserId,
+  validateTaskId,
+  validateDate,
+  validateDateRange,
+  sanitizeString,
+  ValidationError,
+} from '../../utils/validation';
 
 /** Firestore collection name for tasks */
 const TASKS_COLLECTION = 'tasks';
+
+/** Maximum batch size for batch operations */
+const MAX_BATCH_SIZE = 500;
 
 /**
  * Convert a Task object to Firestore document format
@@ -54,7 +67,7 @@ function taskToFirestore(task: Partial<Task>): DocumentData {
       ...task.recurrence,
       endCondition: {
         ...task.recurrence.endCondition,
-        endDate: task.recurrence.endCondition.endDate
+        endDate: task.recurrence?.endCondition?.endDate
           ? Timestamp.fromDate(task.recurrence.endCondition.endDate)
           : null,
       },
@@ -118,9 +131,20 @@ function firestoreToTask(doc: QueryDocumentSnapshot<DocumentData>): Task {
  * @param input - Task creation input (without auto-generated fields)
  * @param userId - The ID of the user creating the task
  * @returns The created task with generated ID
+ * @throws {ValidationError} If input validation fails
  */
 export async function createTask(input: CreateTaskInput, userId: string): Promise<Task> {
+  // Validate user ID
+  validateUserId(userId);
+
+  // Validate input
+  validateCreateTaskInput(input);
+
   const now = new Date();
+
+  // Sanitize string inputs
+  const sanitizedTitle = sanitizeString(input.title);
+  const sanitizedDescription = input.description ? sanitizeString(input.description) : '';
 
   // Build priority with default number if not provided
   const priority: TaskPriority = {
@@ -130,8 +154,8 @@ export async function createTask(input: CreateTaskInput, userId: string): Promis
 
   const taskData: Omit<Task, 'id'> = {
     userId,
-    title: input.title,
-    description: input.description || '',
+    title: sanitizedTitle,
+    description: sanitizedDescription,
     categoryId: input.categoryId ?? null,
     priority,
     status: input.status || 'in_progress',
@@ -148,31 +172,56 @@ export async function createTask(input: CreateTaskInput, userId: string): Promis
     deletedAt: null,
   };
 
-  const docRef = await addDoc(
-    collection(db, TASKS_COLLECTION),
-    taskToFirestore(taskData)
-  );
+  try {
+    const docRef = await addDoc(
+      collection(db, TASKS_COLLECTION),
+      taskToFirestore(taskData)
+    );
 
-  return {
-    ...taskData,
-    id: docRef.id,
-  };
+    return {
+      ...taskData,
+      id: docRef.id,
+    };
+  } catch (error) {
+    console.error('Error creating task:', error);
+    throw new Error(`Failed to create task: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 /**
  * Get a single task by ID
  * @param taskId - The ID of the task to retrieve
+ * @param userId - The ID of the user requesting the task
  * @returns The task if found, null otherwise
+ * @throws {ValidationError} If taskId is invalid or user is unauthorized
  */
-export async function getTask(taskId: string): Promise<Task | null> {
-  const docRef = doc(db, TASKS_COLLECTION, taskId);
-  const docSnap = await getDoc(docRef);
+export async function getTask(taskId: string, userId: string): Promise<Task | null> {
+  validateTaskId(taskId);
+  validateUserId(userId);
 
-  if (!docSnap.exists()) {
-    return null;
+  try {
+    const docRef = doc(db, TASKS_COLLECTION, taskId);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      return null;
+    }
+
+    const task = firestoreToTask(docSnap as QueryDocumentSnapshot<DocumentData>);
+
+    // Authorization check
+    if (task.userId !== userId) {
+      throw new ValidationError('Unauthorized access to task', 'taskId', 'UNAUTHORIZED');
+    }
+
+    return task;
+  } catch (error) {
+    console.error('Error fetching task:', error);
+    if (error instanceof ValidationError) {
+      throw error;
+    }
+    throw new Error(`Failed to fetch task: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-
-  return firestoreToTask(docSnap as QueryDocumentSnapshot<DocumentData>);
 }
 
 /**
@@ -180,28 +229,38 @@ export async function getTask(taskId: string): Promise<Task | null> {
  * @param userId - The user's ID
  * @param date - The date to filter by
  * @returns Array of tasks scheduled for that date
+ * @throws {ValidationError} If userId or date is invalid
  */
 export async function getTasksByDate(userId: string, date: Date): Promise<Task[]> {
-  // Create start and end of day timestamps
-  const startOfDay = new Date(date);
-  startOfDay.setHours(0, 0, 0, 0);
+  // Validate inputs
+  validateUserId(userId);
+  validateDate(date, 'date');
 
-  const endOfDay = new Date(date);
-  endOfDay.setHours(23, 59, 59, 999);
+  try {
+    // Create start and end of day timestamps
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
 
-  const q = query(
-    collection(db, TASKS_COLLECTION),
-    where('userId', '==', userId),
-    where('scheduledDate', '>=', Timestamp.fromDate(startOfDay)),
-    where('scheduledDate', '<=', Timestamp.fromDate(endOfDay)),
-    where('deletedAt', '==', null),
-    orderBy('scheduledDate'),
-    orderBy('priority.letter'),
-    orderBy('priority.number')
-  );
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
 
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(firestoreToTask);
+    const q = query(
+      collection(db, TASKS_COLLECTION),
+      where('userId', '==', userId),
+      where('scheduledDate', '>=', Timestamp.fromDate(startOfDay)),
+      where('scheduledDate', '<=', Timestamp.fromDate(endOfDay)),
+      where('deletedAt', '==', null),
+      orderBy('scheduledDate'),
+      orderBy('priority.letter'),
+      orderBy('priority.number')
+    );
+
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(firestoreToTask);
+  } catch (error) {
+    console.error('Error fetching tasks by date:', error);
+    throw new Error(`Failed to fetch tasks by date: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 /**
@@ -210,152 +269,347 @@ export async function getTasksByDate(userId: string, date: Date): Promise<Task[]
  * @param startDate - Start of the date range
  * @param endDate - End of the date range
  * @returns Array of tasks within the date range
+ * @throws {ValidationError} If inputs are invalid
  */
 export async function getTasksByDateRange(
   userId: string,
   startDate: Date,
   endDate: Date
 ): Promise<Task[]> {
-  const q = query(
-    collection(db, TASKS_COLLECTION),
-    where('userId', '==', userId),
-    where('scheduledDate', '>=', Timestamp.fromDate(startDate)),
-    where('scheduledDate', '<=', Timestamp.fromDate(endDate)),
-    where('deletedAt', '==', null),
-    orderBy('scheduledDate'),
-    orderBy('priority.letter'),
-    orderBy('priority.number')
-  );
+  // Validate inputs
+  validateUserId(userId);
+  validateDateRange(startDate, endDate);
 
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(firestoreToTask);
+  try {
+    const q = query(
+      collection(db, TASKS_COLLECTION),
+      where('userId', '==', userId),
+      where('scheduledDate', '>=', Timestamp.fromDate(startDate)),
+      where('scheduledDate', '<=', Timestamp.fromDate(endDate)),
+      where('deletedAt', '==', null),
+      orderBy('scheduledDate'),
+      orderBy('priority.letter'),
+      orderBy('priority.number')
+    );
+
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(firestoreToTask);
+  } catch (error) {
+    console.error('Error fetching tasks by date range:', error);
+    throw new Error(`Failed to fetch tasks by date range: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 /**
  * Update an existing task
  * @param input - Update input with task ID and fields to update
+ * @param userId - The ID of the user updating the task
  * @returns The updated task
+ * @throws {ValidationError} If input validation fails or user is unauthorized
  */
-export async function updateTask(input: UpdateTaskInput): Promise<Task> {
-  const { id, priority, ...otherUpdates } = input;
-  const docRef = doc(db, TASKS_COLLECTION, id);
+export async function updateTask(input: UpdateTaskInput, userId: string): Promise<Task> {
+  // Validate input
+  validateUpdateTaskInput(input);
+  validateUserId(userId);
 
-  // Build update object without spreading partial priority directly
-  const updates: Record<string, unknown> = {
-    ...otherUpdates,
-    updatedAt: new Date(),
-  };
+  const { id, priority, title, description, ...otherUpdates } = input;
 
-  // Handle priority separately to avoid partial type issues
-  if (priority) {
-    if (priority.letter !== undefined) {
-      updates['priority.letter'] = priority.letter;
+  try {
+    // First, verify ownership
+    const docRef = doc(db, TASKS_COLLECTION, id);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      throw new ValidationError('Task not found', 'id', 'NOT_FOUND');
     }
-    if (priority.number !== undefined) {
-      updates['priority.number'] = priority.number;
+
+    const existingTask = firestoreToTask(docSnap as QueryDocumentSnapshot<DocumentData>);
+
+    // Authorization check
+    if (existingTask.userId !== userId) {
+      throw new ValidationError('Unauthorized access to task', 'id', 'UNAUTHORIZED');
     }
+
+    // Sanitize string inputs if provided
+    const updates: Record<string, unknown> = {
+      ...otherUpdates,
+      updatedAt: new Date(),
+    };
+
+    if (title !== undefined) {
+      updates.title = sanitizeString(title);
+    }
+
+    if (description !== undefined) {
+      updates.description = sanitizeString(description);
+    }
+
+    // Handle priority separately to avoid partial type issues
+    if (priority) {
+      if (priority.letter !== undefined) {
+        updates['priority.letter'] = priority.letter;
+      }
+      if (priority.number !== undefined) {
+        updates['priority.number'] = priority.number;
+      }
+    }
+
+    const updateData = taskToFirestore(updates as Partial<Task>);
+    await updateDoc(docRef, updateData);
+
+    // Return merged local object instead of re-fetching
+    return {
+      ...existingTask,
+      ...(title !== undefined && { title: updates.title as string }),
+      ...(description !== undefined && { description: updates.description as string }),
+      ...(priority?.letter !== undefined && { priority: { ...existingTask.priority, letter: priority.letter } }),
+      ...(priority?.number !== undefined && { priority: { ...existingTask.priority, number: priority.number } }),
+      ...otherUpdates,
+      updatedAt: updates.updatedAt as Date,
+    };
+  } catch (error) {
+    console.error('Error updating task:', error);
+    if (error instanceof ValidationError) {
+      throw error;
+    }
+    throw new Error(`Failed to update task: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-
-  const updateData = taskToFirestore(updates as Partial<Task>);
-
-  await updateDoc(docRef, updateData);
-
-  const updatedTask = await getTask(id);
-  if (!updatedTask) {
-    throw new Error(`Task ${id} not found after update`);
-  }
-
-  return updatedTask;
 }
 
 /**
  * Soft delete a task (sets deletedAt timestamp)
  * @param taskId - The ID of the task to delete
+ * @param userId - The ID of the user deleting the task
+ * @throws {ValidationError} If taskId is invalid or user is unauthorized
  */
-export async function softDeleteTask(taskId: string): Promise<void> {
-  const docRef = doc(db, TASKS_COLLECTION, taskId);
-  await updateDoc(docRef, {
-    deletedAt: Timestamp.fromDate(new Date()),
-    updatedAt: Timestamp.fromDate(new Date()),
-  });
+export async function softDeleteTask(taskId: string, userId: string): Promise<void> {
+  validateTaskId(taskId);
+  validateUserId(userId);
+
+  try {
+    // Verify ownership
+    const docRef = doc(db, TASKS_COLLECTION, taskId);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      throw new ValidationError('Task not found', 'taskId', 'NOT_FOUND');
+    }
+
+    const task = firestoreToTask(docSnap as QueryDocumentSnapshot<DocumentData>);
+
+    // Authorization check
+    if (task.userId !== userId) {
+      throw new ValidationError('Unauthorized access to task', 'taskId', 'UNAUTHORIZED');
+    }
+
+    await updateDoc(docRef, {
+      deletedAt: Timestamp.fromDate(new Date()),
+      updatedAt: Timestamp.fromDate(new Date()),
+    });
+  } catch (error) {
+    console.error('Error soft deleting task:', error);
+    if (error instanceof ValidationError) {
+      throw error;
+    }
+    throw new Error(`Failed to soft delete task: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 /**
  * Permanently delete a task from Firestore
  * @param taskId - The ID of the task to delete
+ * @param userId - The ID of the user deleting the task
+ * @throws {ValidationError} If taskId is invalid or user is unauthorized
  */
-export async function hardDeleteTask(taskId: string): Promise<void> {
-  const docRef = doc(db, TASKS_COLLECTION, taskId);
-  await deleteDoc(docRef);
+export async function hardDeleteTask(taskId: string, userId: string): Promise<void> {
+  validateTaskId(taskId);
+  validateUserId(userId);
+
+  try {
+    // Verify ownership
+    const docRef = doc(db, TASKS_COLLECTION, taskId);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      throw new ValidationError('Task not found', 'taskId', 'NOT_FOUND');
+    }
+
+    const task = firestoreToTask(docSnap as QueryDocumentSnapshot<DocumentData>);
+
+    // Authorization check
+    if (task.userId !== userId) {
+      throw new ValidationError('Unauthorized access to task', 'taskId', 'UNAUTHORIZED');
+    }
+
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.error('Error permanently deleting task:', error);
+    if (error instanceof ValidationError) {
+      throw error;
+    }
+    throw new Error(`Failed to permanently delete task: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 /**
  * Restore a soft-deleted task
  * @param taskId - The ID of the task to restore
+ * @param userId - The ID of the user restoring the task
  * @returns The restored task
+ * @throws {ValidationError} If taskId is invalid or user is unauthorized
  */
-export async function restoreTask(taskId: string): Promise<Task> {
-  const docRef = doc(db, TASKS_COLLECTION, taskId);
-  await updateDoc(docRef, {
-    deletedAt: null,
-    updatedAt: Timestamp.fromDate(new Date()),
-  });
+export async function restoreTask(taskId: string, userId: string): Promise<Task> {
+  validateTaskId(taskId);
+  validateUserId(userId);
 
-  const restoredTask = await getTask(taskId);
-  if (!restoredTask) {
-    throw new Error(`Task ${taskId} not found after restore`);
+  try {
+    // Verify ownership
+    const docRef = doc(db, TASKS_COLLECTION, taskId);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      throw new ValidationError('Task not found', 'taskId', 'NOT_FOUND');
+    }
+
+    const existingTask = firestoreToTask(docSnap as QueryDocumentSnapshot<DocumentData>);
+
+    // Authorization check
+    if (existingTask.userId !== userId) {
+      throw new ValidationError('Unauthorized access to task', 'taskId', 'UNAUTHORIZED');
+    }
+
+    await updateDoc(docRef, {
+      deletedAt: null,
+      updatedAt: Timestamp.fromDate(new Date()),
+    });
+
+    // Return merged local object instead of re-fetching
+    return {
+      ...existingTask,
+      deletedAt: null,
+      updatedAt: new Date(),
+    };
+  } catch (error) {
+    console.error('Error restoring task:', error);
+    if (error instanceof ValidationError) {
+      throw error;
+    }
+    throw new Error(`Failed to restore task: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-
-  return restoredTask;
 }
 
 /**
  * Batch update multiple tasks (for reordering, etc.)
  * @param updates - Array of task updates
+ * @param userId - The ID of the user updating the tasks
+ * @throws {ValidationError} If any update is invalid or user is unauthorized
  */
-export async function batchUpdateTasks(updates: UpdateTaskInput[]): Promise<void> {
-  const batch = writeBatch(db);
-  const now = Timestamp.fromDate(new Date());
-
-  for (const update of updates) {
-    const { id, priority, ...otherFields } = update;
-    const docRef = doc(db, TASKS_COLLECTION, id);
-
-    // Build update object without spreading partial priority directly
-    const fields: Record<string, unknown> = {
-      ...otherFields,
-      updatedAt: now.toDate(),
-    };
-
-    // Handle priority separately to avoid partial type issues
-    if (priority) {
-      if (priority.letter !== undefined) {
-        fields['priority.letter'] = priority.letter;
-      }
-      if (priority.number !== undefined) {
-        fields['priority.number'] = priority.number;
-      }
-    }
-
-    const updateData = taskToFirestore(fields as Partial<Task>);
-    batch.update(docRef, updateData);
+export async function batchUpdateTasks(updates: UpdateTaskInput[], userId: string): Promise<void> {
+  if (!Array.isArray(updates) || updates.length === 0) {
+    throw new ValidationError('Updates array is required and cannot be empty', 'updates', 'INVALID_UPDATES');
   }
 
-  await batch.commit();
+  // Enforce batch size limit
+  if (updates.length > MAX_BATCH_SIZE) {
+    throw new ValidationError(
+      `Batch size cannot exceed ${MAX_BATCH_SIZE} items`,
+      'updates',
+      'BATCH_TOO_LARGE'
+    );
+  }
+
+  validateUserId(userId);
+
+  // Validate all updates first before starting the batch
+  for (const update of updates) {
+    validateUpdateTaskInput(update);
+  }
+
+  try {
+    // Verify ownership for all tasks
+    const taskIds = updates.map(u => u.id);
+    const verificationPromises = taskIds.map(async (id) => {
+      const docRef = doc(db, TASKS_COLLECTION, id);
+      const docSnap = await getDoc(docRef);
+
+      if (!docSnap.exists()) {
+        throw new ValidationError(`Task ${id} not found`, 'id', 'NOT_FOUND');
+      }
+
+      const task = firestoreToTask(docSnap as QueryDocumentSnapshot<DocumentData>);
+
+      if (task.userId !== userId) {
+        throw new ValidationError(`Unauthorized access to task ${id}`, 'id', 'UNAUTHORIZED');
+      }
+    });
+
+    await Promise.all(verificationPromises);
+
+    const batch = writeBatch(db);
+    const now = Timestamp.fromDate(new Date());
+
+    for (const update of updates) {
+      const { id, priority, title, description, ...otherFields } = update;
+      const docRef = doc(db, TASKS_COLLECTION, id);
+
+      // Build update object with sanitized strings
+      const fields: Record<string, unknown> = {
+        ...otherFields,
+        updatedAt: now.toDate(),
+      };
+
+      if (title !== undefined) {
+        fields.title = sanitizeString(title);
+      }
+
+      if (description !== undefined) {
+        fields.description = sanitizeString(description);
+      }
+
+      // Handle priority separately to avoid partial type issues
+      if (priority) {
+        if (priority.letter !== undefined) {
+          fields['priority.letter'] = priority.letter;
+        }
+        if (priority.number !== undefined) {
+          fields['priority.number'] = priority.number;
+        }
+      }
+
+      const updateData = taskToFirestore(fields as Partial<Task>);
+      batch.update(docRef, updateData);
+    }
+
+    await batch.commit();
+  } catch (error) {
+    console.error('Error batch updating tasks:', error);
+    if (error instanceof ValidationError) {
+      throw error;
+    }
+    throw new Error(`Failed to batch update tasks: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 /**
  * Get all tasks for a user (including soft-deleted)
  * @param userId - The user's ID
  * @returns Array of all user's tasks
+ * @throws {ValidationError} If userId is invalid
  */
 export async function getAllTasksForUser(userId: string): Promise<Task[]> {
-  const q = query(
-    collection(db, TASKS_COLLECTION),
-    where('userId', '==', userId),
-    orderBy('scheduledDate', 'desc')
-  );
+  validateUserId(userId);
 
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(firestoreToTask);
+  try {
+    const q = query(
+      collection(db, TASKS_COLLECTION),
+      where('userId', '==', userId),
+      orderBy('scheduledDate', 'desc')
+    );
+
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(firestoreToTask);
+  } catch (error) {
+    console.error('Error fetching all tasks for user:', error);
+    throw new Error(`Failed to fetch all tasks: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }

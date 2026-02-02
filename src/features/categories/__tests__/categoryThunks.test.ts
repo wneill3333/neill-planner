@@ -377,7 +377,7 @@ describe('Category Thunks', () => {
         () => new Promise(() => {})
       );
 
-      store.dispatch(deleteCategory('cat-1'));
+      store.dispatch(deleteCategory({ categoryId: 'cat-1', userId: 'user-1' }));
 
       const state = store.getState().categories;
       expect(state.syncStatus).toBe('syncing');
@@ -392,7 +392,7 @@ describe('Category Thunks', () => {
 
       vi.mocked(categoriesService.deleteCategory).mockResolvedValue();
 
-      await store.dispatch(deleteCategory('cat-1'));
+      await store.dispatch(deleteCategory({ categoryId: 'cat-1', userId: 'user-1' }));
 
       const state = store.getState().categories;
       expect(state.syncStatus).toBe('synced');
@@ -407,7 +407,7 @@ describe('Category Thunks', () => {
         new Error('Delete failed')
       );
 
-      await store.dispatch(deleteCategory('cat-1'));
+      await store.dispatch(deleteCategory({ categoryId: 'cat-1', userId: 'user-1' }));
 
       const state = store.getState().categories;
       expect(state.error).toBe('Delete failed');
@@ -537,7 +537,7 @@ describe('Category Thunks', () => {
       // Delete
       vi.mocked(categoriesService.deleteCategory).mockResolvedValue();
 
-      await store.dispatch(deleteCategory('new-cat'));
+      await store.dispatch(deleteCategory({ categoryId: 'new-cat', userId: 'user-1' }));
 
       state = store.getState().categories;
       expect(state.categories['new-cat']).toBeUndefined();

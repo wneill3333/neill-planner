@@ -35,9 +35,29 @@ export const store = configureStore({
       // Serializable check configuration
       serializableCheck: {
         // Ignore these action types (useful for thunks with non-serializable payloads)
-        ignoredActions: [],
+        ignoredActions: [
+          'tasks/fetchTasksByDate/fulfilled',
+          'tasks/createTask/fulfilled',
+          'tasks/updateTaskAsync/fulfilled',
+          'tasks/restoreTask/fulfilled',
+          'tasks/fetchTasksByDateRange/fulfilled',
+          'categories/fetchCategories/fulfilled',
+          'categories/createCategory/fulfilled',
+          'categories/updateCategoryAsync/fulfilled',
+        ],
         // Ignore these paths in the state (Date objects in tasks and categories)
-        ignoredPaths: ['tasks.tasks', 'categories.categories'],
+        ignoredPaths: [
+          'tasks.tasks',
+          'categories.categories',
+        ],
+        // Ignore Date values in action payloads
+        ignoredActionPaths: [
+          'payload.tasks',
+          'payload.task',
+          'payload.category',
+          'payload',
+          'meta.arg',
+        ],
       },
     }),
   // Enable Redux DevTools in development

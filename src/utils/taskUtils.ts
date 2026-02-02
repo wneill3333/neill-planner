@@ -5,7 +5,10 @@
  */
 
 import type { Task, TaskStatus, PriorityLetter } from '../types';
-import { TaskStatusSymbols } from '../types';
+import { STATUS_COLORS, getStatusSymbol } from './statusUtils';
+
+// Re-export STATUS_COLORS and getStatusSymbol for convenience
+export { STATUS_COLORS, getStatusSymbol };
 
 // =============================================================================
 // Priority Colors
@@ -43,21 +46,6 @@ export const PRIORITY_LABELS: Record<PriorityLetter, string> = {
   B: 'Important',
   C: 'Optional',
   D: 'Delegate',
-} as const;
-
-// =============================================================================
-// Status Colors
-// =============================================================================
-
-/**
- * Color mapping for task statuses
- */
-export const STATUS_COLORS: Record<TaskStatus, string> = {
-  in_progress: '#3B82F6', // Blue
-  forward: '#8B5CF6', // Purple
-  complete: '#22C55E', // Green
-  delete: '#EF4444', // Red
-  delegate: '#F97316', // Orange
 } as const;
 
 // =============================================================================
@@ -111,15 +99,6 @@ export function sortTasksByPriority(tasks: Task[]): Task[] {
 // =============================================================================
 // Display Functions
 // =============================================================================
-
-/**
- * Get the status symbol for a task status
- * @param status - The task status
- * @returns The unicode symbol representing the status
- */
-export function getStatusSymbol(status: TaskStatus): string {
-  return TaskStatusSymbols[status];
-}
 
 /**
  * Get the color for a priority letter

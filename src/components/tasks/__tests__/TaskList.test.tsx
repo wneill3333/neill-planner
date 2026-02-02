@@ -109,11 +109,12 @@ describe('TaskList', () => {
       expect(screen.getByTestId('loading-state')).toBeInTheDocument();
     });
 
-    it('should show loading spinner', () => {
+    it('should show loading skeleton with animation', () => {
       render(<TaskList tasks={[]} loading={true} />);
 
-      const spinner = screen.getByTestId('loading-state').querySelector('.animate-spin');
-      expect(spinner).toBeInTheDocument();
+      // The loading state uses skeleton loaders with animate-pulse class
+      const skeleton = screen.getByTestId('loading-state').querySelector('.animate-pulse');
+      expect(skeleton).toBeInTheDocument();
     });
 
     it('should show loading text', () => {

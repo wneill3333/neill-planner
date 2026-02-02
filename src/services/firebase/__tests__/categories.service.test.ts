@@ -122,7 +122,7 @@ describe('Categories Service', () => {
         data: () => mockCategory,
       });
 
-      const result = await getCategory('cat-123');
+      const result = await getCategory('cat-123', 'user-123');
 
       expect(result).not.toBeNull();
       expect(result?.id).toBe('cat-123');
@@ -137,7 +137,7 @@ describe('Categories Service', () => {
         exists: () => false,
       });
 
-      const result = await getCategory('non-existent');
+      const result = await getCategory('non-existent', 'user-123');
 
       expect(result).toBeNull();
     });
@@ -160,7 +160,7 @@ describe('Categories Service', () => {
         data: () => mockCategory,
       });
 
-      const result = await getCategory('cat-123');
+      const result = await getCategory('cat-123', 'user-123');
 
       expect(result?.sortOrder).toBe(0);
     });
@@ -252,7 +252,7 @@ describe('Categories Service', () => {
         color: '#EF4444',
       };
 
-      const result = await updateCategory(input);
+      const result = await updateCategory(input, 'user-123');
 
       expect(mockUpdateDoc).toHaveBeenCalled();
       expect(result.name).toBe('Updated Work');
@@ -276,22 +276,22 @@ describe('Categories Service', () => {
         }),
       });
 
-      await updateCategory({ id: 'cat-123', name: 'New Name' });
+      await updateCategory({ id: 'cat-123', name: 'New Name' }, 'user-123');
 
       // Verify updateDoc was called with updatedAt
       const updateCall = mockUpdateDoc.mock.calls[0];
       expect(updateCall).toBeDefined();
     });
 
-    it('should throw if category not found after update', async () => {
+    it('should throw if category not found', async () => {
       const { updateCategory } = await import('../categories.service');
 
       mockGetDoc.mockResolvedValue({
         exists: () => false,
       });
 
-      await expect(updateCategory({ id: 'cat-123', name: 'New' })).rejects.toThrow(
-        'Category cat-123 not found after update'
+      await expect(updateCategory({ id: 'cat-123', name: 'New' }, 'user-123')).rejects.toThrow(
+        'Category not found'
       );
     });
   });
@@ -300,9 +300,21 @@ describe('Categories Service', () => {
     it('should delete category', async () => {
       const { deleteCategory } = await import('../categories.service');
 
+      mockGetDoc.mockResolvedValue({
+        exists: () => true,
+        id: 'cat-123',
+        data: () => ({
+          userId: 'user-123',
+          name: 'Work',
+          color: '#3B82F6',
+          sortOrder: 0,
+          createdAt: { toDate: () => new Date() },
+          updatedAt: { toDate: () => new Date() },
+        }),
+      });
       mockDeleteDoc.mockResolvedValue(undefined);
 
-      await deleteCategory('cat-123');
+      await deleteCategory('cat-123', 'user-123');
 
       expect(mockDeleteDoc).toHaveBeenCalled();
       expect(mockDoc).toHaveBeenCalledWith({ name: 'mock-db' }, 'categories', 'cat-123');

@@ -10,6 +10,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useMemo,
   type ReactNode,
   type ReactElement,
 } from 'react';
@@ -131,9 +132,23 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
       setLoading(true);
       await signInWithPopup(auth, googleProvider);
       // User state will be updated by onAuthStateChanged
+      // Note: setLoading(false) is handled by onAuthStateChanged callback
     } catch (err) {
       console.error('Google sign-in error:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Failed to sign in with Google';
+
+      // Provide more user-friendly error messages
+      let errorMessage = 'Failed to sign in with Google';
+      if (err instanceof Error) {
+        // Handle specific Firebase auth errors
+        if (err.message.includes('popup-closed-by-user')) {
+          errorMessage = 'Sign in cancelled';
+        } else if (err.message.includes('network-request-failed')) {
+          errorMessage = 'Network error. Please check your connection.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+
       setError(errorMessage);
       setLoading(false);
       throw err; // Re-throw so callers can handle if needed
@@ -163,15 +178,18 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
     setError(null);
   }, []);
 
-  // Context value
-  const value: AuthContextType = {
-    user,
-    loading,
-    error,
-    signInWithGoogle,
-    signOut,
-    clearError,
-  };
+  // Memoize context value to prevent unnecessary re-renders
+  const value: AuthContextType = useMemo(
+    () => ({
+      user,
+      loading,
+      error,
+      signInWithGoogle,
+      signOut,
+      clearError,
+    }),
+    [user, loading, error, signInWithGoogle, signOut, clearError]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

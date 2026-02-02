@@ -123,7 +123,7 @@ describe('Tasks Service', () => {
         data: () => mockTask,
       });
 
-      const result = await getTask('task-123');
+      const result = await getTask('task-123', 'user-123');
 
       expect(result).not.toBeNull();
       expect(result?.id).toBe('task-123');
@@ -137,7 +137,7 @@ describe('Tasks Service', () => {
         exists: () => false,
       });
 
-      const result = await getTask('non-existent');
+      const result = await getTask('non-existent', 'user-123');
 
       expect(result).toBeNull();
     });
@@ -252,7 +252,7 @@ describe('Tasks Service', () => {
         status: 'complete',
       };
 
-      const result = await updateTask(input);
+      const result = await updateTask(input, 'user-123');
 
       expect(mockUpdateDoc).toHaveBeenCalled();
       expect(result.title).toBe('Updated Task');
@@ -264,9 +264,32 @@ describe('Tasks Service', () => {
     it('should set deletedAt timestamp', async () => {
       const { softDeleteTask } = await import('../tasks.service');
 
+      mockGetDoc.mockResolvedValue({
+        exists: () => true,
+        id: 'task-123',
+        data: () => ({
+          userId: 'user-123',
+          title: 'Task to Delete',
+          description: '',
+          categoryId: null,
+          priority: { letter: 'A', number: 1 },
+          status: 'in_progress',
+          scheduledDate: { toDate: () => new Date() },
+          scheduledTime: null,
+          recurrence: null,
+          linkedNoteIds: [],
+          linkedEventId: null,
+          isRecurringInstance: false,
+          recurringParentId: null,
+          instanceDate: null,
+          createdAt: { toDate: () => new Date() },
+          updatedAt: { toDate: () => new Date() },
+          deletedAt: null,
+        }),
+      });
       mockUpdateDoc.mockResolvedValue(undefined);
 
-      await softDeleteTask('task-123');
+      await softDeleteTask('task-123', 'user-123');
 
       expect(mockUpdateDoc).toHaveBeenCalled();
       const updateCall = mockUpdateDoc.mock.calls[0];
@@ -279,9 +302,32 @@ describe('Tasks Service', () => {
     it('should permanently delete the task', async () => {
       const { hardDeleteTask } = await import('../tasks.service');
 
+      mockGetDoc.mockResolvedValue({
+        exists: () => true,
+        id: 'task-123',
+        data: () => ({
+          userId: 'user-123',
+          title: 'Task to Delete',
+          description: '',
+          categoryId: null,
+          priority: { letter: 'A', number: 1 },
+          status: 'in_progress',
+          scheduledDate: { toDate: () => new Date() },
+          scheduledTime: null,
+          recurrence: null,
+          linkedNoteIds: [],
+          linkedEventId: null,
+          isRecurringInstance: false,
+          recurringParentId: null,
+          instanceDate: null,
+          createdAt: { toDate: () => new Date() },
+          updatedAt: { toDate: () => new Date() },
+          deletedAt: null,
+        }),
+      });
       mockDeleteDoc.mockResolvedValue(undefined);
 
-      await hardDeleteTask('task-123');
+      await hardDeleteTask('task-123', 'user-123');
 
       expect(mockDeleteDoc).toHaveBeenCalled();
     });
@@ -316,7 +362,7 @@ describe('Tasks Service', () => {
         }),
       });
 
-      const result = await restoreTask('task-123');
+      const result = await restoreTask('task-123', 'user-123');
 
       expect(mockUpdateDoc).toHaveBeenCalled();
       const updateCall = mockUpdateDoc.mock.calls[0];
@@ -335,13 +381,38 @@ describe('Tasks Service', () => {
       };
       mockWriteBatch.mockReturnValue(mockBatch);
 
+      // Mock getDoc for ownership verification
+      mockGetDoc.mockImplementation(() => Promise.resolve({
+        exists: () => true,
+        id: 'task-id',
+        data: () => ({
+          userId: 'user-123',
+          title: 'Task',
+          description: '',
+          categoryId: null,
+          priority: { letter: 'A', number: 1 },
+          status: 'in_progress',
+          scheduledDate: { toDate: () => new Date() },
+          scheduledTime: null,
+          recurrence: null,
+          linkedNoteIds: [],
+          linkedEventId: null,
+          isRecurringInstance: false,
+          recurringParentId: null,
+          instanceDate: null,
+          createdAt: { toDate: () => new Date() },
+          updatedAt: { toDate: () => new Date() },
+          deletedAt: null,
+        }),
+      }));
+
       const updates: UpdateTaskInput[] = [
         { id: 'task-1', priority: { letter: 'A', number: 1 } },
         { id: 'task-2', priority: { letter: 'A', number: 2 } },
         { id: 'task-3', priority: { letter: 'A', number: 3 } },
       ];
 
-      await batchUpdateTasks(updates);
+      await batchUpdateTasks(updates, 'user-123');
 
       expect(mockBatch.update).toHaveBeenCalledTimes(3);
       expect(mockBatch.commit).toHaveBeenCalled();

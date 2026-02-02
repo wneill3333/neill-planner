@@ -17,6 +17,7 @@ import {
   restoreTask,
   batchUpdateTasksAsync,
   fetchTasksByDateRange,
+  reorderTasks,
 } from '../taskThunks';
 import type { Task, CreateTaskInput, UpdateTaskInput } from '../../../types';
 import * as tasksService from '../../../services/firebase/tasks.service';
@@ -297,6 +298,160 @@ describe('Task Thunks', () => {
       expect(state.error).toBe('Create failed');
       expect(state.syncStatus).toBe('error');
     });
+
+    // ==========================================================================
+    // Auto-numbering Tests
+    // ==========================================================================
+
+    it('should auto-assign priority number 1 for first task with priority letter', async () => {
+      const store = createTestStore({
+        selectedDate: '2026-01-31',
+        taskIdsByDate: { '2026-01-31': [] },
+      });
+
+      const createdTask = createMockTask({
+        id: 'new-task',
+        priority: { letter: 'A', number: 1 },
+        scheduledDate: new Date('2026-01-31'),
+      });
+
+      vi.mocked(tasksService.createTask).mockResolvedValue(createdTask);
+
+      const input: CreateTaskInput = {
+        title: 'First A Task',
+        priority: { letter: 'A' }, // No number specified
+        scheduledDate: new Date('2026-01-31'),
+      };
+
+      await store.dispatch(createTask({ input, userId: 'user-1' }));
+
+      // Verify the service was called with number: 1
+      expect(tasksService.createTask).toHaveBeenCalledWith(
+        expect.objectContaining({
+          priority: { letter: 'A', number: 1 },
+        }),
+        'user-1'
+      );
+    });
+
+    it('should auto-assign next priority number based on existing tasks', async () => {
+      const existingTask = createMockTask({
+        id: 'task-1',
+        priority: { letter: 'A', number: 1 },
+        scheduledDate: new Date('2026-01-31'),
+      });
+
+      const store = createTestStore({
+        selectedDate: '2026-01-31',
+        tasks: { 'task-1': existingTask },
+        taskIdsByDate: { '2026-01-31': ['task-1'] },
+      });
+
+      const createdTask = createMockTask({
+        id: 'new-task',
+        priority: { letter: 'A', number: 2 },
+        scheduledDate: new Date('2026-01-31'),
+      });
+
+      vi.mocked(tasksService.createTask).mockResolvedValue(createdTask);
+
+      const input: CreateTaskInput = {
+        title: 'Second A Task',
+        priority: { letter: 'A' }, // No number specified
+        scheduledDate: new Date('2026-01-31'),
+      };
+
+      await store.dispatch(createTask({ input, userId: 'user-1' }));
+
+      // Verify the service was called with number: 2 (next after existing A1)
+      expect(tasksService.createTask).toHaveBeenCalledWith(
+        expect.objectContaining({
+          priority: { letter: 'A', number: 2 },
+        }),
+        'user-1'
+      );
+    });
+
+    it('should respect explicitly provided priority number', async () => {
+      const existingTask = createMockTask({
+        id: 'task-1',
+        priority: { letter: 'A', number: 1 },
+        scheduledDate: new Date('2026-01-31'),
+      });
+
+      const store = createTestStore({
+        selectedDate: '2026-01-31',
+        tasks: { 'task-1': existingTask },
+        taskIdsByDate: { '2026-01-31': ['task-1'] },
+      });
+
+      const createdTask = createMockTask({
+        id: 'new-task',
+        priority: { letter: 'A', number: 5 },
+        scheduledDate: new Date('2026-01-31'),
+      });
+
+      vi.mocked(tasksService.createTask).mockResolvedValue(createdTask);
+
+      const input: CreateTaskInput = {
+        title: 'Specific Priority Task',
+        priority: { letter: 'A', number: 5 }, // Explicit number
+        scheduledDate: new Date('2026-01-31'),
+      };
+
+      await store.dispatch(createTask({ input, userId: 'user-1' }));
+
+      // Verify the explicit number was used
+      expect(tasksService.createTask).toHaveBeenCalledWith(
+        expect.objectContaining({
+          priority: { letter: 'A', number: 5 },
+        }),
+        'user-1'
+      );
+    });
+
+    it('should handle multiple priority letters independently', async () => {
+      const existingA = createMockTask({
+        id: 'task-a',
+        priority: { letter: 'A', number: 1 },
+        scheduledDate: new Date('2026-01-31'),
+      });
+      const existingB = createMockTask({
+        id: 'task-b',
+        priority: { letter: 'B', number: 1 },
+        scheduledDate: new Date('2026-01-31'),
+      });
+
+      const store = createTestStore({
+        selectedDate: '2026-01-31',
+        tasks: { 'task-a': existingA, 'task-b': existingB },
+        taskIdsByDate: { '2026-01-31': ['task-a', 'task-b'] },
+      });
+
+      // Create a new B task
+      const createdTask = createMockTask({
+        id: 'new-b',
+        priority: { letter: 'B', number: 2 },
+        scheduledDate: new Date('2026-01-31'),
+      });
+
+      vi.mocked(tasksService.createTask).mockResolvedValue(createdTask);
+
+      const input: CreateTaskInput = {
+        title: 'New B Task',
+        priority: { letter: 'B' }, // Should get number 2 (next for B), not 3
+        scheduledDate: new Date('2026-01-31'),
+      };
+
+      await store.dispatch(createTask({ input, userId: 'user-1' }));
+
+      expect(tasksService.createTask).toHaveBeenCalledWith(
+        expect.objectContaining({
+          priority: { letter: 'B', number: 2 },
+        }),
+        'user-1'
+      );
+    });
   });
 
   // ===========================================================================
@@ -311,7 +466,7 @@ describe('Task Thunks', () => {
         () => new Promise(() => {})
       );
 
-      store.dispatch(updateTaskAsync({ id: 'task-1', title: 'Updated' }));
+      store.dispatch(updateTaskAsync({ id: 'task-1', title: 'Updated', userId: 'user-1' }));
 
       const state = store.getState().tasks;
       expect(state.syncStatus).toBe('syncing');
@@ -338,7 +493,7 @@ describe('Task Thunks', () => {
       vi.mocked(tasksService.updateTask).mockResolvedValue(updatedTask);
 
       await store.dispatch(
-        updateTaskAsync({ id: 'task-1', title: 'Updated Title' })
+        updateTaskAsync({ id: 'task-1', title: 'Updated Title', userId: 'user-1' })
       );
 
       const state = store.getState().tasks;
@@ -365,7 +520,7 @@ describe('Task Thunks', () => {
       vi.mocked(tasksService.updateTask).mockResolvedValue(updatedTask);
 
       await store.dispatch(
-        updateTaskAsync({ id: 'task-1', scheduledDate: new Date('2026-02-01') })
+        updateTaskAsync({ id: 'task-1', scheduledDate: new Date('2026-02-01'), userId: 'user-1' })
       );
 
       const state = store.getState().tasks;
@@ -382,7 +537,7 @@ describe('Task Thunks', () => {
         new Error('Update failed')
       );
 
-      await store.dispatch(updateTaskAsync({ id: 'task-1', title: 'Updated' }));
+      await store.dispatch(updateTaskAsync({ id: 'task-1', title: 'Updated', userId: 'user-1' }));
 
       const state = store.getState().tasks;
       expect(state.error).toBe('Update failed');
@@ -402,7 +557,7 @@ describe('Task Thunks', () => {
         () => new Promise(() => {})
       );
 
-      store.dispatch(deleteTask('task-1'));
+      store.dispatch(deleteTask({ taskId: 'task-1', userId: 'user-1' }));
 
       const state = store.getState().tasks;
       expect(state.syncStatus).toBe('syncing');
@@ -421,7 +576,7 @@ describe('Task Thunks', () => {
 
       vi.mocked(tasksService.softDeleteTask).mockResolvedValue();
 
-      await store.dispatch(deleteTask('task-1'));
+      await store.dispatch(deleteTask({ taskId: 'task-1', userId: 'user-1' }));
 
       const state = store.getState().tasks;
       expect(state.syncStatus).toBe('synced');
@@ -444,7 +599,7 @@ describe('Task Thunks', () => {
 
       vi.mocked(tasksService.softDeleteTask).mockResolvedValue();
 
-      await store.dispatch(deleteTask('task-1'));
+      await store.dispatch(deleteTask({ taskId: 'task-1', userId: 'user-1' }));
 
       const state = store.getState().tasks;
       expect(state.taskIdsByDate['2026-01-31']).toBeUndefined();
@@ -457,7 +612,7 @@ describe('Task Thunks', () => {
         new Error('Delete failed')
       );
 
-      await store.dispatch(deleteTask('task-1'));
+      await store.dispatch(deleteTask({ taskId: 'task-1', userId: 'user-1' }));
 
       const state = store.getState().tasks;
       expect(state.error).toBe('Delete failed');
@@ -469,7 +624,7 @@ describe('Task Thunks', () => {
 
       vi.mocked(tasksService.softDeleteTask).mockResolvedValue();
 
-      await store.dispatch(deleteTask('non-existent'));
+      await store.dispatch(deleteTask({ taskId: 'non-existent', userId: 'user-1' }));
 
       const state = store.getState().tasks;
       expect(state.syncStatus).toBe('synced');
@@ -490,7 +645,7 @@ describe('Task Thunks', () => {
         () => new Promise(() => {})
       );
 
-      store.dispatch(hardDeleteTask('task-1'));
+      store.dispatch(hardDeleteTask({ taskId: 'task-1', userId: 'user-1' }));
 
       const state = store.getState().tasks;
       expect(state.syncStatus).toBe('syncing');
@@ -509,7 +664,7 @@ describe('Task Thunks', () => {
 
       vi.mocked(tasksService.hardDeleteTask).mockResolvedValue();
 
-      await store.dispatch(hardDeleteTask('task-1'));
+      await store.dispatch(hardDeleteTask({ taskId: 'task-1', userId: 'user-1' }));
 
       const state = store.getState().tasks;
       expect(state.syncStatus).toBe('synced');
@@ -523,7 +678,7 @@ describe('Task Thunks', () => {
         new Error('Hard delete failed')
       );
 
-      await store.dispatch(hardDeleteTask('task-1'));
+      await store.dispatch(hardDeleteTask({ taskId: 'task-1', userId: 'user-1' }));
 
       const state = store.getState().tasks;
       expect(state.error).toBe('Hard delete failed');
@@ -543,7 +698,7 @@ describe('Task Thunks', () => {
         () => new Promise(() => {})
       );
 
-      store.dispatch(restoreTask('task-1'));
+      store.dispatch(restoreTask({ taskId: 'task-1', userId: 'user-1' }));
 
       const state = store.getState().tasks;
       expect(state.syncStatus).toBe('syncing');
@@ -560,7 +715,7 @@ describe('Task Thunks', () => {
 
       vi.mocked(tasksService.restoreTask).mockResolvedValue(restoredTask);
 
-      await store.dispatch(restoreTask('task-1'));
+      await store.dispatch(restoreTask({ taskId: 'task-1', userId: 'user-1' }));
 
       const state = store.getState().tasks;
       expect(state.syncStatus).toBe('synced');
@@ -575,7 +730,7 @@ describe('Task Thunks', () => {
         new Error('Restore failed')
       );
 
-      await store.dispatch(restoreTask('task-1'));
+      await store.dispatch(restoreTask({ taskId: 'task-1', userId: 'user-1' }));
 
       const state = store.getState().tasks;
       expect(state.error).toBe('Restore failed');
@@ -600,7 +755,7 @@ describe('Task Thunks', () => {
         { id: 'task-2', priority: { number: 2 } },
       ];
 
-      store.dispatch(batchUpdateTasksAsync(updates));
+      store.dispatch(batchUpdateTasksAsync({ updates, userId: 'user-1' }));
 
       const state = store.getState().tasks;
       expect(state.syncStatus).toBe('syncing');
@@ -628,7 +783,7 @@ describe('Task Thunks', () => {
         { id: 'task-2', priority: { number: 2 } },
       ];
 
-      await store.dispatch(batchUpdateTasksAsync(updates));
+      await store.dispatch(batchUpdateTasksAsync({ updates, userId: 'user-1' }));
 
       const state = store.getState().tasks;
       expect(state.syncStatus).toBe('synced');
@@ -644,7 +799,7 @@ describe('Task Thunks', () => {
       );
 
       await store.dispatch(
-        batchUpdateTasksAsync([{ id: 'task-1', title: 'Updated' }])
+        batchUpdateTasksAsync({ updates: [{ id: 'task-1', title: 'Updated' }], userId: 'user-1' })
       );
 
       const state = store.getState().tasks;
@@ -734,6 +889,188 @@ describe('Task Thunks', () => {
       expect(state.loading).toBe(false);
       expect(state.error).toBe('Range fetch failed');
       expect(state.syncStatus).toBe('error');
+    });
+  });
+
+  // ===========================================================================
+  // reorderTasks
+  // ===========================================================================
+
+  describe('reorderTasks', () => {
+    it('should handle pending state', () => {
+      const store = createTestStore();
+
+      vi.mocked(tasksService.batchUpdateTasks).mockImplementation(
+        () => new Promise(() => {})
+      );
+
+      store.dispatch(reorderTasks({ date: '2026-01-31', userId: 'user-1' }));
+
+      const state = store.getState().tasks;
+      expect(state.syncStatus).toBe('syncing');
+    });
+
+    it('should return hasChanges=false when no changes needed', async () => {
+      // Sequential numbering - no gaps
+      const task1 = createMockTask({
+        id: 'task-1',
+        priority: { letter: 'A', number: 1 },
+        scheduledDate: new Date('2026-01-31'),
+      });
+      const task2 = createMockTask({
+        id: 'task-2',
+        priority: { letter: 'A', number: 2 },
+        scheduledDate: new Date('2026-01-31'),
+      });
+
+      const store = createTestStore({
+        tasks: { 'task-1': task1, 'task-2': task2 },
+        taskIdsByDate: { '2026-01-31': ['task-1', 'task-2'] },
+      });
+
+      const result = await store.dispatch(
+        reorderTasks({ date: '2026-01-31', userId: 'user-1' })
+      );
+
+      expect(result.payload).toEqual({ updates: [], hasChanges: false });
+      // Service should not be called when no changes needed
+      expect(tasksService.batchUpdateTasks).not.toHaveBeenCalled();
+    });
+
+    it('should reorder tasks with gaps successfully', async () => {
+      // Tasks with gaps: A1, A3, A5
+      const task1 = createMockTask({
+        id: 'task-1',
+        priority: { letter: 'A', number: 1 },
+        scheduledDate: new Date('2026-01-31'),
+      });
+      const task2 = createMockTask({
+        id: 'task-2',
+        priority: { letter: 'A', number: 3 },
+        scheduledDate: new Date('2026-01-31'),
+      });
+      const task3 = createMockTask({
+        id: 'task-3',
+        priority: { letter: 'A', number: 5 },
+        scheduledDate: new Date('2026-01-31'),
+      });
+
+      const store = createTestStore({
+        tasks: {
+          'task-1': task1,
+          'task-2': task2,
+          'task-3': task3,
+        },
+        taskIdsByDate: { '2026-01-31': ['task-1', 'task-2', 'task-3'] },
+      });
+
+      vi.mocked(tasksService.batchUpdateTasks).mockResolvedValue();
+
+      const result = await store.dispatch(
+        reorderTasks({ date: '2026-01-31', userId: 'user-1' })
+      );
+
+      expect(result.payload).toHaveProperty('hasChanges', true);
+      expect(tasksService.batchUpdateTasks).toHaveBeenCalled();
+
+      const state = store.getState().tasks;
+      expect(state.syncStatus).toBe('synced');
+      // Verify the numbers were updated
+      expect(state.tasks['task-1'].priority.number).toBe(1);
+      expect(state.tasks['task-2'].priority.number).toBe(2); // Was 3
+      expect(state.tasks['task-3'].priority.number).toBe(3); // Was 5
+    });
+
+    it('should only update tasks that changed', async () => {
+      // Task 1 stays at 1, task 2 changes from 3 to 2
+      const task1 = createMockTask({
+        id: 'task-1',
+        priority: { letter: 'A', number: 1 },
+        scheduledDate: new Date('2026-01-31'),
+      });
+      const task2 = createMockTask({
+        id: 'task-2',
+        priority: { letter: 'A', number: 3 },
+        scheduledDate: new Date('2026-01-31'),
+      });
+
+      const store = createTestStore({
+        tasks: { 'task-1': task1, 'task-2': task2 },
+        taskIdsByDate: { '2026-01-31': ['task-1', 'task-2'] },
+      });
+
+      vi.mocked(tasksService.batchUpdateTasks).mockResolvedValue();
+
+      const result = await store.dispatch(
+        reorderTasks({ date: '2026-01-31', userId: 'user-1' })
+      );
+
+      // Only task-2 should be in updates (task-1 didn't change)
+      const updates = (result.payload as { updates: UpdateTaskInput[] }).updates;
+      expect(updates).toHaveLength(1);
+      expect(updates[0].id).toBe('task-2');
+      expect(updates[0].priority).toEqual({ letter: 'A', number: 2 });
+    });
+
+    it('should handle multiple priority letters', async () => {
+      const taskA1 = createMockTask({
+        id: 'a1',
+        priority: { letter: 'A', number: 2 }, // Gap
+        scheduledDate: new Date('2026-01-31'),
+      });
+      const taskB1 = createMockTask({
+        id: 'b1',
+        priority: { letter: 'B', number: 5 }, // Gap
+        scheduledDate: new Date('2026-01-31'),
+      });
+
+      const store = createTestStore({
+        tasks: { a1: taskA1, b1: taskB1 },
+        taskIdsByDate: { '2026-01-31': ['a1', 'b1'] },
+      });
+
+      vi.mocked(tasksService.batchUpdateTasks).mockResolvedValue();
+
+      await store.dispatch(reorderTasks({ date: '2026-01-31', userId: 'user-1' }));
+
+      const state = store.getState().tasks;
+      expect(state.tasks['a1'].priority.number).toBe(1);
+      expect(state.tasks['b1'].priority.number).toBe(1);
+    });
+
+    it('should handle reorder error', async () => {
+      const task = createMockTask({
+        id: 'task-1',
+        priority: { letter: 'A', number: 5 },
+        scheduledDate: new Date('2026-01-31'),
+      });
+
+      const store = createTestStore({
+        tasks: { 'task-1': task },
+        taskIdsByDate: { '2026-01-31': ['task-1'] },
+      });
+
+      vi.mocked(tasksService.batchUpdateTasks).mockRejectedValue(
+        new Error('Reorder failed')
+      );
+
+      await store.dispatch(reorderTasks({ date: '2026-01-31', userId: 'user-1' }));
+
+      const state = store.getState().tasks;
+      expect(state.error).toBe('Reorder failed');
+      expect(state.syncStatus).toBe('error');
+    });
+
+    it('should handle empty date', async () => {
+      const store = createTestStore({
+        taskIdsByDate: { '2026-01-31': [] },
+      });
+
+      const result = await store.dispatch(
+        reorderTasks({ date: '2026-01-31', userId: 'user-1' })
+      );
+
+      expect(result.payload).toEqual({ updates: [], hasChanges: false });
     });
   });
 
@@ -830,7 +1167,7 @@ describe('Task Thunks', () => {
       vi.mocked(tasksService.updateTask).mockResolvedValue(updatedTask);
 
       await store.dispatch(
-        updateTaskAsync({ id: 'new-task', title: 'Updated Task' })
+        updateTaskAsync({ id: 'new-task', title: 'Updated Task', userId: 'user-1' })
       );
 
       state = store.getState().tasks;
@@ -839,7 +1176,7 @@ describe('Task Thunks', () => {
       // Delete
       vi.mocked(tasksService.softDeleteTask).mockResolvedValue();
 
-      await store.dispatch(deleteTask('new-task'));
+      await store.dispatch(deleteTask({ taskId: 'new-task', userId: 'user-1' }));
 
       state = store.getState().tasks;
       expect(state.tasks['new-task']).toBeUndefined();
@@ -847,7 +1184,7 @@ describe('Task Thunks', () => {
       // Restore
       vi.mocked(tasksService.restoreTask).mockResolvedValue(updatedTask);
 
-      await store.dispatch(restoreTask('new-task'));
+      await store.dispatch(restoreTask({ taskId: 'new-task', userId: 'user-1' }));
 
       state = store.getState().tasks;
       expect(state.tasks['new-task']).toBeDefined();

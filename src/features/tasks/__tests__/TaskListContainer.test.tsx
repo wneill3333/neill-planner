@@ -240,13 +240,15 @@ describe('TaskListContainer', () => {
 
       expect(screen.getByTestId('error-state')).toBeInTheDocument();
 
-      const retryButton = screen.getByRole('button', { name: /try again/i });
+      const retryButton = screen.getByRole('button', { name: /retry loading tasks/i });
       expect(retryButton).toBeInTheDocument();
 
       fireEvent.click(retryButton);
 
       // The refetch should have been called
-      expect(mockGetTasksByDate).toHaveBeenCalled();
+      await waitFor(() => {
+        expect(mockGetTasksByDate).toHaveBeenCalled();
+      });
     });
   });
 
@@ -282,7 +284,7 @@ describe('TaskListContainer', () => {
       expect(screen.getByTestId('empty-state')).toBeInTheDocument();
     });
 
-    it('should show custom empty message', () => {
+    it('should show default empty message', () => {
       const user = createMockUser();
 
       const store = createTestStore({
@@ -304,15 +306,13 @@ describe('TaskListContainer', () => {
         },
       });
 
-      renderWithProviders(
-        <TaskListContainer emptyMessage="No tasks scheduled" />,
-        { user, store }
-      );
+      renderWithProviders(<TaskListContainer />, { user, store });
 
-      expect(screen.getByText('No tasks scheduled')).toBeInTheDocument();
+      // DraggableTaskList shows its own empty state
+      expect(screen.getByText('No tasks for this day')).toBeInTheDocument();
     });
 
-    it('should render custom empty component', () => {
+    it('should show add task hint in empty state', () => {
       const user = createMockUser();
 
       const store = createTestStore({
@@ -334,14 +334,10 @@ describe('TaskListContainer', () => {
         },
       });
 
-      const customEmpty = <div data-testid="custom-empty">Custom Empty!</div>;
+      renderWithProviders(<TaskListContainer />, { user, store });
 
-      renderWithProviders(
-        <TaskListContainer emptyComponent={customEmpty} />,
-        { user, store }
-      );
-
-      expect(screen.getByTestId('custom-empty')).toBeInTheDocument();
+      // DraggableTaskList shows hint to add tasks
+      expect(screen.getByText(/click the \+ button/i)).toBeInTheDocument();
     });
   });
 
@@ -350,7 +346,7 @@ describe('TaskListContainer', () => {
   // ===========================================================================
 
   describe('Task Rendering', () => {
-    it('should render tasks grouped by priority', () => {
+    it('should render tasks grouped by priority with drag handles', () => {
       const user = createMockUser();
       const taskA = createMockTask({ id: 'task-a1', title: 'A Task', priorityLetter: 'A', priorityNumber: 1 });
       const taskB = createMockTask({ id: 'task-b1', title: 'B Task', priorityLetter: 'B', priorityNumber: 1 });
@@ -376,10 +372,15 @@ describe('TaskListContainer', () => {
 
       renderWithProviders(<TaskListContainer />, { user, store });
 
-      expect(screen.getByTestId('priority-group-A')).toBeInTheDocument();
-      expect(screen.getByTestId('priority-group-B')).toBeInTheDocument();
+      // DraggableTaskList uses sortable-priority-group prefix
+      expect(screen.getByTestId('sortable-priority-group-A')).toBeInTheDocument();
+      expect(screen.getByTestId('sortable-priority-group-B')).toBeInTheDocument();
       expect(screen.getByText('A Task')).toBeInTheDocument();
       expect(screen.getByText('B Task')).toBeInTheDocument();
+
+      // Should have drag handles
+      expect(screen.getByTestId('drag-handle-task-a1')).toBeInTheDocument();
+      expect(screen.getByTestId('drag-handle-task-b1')).toBeInTheDocument();
     });
 
     it('should show category colors', () => {
@@ -528,7 +529,8 @@ describe('TaskListContainer', () => {
           expect.objectContaining({
             id: 'task-1',
             status: 'complete', // Next status after in_progress
-          })
+          }),
+          undefined
         );
       });
     });

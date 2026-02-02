@@ -18,6 +18,12 @@
 export type PriorityLetter = 'A' | 'B' | 'C' | 'D';
 
 /**
+ * Array of all priority letters in order
+ * Useful for iteration and mapping operations
+ */
+export const PRIORITY_LETTERS: readonly PriorityLetter[] = ['A', 'B', 'C', 'D'] as const;
+
+/**
  * Task priority combining letter and number (e.g., A1, A2, B1)
  */
 export interface TaskPriority {
@@ -219,12 +225,4 @@ export const DEFAULT_TASK_VALUES: Partial<Task> = {
   deletedAt: null,
 } as const;
 
-/**
- * Priority letter display colors (for UI)
- */
-export const PRIORITY_COLORS: Record<PriorityLetter, string> = {
-  A: '#EF4444', // Red
-  B: '#F97316', // Orange
-  C: '#EAB308', // Yellow
-  D: '#9CA3AF', // Gray
-} as const;
+// Note: PRIORITY_COLORS is defined in utils/taskUtils.ts to keep UI constants separate from types

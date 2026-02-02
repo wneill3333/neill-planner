@@ -301,9 +301,18 @@ describe('TaskItem', () => {
       render(<TaskItem task={task} />);
 
       const taskItem = screen.getByTestId('task-item-task-1');
+      // aria-label format: Task: {title}. Priority {label}. Status: {status}...
       expect(taskItem).toHaveAttribute(
         'aria-label',
-        'Task: Important Meeting, Priority A1, Status in_progress'
+        expect.stringContaining('Task: Important Meeting')
+      );
+      expect(taskItem).toHaveAttribute(
+        'aria-label',
+        expect.stringContaining('Priority A1')
+      );
+      expect(taskItem).toHaveAttribute(
+        'aria-label',
+        expect.stringContaining('Status: In Progress')
       );
     });
 
@@ -312,7 +321,7 @@ describe('TaskItem', () => {
       render(<TaskItem task={task} />);
 
       const statusButton = screen.getByTestId('status-symbol');
-      expect(statusButton).toHaveAttribute('aria-label', 'Status: forward. Click to change.');
+      expect(statusButton).toHaveAttribute('aria-label', 'Status: Forwarded. Click to change.');
     });
 
     it('should have aria-hidden on category color indicator', () => {

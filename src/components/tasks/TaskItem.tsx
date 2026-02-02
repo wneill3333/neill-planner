@@ -8,16 +8,16 @@
  * parent components update but this task's data hasn't changed.
  */
 
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
 import type { Task, Category } from '../../types';
 import {
   formatPriorityLabel,
-  getStatusSymbol,
-  getStatusColor,
   isTaskComplete,
   isTaskRecurring,
   getPriorityColorClasses,
 } from '../../utils/taskUtils';
+import { getStatusLabel } from '../../utils/statusUtils';
+import { StatusSymbol } from './StatusSymbol';
 
 // =============================================================================
 // Types
@@ -30,10 +30,14 @@ export interface TaskItemProps {
   category?: Category | null;
   /** Callback when the task is clicked */
   onClick?: (task: Task) => void;
-  /** Callback when the status symbol is clicked */
+  /** Callback when the status symbol is clicked (cycles forward) */
   onStatusClick?: (task: Task) => void;
+  /** Callback when the status symbol cycles backward (via arrow keys) */
+  onStatusCycleBackward?: (task: Task) => void;
   /** Whether to show the category color indicator */
   showCategoryColor?: boolean;
+  /** Whether the task is currently being updated */
+  isUpdating?: boolean;
   /** Test ID for testing */
   testId?: string;
 }
@@ -57,54 +61,41 @@ function TaskItemComponent({
   category,
   onClick,
   onStatusClick,
+  onStatusCycleBackward,
   showCategoryColor = true,
+  isUpdating = false,
   testId,
 }: TaskItemProps) {
   const isComplete = isTaskComplete(task);
   const isRecurring = isTaskRecurring(task);
   const priorityLabel = formatPriorityLabel(task);
-  const statusSymbol = getStatusSymbol(task.status);
-  const statusColor = getStatusColor(task.status);
   const priorityClasses = getPriorityColorClasses(task.priority.letter);
 
-  // Memoized click handler to prevent creating new function on each render
-  const handleClick = useCallback(() => {
-    onClick?.(task);
-  }, [onClick, task]);
+  // Simple inline handlers - no need for useCallback since task changes frequently
+  const handleClick = () => onClick?.(task);
+  const handleStatusClick = () => onStatusClick?.(task);
+  const handleStatusCycleBackward = () => onStatusCycleBackward?.(task);
 
-  // Memoized status click handler with event propagation prevention
-  const handleStatusClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation(); // Prevent triggering the task click
-      onStatusClick?.(task);
-    },
-    [onStatusClick, task]
-  );
-
-  // Memoized keyboard handler for accessibility
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        onClick?.(task);
-      }
-    },
-    [onClick, task]
-  );
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick?.(task);
+    }
+  };
 
   return (
     <div
       className={`
-        flex items-center gap-3 px-3 py-2 rounded-lg
-        hover:bg-gray-50 cursor-pointer
+        flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer
         transition-colors duration-150
+        hover:bg-gray-50
         ${isComplete ? 'opacity-60' : ''}
       `}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      role="button"
       tabIndex={0}
-      aria-label={`Task: ${task.title}, Priority ${priorityLabel}, Status ${task.status}`}
+      role="button"
+      aria-label={`Task: ${task.title}. Priority ${priorityLabel}. Status: ${getStatusLabel(task.status)}${category ? `. Category: ${category.name}` : ''}${isRecurring ? '. Recurring task' : ''}${isComplete ? '. Completed' : ''}. Press Enter to edit or Tab to change status.`}
       data-testid={testId || `task-item-${task.id}`}
     >
       {/* Category Color Indicator */}
@@ -129,21 +120,14 @@ function TaskItemComponent({
       </span>
 
       {/* Status Symbol */}
-      <button
-        type="button"
-        className={`
-          w-6 h-6 flex items-center justify-center
-          rounded-full text-lg flex-shrink-0
-          hover:bg-gray-200 transition-colors
-          focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500
-        `}
-        style={{ color: statusColor }}
+      <StatusSymbol
+        status={task.status}
         onClick={handleStatusClick}
-        aria-label={`Status: ${task.status}. Click to change.`}
-        data-testid="status-symbol"
-      >
-        {statusSymbol}
-      </button>
+        onCycleBackward={handleStatusCycleBackward}
+        isUpdating={isUpdating}
+        showTooltip={true}
+        testId="status-symbol"
+      />
 
       {/* Task Title */}
       <span
@@ -178,24 +162,14 @@ function TaskItemComponent({
  * ignoring changes to callback function references.
  */
 function arePropsEqual(prevProps: TaskItemProps, nextProps: TaskItemProps): boolean {
-  // Compare task properties that affect rendering
-  const taskEqual =
+  return (
     prevProps.task.id === nextProps.task.id &&
-    prevProps.task.title === nextProps.task.title &&
-    prevProps.task.status === nextProps.task.status &&
-    prevProps.task.priority.letter === nextProps.task.priority.letter &&
-    prevProps.task.priority.number === nextProps.task.priority.number &&
-    prevProps.task.recurrence === nextProps.task.recurrence;
-
-  // Compare category (if present)
-  const categoryEqual =
+    prevProps.task.updatedAt.getTime() === nextProps.task.updatedAt.getTime() &&
     prevProps.category?.id === nextProps.category?.id &&
-    prevProps.category?.color === nextProps.category?.color;
-
-  // Compare display options
-  const optionsEqual = prevProps.showCategoryColor === nextProps.showCategoryColor;
-
-  return taskEqual && categoryEqual && optionsEqual;
+    prevProps.category?.color === nextProps.category?.color &&
+    prevProps.showCategoryColor === nextProps.showCategoryColor &&
+    prevProps.isUpdating === nextProps.isUpdating
+  );
 }
 
 // Export memoized component

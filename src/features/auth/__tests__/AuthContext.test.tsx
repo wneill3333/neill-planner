@@ -42,13 +42,27 @@ function AuthStateDisplay(): ReactElement {
 }
 
 // Helper component with sign in/out buttons
+// Note: We catch errors here to prevent unhandled promise rejections in tests
+// since signInWithGoogle and signOut re-throw errors after handling them
 function AuthActions(): ReactElement {
   const { signInWithGoogle, signOut, clearError } = useAuth();
 
+  const handleSignIn = () => {
+    signInWithGoogle().catch(() => {
+      // Error is already handled in AuthContext, we just catch here to prevent unhandled rejection
+    });
+  };
+
+  const handleSignOut = () => {
+    signOut().catch(() => {
+      // Error is already handled in AuthContext, we just catch here to prevent unhandled rejection
+    });
+  };
+
   return (
     <div>
-      <button onClick={signInWithGoogle}>Sign In</button>
-      <button onClick={signOut}>Sign Out</button>
+      <button onClick={handleSignIn}>Sign In</button>
+      <button onClick={handleSignOut}>Sign Out</button>
       <button onClick={clearError}>Clear Error</button>
     </div>
   );

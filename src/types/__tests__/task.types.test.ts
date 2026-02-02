@@ -3,8 +3,9 @@ import {
   TaskStatusSymbols,
   TaskStatusLabels,
   DEFAULT_TASK_VALUES,
-  PRIORITY_COLORS,
+  PRIORITY_LETTERS,
 } from '../task.types';
+import { PRIORITY_COLORS } from '../../utils/taskUtils';
 import type {
   PriorityLetter,
   TaskPriority,
@@ -36,7 +37,11 @@ describe('Task Types', () => {
       expect(PRIORITY_COLORS.A).toBe('#EF4444'); // Red
       expect(PRIORITY_COLORS.B).toBe('#F97316'); // Orange
       expect(PRIORITY_COLORS.C).toBe('#EAB308'); // Yellow
-      expect(PRIORITY_COLORS.D).toBe('#9CA3AF'); // Gray
+      expect(PRIORITY_COLORS.D).toBe('#6B7280'); // Gray
+    });
+
+    it('should have PRIORITY_LETTERS constant defined', () => {
+      expect(PRIORITY_LETTERS).toEqual(['A', 'B', 'C', 'D']);
     });
   });
 

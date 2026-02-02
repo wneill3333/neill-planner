@@ -51,12 +51,15 @@ export {
   restoreTask,
   batchUpdateTasksAsync,
   fetchTasksByDateRange,
+  reorderTasks,
 } from './taskThunks';
 
 // Thunk Types
 export type {
   FetchTasksByDatePayload,
   CreateTaskPayload,
+  ReorderTasksPayload,
+  ReorderTasksResult,
   ThunkError,
 } from './taskThunks';
 
@@ -66,3 +69,8 @@ export type { UseTasksByDateResult, UseSelectedDateTasksResult } from './hooks';
 
 // Container Components
 export { TaskListContainer, type TaskListContainerProps } from './TaskListContainer';
+
+// Page Components
+export { CreateTaskModal, type CreateTaskModalProps } from './CreateTaskModal';
+export { EditTaskModal, type EditTaskModalProps } from './EditTaskModal';
+export { TasksPage, type TasksPageProps } from './TasksPage';

@@ -198,15 +198,8 @@ export const categorySlice = createSlice({
           state.categoryIds.push(category.id);
         }
 
-        // Sort by sortOrder, then name
-        state.categoryIds.sort((a, b) => {
-          const catA = state.categories[a];
-          const catB = state.categories[b];
-          if (catA.sortOrder !== catB.sortOrder) {
-            return catA.sortOrder - catB.sortOrder;
-          }
-          return catA.name.localeCompare(catB.name);
-        });
+        // Sort using helper function
+        sortCategoryIds(state.categoryIds, state.categories);
       })
       .addCase(fetchCategories.rejected, (state, action) => {
         state.loading = false;
@@ -226,15 +219,8 @@ export const categorySlice = createSlice({
         state.categories[category.id] = category;
         state.categoryIds.push(category.id);
 
-        // Re-sort
-        state.categoryIds.sort((a, b) => {
-          const catA = state.categories[a];
-          const catB = state.categories[b];
-          if (catA.sortOrder !== catB.sortOrder) {
-            return catA.sortOrder - catB.sortOrder;
-          }
-          return catA.name.localeCompare(catB.name);
-        });
+        // Re-sort using helper function
+        sortCategoryIds(state.categoryIds, state.categories);
 
         state.syncStatus = 'synced';
       })
@@ -254,15 +240,8 @@ export const categorySlice = createSlice({
         const updatedCategory = action.payload;
         state.categories[updatedCategory.id] = updatedCategory;
 
-        // Re-sort
-        state.categoryIds.sort((a, b) => {
-          const catA = state.categories[a];
-          const catB = state.categories[b];
-          if (catA.sortOrder !== catB.sortOrder) {
-            return catA.sortOrder - catB.sortOrder;
-          }
-          return catA.name.localeCompare(catB.name);
-        });
+        // Re-sort using helper function
+        sortCategoryIds(state.categoryIds, state.categories);
 
         state.syncStatus = 'synced';
       })

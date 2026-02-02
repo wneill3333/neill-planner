@@ -6,7 +6,7 @@
  */
 
 import { createSlice, createSelector, type PayloadAction } from '@reduxjs/toolkit';
-import type { Task, SyncStatus } from '../../types';
+import type { Task, SyncStatus, PriorityLetter } from '../../types';
 import type { RootState } from '../../store';
 import {
   fetchTasksByDate,
@@ -17,6 +17,7 @@ import {
   restoreTask,
   batchUpdateTasksAsync,
   fetchTasksByDateRange,
+  reorderTasks,
 } from './taskThunks';
 
 // =============================================================================
@@ -254,10 +255,13 @@ export const taskSlice = createSlice({
 
     /**
      * Reorder tasks within a priority group (optimistic update)
+     *
+     * @param taskIds - Array of task IDs in the new order
+     * @param priorityLetter - The priority letter of the group being reordered
      */
     reorderTasksLocal: (
       state,
-      action: PayloadAction<{ taskIds: string[]; priorityLetter: string }>
+      action: PayloadAction<{ taskIds: string[]; priorityLetter: PriorityLetter }>
     ) => {
       const { taskIds, priorityLetter } = action.payload;
 
@@ -506,6 +510,35 @@ export const taskSlice = createSlice({
       .addCase(fetchTasksByDateRange.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || 'Failed to fetch tasks for date range';
+        state.syncStatus = 'error';
+      });
+
+    // ==========================================================================
+    // reorderTasks
+    // ==========================================================================
+    builder
+      .addCase(reorderTasks.pending, (state) => {
+        state.syncStatus = 'syncing';
+      })
+      .addCase(reorderTasks.fulfilled, (state, action) => {
+        // Apply the priority updates to local state
+        for (const update of action.payload.updates) {
+          const existingTask = state.tasks[update.id];
+          if (existingTask && update.priority) {
+            state.tasks[update.id] = {
+              ...existingTask,
+              priority: {
+                ...existingTask.priority,
+                ...update.priority,
+              },
+              updatedAt: new Date(),
+            };
+          }
+        }
+        state.syncStatus = 'synced';
+      })
+      .addCase(reorderTasks.rejected, (state, action) => {
+        state.error = action.payload?.message || 'Failed to reorder tasks';
         state.syncStatus = 'error';
       });
   },

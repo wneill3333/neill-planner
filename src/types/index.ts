@@ -25,7 +25,7 @@ export {
   TaskStatusSymbols,
   TaskStatusLabels,
   DEFAULT_TASK_VALUES,
-  PRIORITY_COLORS,
+  PRIORITY_LETTERS,
 } from './task.types';
 
 // =============================================================================

@@ -10,6 +10,8 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import type { Task, CreateTaskInput, UpdateTaskInput } from '../../types';
 import * as tasksService from '../../services/firebase/tasks.service';
 import type { RootState } from '../../store';
+import { selectTasksByDate } from './taskSlice';
+import { getNextPriorityNumber, reorderAllTasks, getTasksWithChangedPriority } from '../../utils/priorityUtils';
 
 // =============================================================================
 // Types
@@ -69,14 +71,39 @@ export const fetchTasksByDate = createAsyncThunk<
  *
  * Creates a task in Firestore and adds it to the local state.
  * The task is immediately available in the UI after creation.
+ *
+ * Auto-assigns the next priority number for the task's priority letter
+ * if not explicitly provided.
  */
 export const createTask = createAsyncThunk<
   Task,
   CreateTaskPayload,
   { state: RootState; rejectValue: ThunkError }
->('tasks/createTask', async ({ input, userId }, { rejectWithValue }) => {
+>('tasks/createTask', async ({ input, userId }, { getState, rejectWithValue }) => {
   try {
-    const task = await tasksService.createTask(input, userId);
+    // Get the scheduled date string for looking up existing tasks
+    const dateString = input.scheduledDate
+      ? input.scheduledDate.toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0];
+
+    // Get current tasks for the scheduled date
+    const state = getState();
+    const tasksForDate = selectTasksByDate(state, dateString);
+
+    // Calculate next priority number if not explicitly provided
+    const priorityNumber =
+      input.priority.number ?? getNextPriorityNumber(tasksForDate, input.priority.letter);
+
+    // Create the task input with the calculated priority number
+    const taskInput: CreateTaskInput = {
+      ...input,
+      priority: {
+        letter: input.priority.letter,
+        number: priorityNumber,
+      },
+    };
+
+    const task = await tasksService.createTask(taskInput, userId);
     return task;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to create task';
@@ -92,11 +119,12 @@ export const createTask = createAsyncThunk<
  */
 export const updateTaskAsync = createAsyncThunk<
   Task,
-  UpdateTaskInput,
+  UpdateTaskInput & { userId: string },
   { state: RootState; rejectValue: ThunkError }
 >('tasks/updateTaskAsync', async (input, { rejectWithValue }) => {
   try {
-    const task = await tasksService.updateTask(input);
+    const { userId, ...updateInput } = input;
+    const task = await tasksService.updateTask(updateInput, userId);
     return task;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to update task';
@@ -113,11 +141,11 @@ export const updateTaskAsync = createAsyncThunk<
  */
 export const deleteTask = createAsyncThunk<
   string,
-  string,
+  { taskId: string; userId: string },
   { state: RootState; rejectValue: ThunkError }
->('tasks/deleteTask', async (taskId, { rejectWithValue }) => {
+>('tasks/deleteTask', async ({ taskId, userId }, { rejectWithValue }) => {
   try {
-    await tasksService.softDeleteTask(taskId);
+    await tasksService.softDeleteTask(taskId, userId);
     return taskId;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to delete task';
@@ -133,11 +161,11 @@ export const deleteTask = createAsyncThunk<
  */
 export const hardDeleteTask = createAsyncThunk<
   string,
-  string,
+  { taskId: string; userId: string },
   { state: RootState; rejectValue: ThunkError }
->('tasks/hardDeleteTask', async (taskId, { rejectWithValue }) => {
+>('tasks/hardDeleteTask', async ({ taskId, userId }, { rejectWithValue }) => {
   try {
-    await tasksService.hardDeleteTask(taskId);
+    await tasksService.hardDeleteTask(taskId, userId);
     return taskId;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to permanently delete task';
@@ -153,11 +181,11 @@ export const hardDeleteTask = createAsyncThunk<
  */
 export const restoreTask = createAsyncThunk<
   Task,
-  string,
+  { taskId: string; userId: string },
   { state: RootState; rejectValue: ThunkError }
->('tasks/restoreTask', async (taskId, { rejectWithValue }) => {
+>('tasks/restoreTask', async ({ taskId, userId }, { rejectWithValue }) => {
   try {
-    const task = await tasksService.restoreTask(taskId);
+    const task = await tasksService.restoreTask(taskId, userId);
     return task;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to restore task';
@@ -173,11 +201,11 @@ export const restoreTask = createAsyncThunk<
  */
 export const batchUpdateTasksAsync = createAsyncThunk<
   UpdateTaskInput[],
-  UpdateTaskInput[],
+  { updates: UpdateTaskInput[]; userId: string },
   { state: RootState; rejectValue: ThunkError }
->('tasks/batchUpdateTasksAsync', async (updates, { rejectWithValue }) => {
+>('tasks/batchUpdateTasksAsync', async ({ updates, userId }, { rejectWithValue }) => {
   try {
-    await tasksService.batchUpdateTasks(updates);
+    await tasksService.batchUpdateTasks(updates, userId);
     return updates;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to batch update tasks';
@@ -203,3 +231,71 @@ export const fetchTasksByDateRange = createAsyncThunk<
     return rejectWithValue({ message });
   }
 });
+
+/**
+ * Payload for reordering tasks
+ */
+export interface ReorderTasksPayload {
+  /** ISO date string for the date to reorder */
+  date: string;
+  /** User ID for authorization */
+  userId: string;
+}
+
+/**
+ * Result from reordering tasks
+ */
+export interface ReorderTasksResult {
+  /** Update inputs that were applied */
+  updates: UpdateTaskInput[];
+  /** Whether any changes were made */
+  hasChanges: boolean;
+}
+
+/**
+ * Reorder tasks to fill gaps in priority numbering
+ *
+ * Renumbers all tasks for the given date so that priority numbers
+ * are sequential within each priority letter group (A1, A2, A3, etc.).
+ *
+ * Only tasks that actually changed are updated in Firestore.
+ */
+export const reorderTasks = createAsyncThunk<
+  ReorderTasksResult,
+  ReorderTasksPayload,
+  { state: RootState; rejectValue: ThunkError }
+>('tasks/reorderTasks', async ({ date, userId }, { getState, rejectWithValue }) => {
+  try {
+    const state = getState();
+    const tasksForDate = selectTasksByDate(state, date);
+
+    // Calculate reordered tasks
+    const reorderResult = reorderAllTasks(tasksForDate);
+
+    if (!reorderResult.hasChanges) {
+      return { updates: [], hasChanges: false };
+    }
+
+    // Find tasks that actually changed
+    const changedTasks = getTasksWithChangedPriority(tasksForDate, reorderResult.tasks);
+
+    // Convert to update inputs
+    const updates: UpdateTaskInput[] = changedTasks.map((task) => ({
+      id: task.id,
+      priority: task.priority,
+    }));
+
+    // Only call service if there are changes
+    if (updates.length > 0) {
+      await tasksService.batchUpdateTasks(updates, userId);
+    }
+
+    return { updates, hasChanges: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to reorder tasks';
+    return rejectWithValue({ message });
+  }
+});
+
+// Alias for backward compatibility
+export const createTaskAsync = createTask;

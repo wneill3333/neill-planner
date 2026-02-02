@@ -104,7 +104,7 @@ export const updateCategoryAsync = createAsyncThunk<
       }
     }
 
-    const category = await categoriesService.updateCategory(updateInput);
+    const category = await categoriesService.updateCategory(updateInput, userId);
     return category;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to update category';
@@ -120,11 +120,11 @@ export const updateCategoryAsync = createAsyncThunk<
  */
 export const deleteCategory = createAsyncThunk<
   string,
-  string,
+  { categoryId: string; userId: string },
   { state: RootState; rejectValue: ThunkError }
->('categories/deleteCategory', async (categoryId, { rejectWithValue }) => {
+>('categories/deleteCategory', async ({ categoryId, userId }, { rejectWithValue }) => {
   try {
-    await categoriesService.deleteCategory(categoryId);
+    await categoriesService.deleteCategory(categoryId, userId);
     return categoryId;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to delete category';

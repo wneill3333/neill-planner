@@ -5,7 +5,7 @@
  * Provides data fetching, state management, and task operations for components.
  */
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   selectTasksByDate,
@@ -108,35 +108,90 @@ export function useTasksByDate(date: string, userId: string | null): UseTasksByD
   const tasksFetchInProgressRef = useRef(false);
   const categoriesFetchInProgressRef = useRef(false);
 
+  // Memoize selectors to prevent creating new function references on every render
+  const selectTasksForDate = useMemo(
+    () => (state: Parameters<typeof selectTasksByDate>[0]) => selectTasksByDate(state, date),
+    [date]
+  );
+  const selectIsLoadedForDate = useMemo(
+    () => (state: Parameters<typeof selectTasksLoadedForDate>[0]) => selectTasksLoadedForDate(state, date),
+    [date]
+  );
+
   // Selectors - using memoized selectors from taskSlice
-  const tasks = useAppSelector((state) => selectTasksByDate(state, date));
+  const tasks = useAppSelector(selectTasksForDate);
   const loading = useAppSelector(selectTasksLoading);
   const error = useAppSelector(selectTasksError);
   const syncStatus = useAppSelector(selectTasksSyncStatus);
-  const isLoaded = useAppSelector((state) => selectTasksLoadedForDate(state, date));
+  const isLoaded = useAppSelector(selectIsLoadedForDate);
   const categoriesMap = useAppSelector(selectCategoriesMap);
   const categoriesInitialized = useAppSelector(selectCategoriesInitialized);
 
   // Fetch tasks when date or userId changes - with race condition protection
   useEffect(() => {
-    if (userId && date && !isLoaded && !tasksFetchInProgressRef.current) {
-      tasksFetchInProgressRef.current = true;
-      // Convert ISO date string to Date object for the thunk
-      const dateObj = new Date(date + 'T00:00:00.000Z');
-      dispatch(fetchTasksByDate({ userId, date: dateObj })).finally(() => {
-        tasksFetchInProgressRef.current = false;
-      });
-    }
+    // Early return if conditions not met
+    if (!userId || !date || isLoaded) return;
+
+    // Use atomic flag check to prevent race condition
+    if (tasksFetchInProgressRef.current) return;
+
+    tasksFetchInProgressRef.current = true;
+    let aborted = false;
+
+    const fetchData = async () => {
+      try {
+        const dateObj = new Date(date + 'T00:00:00.000Z');
+        await dispatch(fetchTasksByDate({ userId, date: dateObj })).unwrap();
+      } catch (error) {
+        if (!aborted) {
+          console.error('Failed to fetch tasks:', error);
+        }
+      } finally {
+        if (!aborted) {
+          tasksFetchInProgressRef.current = false;
+        }
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      aborted = true;
+      tasksFetchInProgressRef.current = false;
+    };
   }, [dispatch, userId, date, isLoaded]);
 
   // Fetch categories if not initialized - with race condition protection
   useEffect(() => {
-    if (userId && !categoriesInitialized && !categoriesFetchInProgressRef.current) {
-      categoriesFetchInProgressRef.current = true;
-      dispatch(fetchCategories(userId)).finally(() => {
-        categoriesFetchInProgressRef.current = false;
-      });
-    }
+    // Early return if conditions not met
+    if (!userId || categoriesInitialized) return;
+
+    // Use atomic flag check to prevent race condition
+    if (categoriesFetchInProgressRef.current) return;
+
+    categoriesFetchInProgressRef.current = true;
+    let aborted = false;
+
+    const fetchData = async () => {
+      try {
+        await dispatch(fetchCategories(userId)).unwrap();
+      } catch (error) {
+        if (!aborted) {
+          console.error('Failed to fetch categories:', error);
+        }
+      } finally {
+        if (!aborted) {
+          categoriesFetchInProgressRef.current = false;
+        }
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      aborted = true;
+      categoriesFetchInProgressRef.current = false;
+    };
   }, [dispatch, userId, categoriesInitialized]);
 
   // Memoized refetch function - allows manual refresh

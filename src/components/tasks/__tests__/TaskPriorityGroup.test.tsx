@@ -78,15 +78,16 @@ describe('TaskPriorityGroup', () => {
       const tasks = [createMockTask()];
       render(<TaskPriorityGroup priorityLetter="A" tasks={tasks} />);
 
-      expect(screen.getByText('Vital')).toBeInTheDocument();
+      // Format is "Priority A: Vital"
+      expect(screen.getByText(/Priority A: Vital/)).toBeInTheDocument();
     });
 
     it('should render priority labels for all letters', () => {
       const letters: { letter: PriorityLetter; label: string }[] = [
-        { letter: 'A', label: 'Vital' },
-        { letter: 'B', label: 'Important' },
-        { letter: 'C', label: 'Optional' },
-        { letter: 'D', label: 'Delegate' },
+        { letter: 'A', label: 'Priority A: Vital' },
+        { letter: 'B', label: 'Priority B: Important' },
+        { letter: 'C', label: 'Priority C: Optional' },
+        { letter: 'D', label: 'Priority D: Delegate' },
       ];
 
       for (const { letter, label } of letters) {

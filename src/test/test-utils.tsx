@@ -10,6 +10,7 @@ import { render, type RenderOptions, type RenderResult } from '@testing-library/
 import { Provider } from 'react-redux';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import taskReducer from '../features/tasks/taskSlice';
+import categoryReducer from '../features/categories/categorySlice';
 import type { RootState, AppStore } from '../store';
 
 // =============================================================================
@@ -22,6 +23,7 @@ import type { RootState, AppStore } from '../store';
  */
 const rootReducer = combineReducers({
   tasks: taskReducer,
+  categories: categoryReducer,
 });
 
 /**

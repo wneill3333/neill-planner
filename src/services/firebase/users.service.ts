@@ -16,6 +16,7 @@ import {
 import { db } from './config';
 import type { User, UserSettings, UpdateUserSettingsInput } from '../../types';
 import { DEFAULT_USER_SETTINGS } from '../../types';
+import { validateUserId, ValidationError } from '../../utils/validation';
 
 /** Firestore collection name for users */
 const USERS_COLLECTION = 'users';
@@ -101,45 +102,65 @@ function firestoreToSettings(data: DocumentData): UserSettings {
  * Get a user by ID
  * @param userId - The user's ID (Firebase Auth UID)
  * @returns The user if found, null otherwise
+ * @throws {ValidationError} If userId is invalid
  */
 export async function getUser(userId: string): Promise<User | null> {
-  const docRef = doc(db, USERS_COLLECTION, userId);
-  const docSnap = await getDoc(docRef);
+  validateUserId(userId);
 
-  if (!docSnap.exists()) {
-    return null;
+  try {
+    const docRef = doc(db, USERS_COLLECTION, userId);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      return null;
+    }
+
+    return firestoreToUser(docSnap.id, docSnap.data());
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    throw new Error(`Failed to fetch user: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-
-  return firestoreToUser(docSnap.id, docSnap.data());
 }
 
 /**
  * Create a new user from Firebase Auth user
  * @param firebaseUser - The Firebase Auth user object
  * @returns The created user
+ * @throws {ValidationError} If firebaseUser data is invalid
  */
 export async function createUser(firebaseUser: FirebaseUser): Promise<User> {
-  const now = new Date();
+  if (!firebaseUser || !firebaseUser.uid) {
+    throw new ValidationError('Firebase user object with valid UID is required', 'firebaseUser', 'INVALID_FIREBASE_USER');
+  }
 
-  const userData: Omit<User, 'id'> = {
-    email: firebaseUser.email ?? '',
-    displayName: firebaseUser.displayName ?? firebaseUser.email ?? 'User',
-    role: 'standard', // Default role for new users
-    googleCalendarConnected: false,
-    createdAt: now,
-    lastLoginAt: now,
-  };
+  validateUserId(firebaseUser.uid, 'firebaseUser.uid');
 
-  const docRef = doc(db, USERS_COLLECTION, firebaseUser.uid);
-  await setDoc(docRef, userToFirestore(userData));
+  try {
+    const now = new Date();
 
-  // Also create default settings
-  await createDefaultSettings(firebaseUser.uid);
+    const userData: Omit<User, 'id'> = {
+      email: firebaseUser.email ?? '',
+      displayName: firebaseUser.displayName ?? firebaseUser.email ?? 'User',
+      role: 'standard', // Default role for new users
+      googleCalendarConnected: false,
+      createdAt: now,
+      lastLoginAt: now,
+    };
 
-  return {
-    id: firebaseUser.uid,
-    ...userData,
-  };
+    const docRef = doc(db, USERS_COLLECTION, firebaseUser.uid);
+    await setDoc(docRef, userToFirestore(userData));
+
+    // Also create default settings
+    await createDefaultSettings(firebaseUser.uid);
+
+    return {
+      id: firebaseUser.uid,
+      ...userData,
+    };
+  } catch (error) {
+    console.error('Error creating user:', error);
+    throw new Error(`Failed to create user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 /**
@@ -147,40 +168,63 @@ export async function createUser(firebaseUser: FirebaseUser): Promise<User> {
  * @param userId - The user's ID
  */
 async function createDefaultSettings(userId: string): Promise<void> {
-  const settings: UserSettings = {
-    ...DEFAULT_USER_SETTINGS,
-    userId,
-  };
+  validateUserId(userId);
 
-  const docRef = doc(db, USER_SETTINGS_COLLECTION, userId);
-  await setDoc(docRef, settingsToFirestore(settings));
+  try {
+    const settings: UserSettings = {
+      ...DEFAULT_USER_SETTINGS,
+      userId,
+    };
+
+    const docRef = doc(db, USER_SETTINGS_COLLECTION, userId);
+    await setDoc(docRef, settingsToFirestore(settings));
+  } catch (error) {
+    console.error('Error creating default settings:', error);
+    throw new Error(`Failed to create default settings: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 /**
  * Update the user's last login timestamp
  * @param userId - The user's ID
+ * @throws {ValidationError} If userId is invalid
  */
 export async function updateLastLogin(userId: string): Promise<void> {
-  const docRef = doc(db, USERS_COLLECTION, userId);
-  await updateDoc(docRef, {
-    lastLoginAt: Timestamp.fromDate(new Date()),
-  });
+  validateUserId(userId);
+
+  try {
+    const docRef = doc(db, USERS_COLLECTION, userId);
+    await updateDoc(docRef, {
+      lastLoginAt: Timestamp.fromDate(new Date()),
+    });
+  } catch (error) {
+    console.error('Error updating last login:', error);
+    throw new Error(`Failed to update last login: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 /**
  * Get user settings
  * @param userId - The user's ID
  * @returns The user settings if found, null otherwise
+ * @throws {ValidationError} If userId is invalid
  */
 export async function getUserSettings(userId: string): Promise<UserSettings | null> {
-  const docRef = doc(db, USER_SETTINGS_COLLECTION, userId);
-  const docSnap = await getDoc(docRef);
+  validateUserId(userId);
 
-  if (!docSnap.exists()) {
-    return null;
+  try {
+    const docRef = doc(db, USER_SETTINGS_COLLECTION, userId);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      return null;
+    }
+
+    return firestoreToSettings(docSnap.data());
+  } catch (error) {
+    console.error('Error fetching user settings:', error);
+    throw new Error(`Failed to fetch user settings: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-
-  return firestoreToSettings(docSnap.data());
 }
 
 /**
@@ -188,51 +232,73 @@ export async function getUserSettings(userId: string): Promise<UserSettings | nu
  * @param userId - The user's ID
  * @param updates - Partial settings to update
  * @returns The updated settings
+ * @throws {ValidationError} If inputs are invalid
  */
 export async function updateUserSettings(
   userId: string,
   updates: UpdateUserSettingsInput
 ): Promise<UserSettings> {
-  const docRef = doc(db, USER_SETTINGS_COLLECTION, userId);
+  validateUserId(userId);
 
-  // Build update object, handling nested notifications
-  const updateData: DocumentData = { ...updates };
-  if (updates.notifications) {
-    // Merge with existing notifications rather than replace
-    const existing = await getUserSettings(userId);
-    updateData.notifications = {
-      ...(existing?.notifications ?? DEFAULT_USER_SETTINGS.notifications),
-      ...updates.notifications,
-    };
+  if (!updates || typeof updates !== 'object' || Object.keys(updates).length === 0) {
+    throw new ValidationError('Updates object is required and cannot be empty', 'updates', 'INVALID_UPDATES');
   }
 
-  await updateDoc(docRef, updateData);
+  try {
+    const docRef = doc(db, USER_SETTINGS_COLLECTION, userId);
 
-  const updatedSettings = await getUserSettings(userId);
-  if (!updatedSettings) {
-    throw new Error(`Settings for user ${userId} not found after update`);
+    // Build update object, handling nested notifications
+    const updateData: DocumentData = { ...updates };
+    if (updates.notifications) {
+      // Merge with existing notifications rather than replace
+      const existing = await getUserSettings(userId);
+      updateData.notifications = {
+        ...(existing?.notifications ?? DEFAULT_USER_SETTINGS.notifications),
+        ...updates.notifications,
+      };
+    }
+
+    await updateDoc(docRef, updateData);
+
+    const updatedSettings = await getUserSettings(userId);
+    if (!updatedSettings) {
+      throw new Error(`Settings for user ${userId} not found after update`);
+    }
+
+    return updatedSettings;
+  } catch (error) {
+    console.error('Error updating user settings:', error);
+    throw new Error(`Failed to update user settings: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-
-  return updatedSettings;
 }
 
 /**
  * Get or create a user (used during authentication)
  * @param firebaseUser - The Firebase Auth user
  * @returns The existing or newly created user
+ * @throws {ValidationError} If firebaseUser data is invalid
  */
 export async function getOrCreateUser(firebaseUser: FirebaseUser): Promise<User> {
-  const existingUser = await getUser(firebaseUser.uid);
-
-  if (existingUser) {
-    // Update last login
-    await updateLastLogin(firebaseUser.uid);
-    return {
-      ...existingUser,
-      lastLoginAt: new Date(),
-    };
+  if (!firebaseUser || !firebaseUser.uid) {
+    throw new ValidationError('Firebase user object with valid UID is required', 'firebaseUser', 'INVALID_FIREBASE_USER');
   }
 
-  // Create new user
-  return createUser(firebaseUser);
+  try {
+    const existingUser = await getUser(firebaseUser.uid);
+
+    if (existingUser) {
+      // Update last login
+      await updateLastLogin(firebaseUser.uid);
+      return {
+        ...existingUser,
+        lastLoginAt: new Date(),
+      };
+    }
+
+    // Create new user
+    return createUser(firebaseUser);
+  } catch (error) {
+    console.error('Error getting or creating user:', error);
+    throw new Error(`Failed to get or create user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
