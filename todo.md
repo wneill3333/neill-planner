@@ -15,7 +15,7 @@
 | Phase 1: Foundation | ✅ Complete | 25/25 |
 | Phase 2: Data Layer | ✅ Complete | 22/22 |
 | Phase 3: Core Tasks | ✅ Complete | 59/59 |
-| Phase 4: Date & Daily View | 🔄 In Progress | 11/18 |
+| Phase 4: Date & Daily View | 🔄 In Progress | 19/26 |
 | Phase 5: Categories | ⬜ Not Started | 0/15 |
 | Phase 6: Recurring Tasks | ⬜ Not Started | 0/20 |
 | Phase 7: Events & Calendar | ⬜ Not Started | 0/22 |
@@ -24,7 +24,7 @@
 | Phase 10: Reminders | ⬜ Not Started | 0/12 |
 | Phase 11: Offline Support | ⬜ Not Started | 0/12 |
 | Phase 12: Polish & Deploy | ⬜ Not Started | 0/18 |
-| **TOTAL** | | **118/253** |
+| **TOTAL** | | **126/261** |
 
 ---
 
@@ -1269,6 +1269,72 @@
   - [x] Test TabPanel renders when active
   - [x] Test TabPanel hidden when inactive
   - [x] Test switching tabs shows correct content
+
+---
+
+## 4.4 FloatingActionButton Integration
+
+### Step 4.4.1: FloatingActionButton in Daily View ✅ Completed 2026-02-02
+
+- [x] **Add FloatingActionButton to DailyView**
+  - [x] Import FloatingActionButton from common components
+  - [x] Add FAB that opens CreateTaskModal
+  - [x] Only show FAB when Tasks tab is active
+  - [x] Use icon="plus" and ariaLabel="Add new task"
+  - [x] Add memoized callback for onClick handler
+
+- [x] **Update footer section**
+  - [x] Remove old inline "Add Task" button
+  - [x] Footer now only shows when Reorder All is needed
+  - [x] Cleaner UI when no reorder needed
+
+- [x] **Add FloatingActionButton unit tests**
+  - [x] Create `src/components/common/__tests__/FloatingActionButton.test.tsx`
+  - [x] Test rendering with default plus icon
+  - [x] Test all icon variants (plus, edit, save)
+  - [x] Test custom icon rendering
+  - [x] Test click handler invocation
+  - [x] Test disabled state behavior
+  - [x] Test accessibility attributes (aria-label, aria-hidden)
+  - [x] Test styling (fixed positioning, colors, transitions)
+  - [x] 37 comprehensive tests
+
+- [x] **Update DailyView tests**
+  - [x] Test FAB renders on Tasks tab
+  - [x] Test FAB does NOT render on Calendar tab
+  - [x] Test FAB does NOT render on Notes tab
+  - [x] Test clicking FAB opens CreateTaskModal
+  - [x] Test FAB has correct aria-label
+
+---
+
+## 4.5 Today Highlighting
+
+### Step 4.5.1: Today Highlighting ✅ Completed 2026-02-02
+
+- [x] **Add Today indicator badge**
+  - [x] Show "Today" badge above date when viewing today
+  - [x] Badge styling: amber background, rounded-full
+  - [x] Only visible when `isTodaySelected` is true
+
+- [x] **Conditional date display styling**
+  - [x] When viewing today: amber text color (text-amber-700)
+  - [x] When viewing other dates: neutral gray (text-gray-800)
+  - [x] Smooth transition between states
+
+- [x] **Accessibility**
+  - [x] aria-label="Today" on indicator badge
+  - [x] Existing aria-live region announces date changes
+  - [x] Screen reader support maintained
+
+- [x] **Write tests**
+  - [x] Test Today indicator shows when today is selected
+  - [x] Test Today indicator hidden on other dates
+  - [x] Test amber styling when today is selected
+  - [x] Test neutral styling on other dates
+  - [x] Test state transitions when date changes
+  - [x] Test ARIA attributes
+  - [x] 7 new tests added
 
 ---
 
