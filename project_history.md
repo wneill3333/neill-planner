@@ -3,11 +3,100 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 2, 2026 (Step 6.1.2 - Recurrence Integration)
+**Last Updated:** February 3, 2026 (Step 6.2.2 - Display Recurring Instances)
 
 ---
 
 ## SESSION LOG
+
+### SESSION: Step 6.2.2 - Display Recurring Instances
+**Date:** February 3, 2026
+**Duration:** Complete session
+**Status:** ✅ COMPLETED
+
+#### Summary
+Completed Step 6.2.2 by implementing the display of recurring task instances in the daily view. Updated state management to fetch and store parent recurring tasks, added selector to combine regular tasks with generated recurring instances, and integrated instance fetching into the task hook. Users can now see virtual recurring instances alongside regular tasks with the recurrence indicator (↻). 26 new tests passing, bringing total to 1924 tests across 65 test files.
+
+#### Key Achievements
+- **State Management (taskSlice.ts)**
+  - Added `recurringParentTasks: Record<string, Task>` to store tasks with recurrence patterns
+  - Added `recurringTasksLoaded: boolean` flag for tracking loading state
+  - Created `selectTasksWithRecurringInstances` memoized selector combining regular tasks with generated instances
+  - Added defensive null checks and deduplication logic to prevent duplicate instances
+
+- **Data Fetching (taskThunks.ts & tasks.service.ts)**
+  - Implemented `fetchRecurringTasks` async thunk to fetch parent recurring tasks once per session
+  - Added `getRecurringTasks(userId)` service function querying Firestore for tasks with `recurrence !== null`
+  - Integrated into task fetching pipeline with efficient one-time loading
+
+- **Hook Integration (hooks.ts)**
+  - Updated `useTasksByDate` hook to trigger recurring task fetch on component mount
+  - Uses new `selectTasksWithRecurringInstances` selector for combined task display
+  - Proper loading state management and memoization
+
+- **Code Review Fixes Applied**
+  - Added deduplication logic to prevent duplicate instances when materialized instances exist
+  - Added early filtering to skip parent tasks that can't generate instances on requested date
+  - Added date validation with fallback for invalid date formats
+  - Added defensive null checks for `recurringParentTasks` record
+  - Memoized selectors for performance optimization
+
+#### Test Coverage
+- **New test files:** 2
+  - `src/features/tasks/__tests__/recurringInstances.test.ts` - 20 selector and integration tests
+  - `src/services/firebase/__tests__/tasks.service.recurring.test.ts` - 6 service tests
+- **Updated test files:** 3
+  - `src/features/tasks/__tests__/TaskListContainer.test.tsx` - Updated state mocks
+  - `src/features/tasks/__tests__/TaskListContainer.reorder.test.tsx` - Updated state mocks
+  - `src/features/tasks/__tests__/hooks.test.tsx` - Updated test assertions
+
+#### Test Results
+- New tests: 26 (20 selector + 6 service)
+- Before: 1898 tests passing across 63 test files
+- After: **1924 tests passing across 65 test files** (+26 tests)
+- All tests passing, 0 regressions
+- Status: PRODUCTION READY
+
+#### Progress Update
+- **Phase 6: 4/20 steps complete (20%)**
+- Total: 154/261 tasks complete (~59%)
+- Overall progress: ~59% complete
+
+#### Files Created/Modified
+- **Modified:** `src/features/tasks/taskSlice.ts` - Added recurring task state and selector
+- **Modified:** `src/features/tasks/taskThunks.ts` - Added fetchRecurringTasks thunk
+- **Modified:** `src/services/firebase/tasks.service.ts` - Added getRecurringTasks function
+- **Modified:** `src/features/tasks/hooks.ts` - Updated useTasksByDate to fetch recurring tasks
+- **Created:** `src/features/tasks/__tests__/recurringInstances.test.ts` - 20 new tests
+- **Created:** `src/services/firebase/__tests__/tasks.service.recurring.test.ts` - 6 new tests
+- **Modified:** `src/features/tasks/__tests__/TaskListContainer.test.tsx` - Updated mocks
+- **Modified:** `src/features/tasks/__tests__/TaskListContainer.reorder.test.tsx` - Updated mocks
+- **Modified:** `src/features/tasks/__tests__/hooks.test.tsx` - Updated assertions
+
+#### Key Technical Decisions
+1. **Memoized selector pattern** - selectTasksWithRecurringInstances prevents unnecessary recalculations
+2. **One-time loading strategy** - recurringTasksLoaded flag prevents redundant Firestore queries
+3. **Deduplication logic** - Prevents showing duplicate instances if both parent and materialized versions exist
+4. **Early filtering** - Skip parent tasks that can't generate instances on requested date (performance optimization)
+5. **Defensive programming** - Null checks and date validation provide robustness
+
+#### Architecture Notes
+- Recurring instances are generated on-demand during selector execution, not stored in DB
+- Parent recurring tasks fetched once per session via thunk
+- Instances mixed with regular tasks in UI, sorted by priority
+- Instance IDs maintain format: `{parentId}#{date}` for linked editing later
+
+#### Next Steps
+1. **Step 6.3.1** - Edit This/All Future Logic
+   - Create edit dialog with "This occurrence only" vs "All future occurrences" options
+   - Implement exception dates for "this occurrence only"
+   - Implement pattern updates for "all future occurrences"
+
+2. **Step 6.3.2** - Delete Recurring Options
+   - Similar dialog pattern for deletion choices
+   - Implement instance deletion vs pattern modification
+
+---
 
 ### SESSION: Step 6.2.1 - Instance Generation Logic
 **Date:** February 2, 2026
