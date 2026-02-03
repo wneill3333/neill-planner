@@ -14,7 +14,7 @@ import {
   deleteCategory,
   checkCategoryNameExists,
 } from '../categoryThunks';
-import type { Category, CreateCategoryInput, UpdateCategoryInput } from '../../../types';
+import type { Category, CreateCategoryInput } from '../../../types';
 import * as categoriesService from '../../../services/firebase/categories.service';
 
 // Mock the categories service

@@ -47,3 +47,10 @@ export {
 
 // Thunk Types
 export type { CreateCategoryPayload, ThunkError } from './categoryThunks';
+
+// Components
+export { CategoryListContainer } from './CategoryListContainer';
+export type { CategoryListContainerProps } from './CategoryListContainer';
+
+export { CategoryFormModal } from './CategoryFormModal';
+export type { CategoryFormModalProps } from './CategoryFormModal';

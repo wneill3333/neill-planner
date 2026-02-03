@@ -137,6 +137,10 @@ export function TaskList({
   updatingTaskId = null,
   testId,
 }: TaskListProps) {
+  // Memoize grouped tasks - must be called before any early returns (rules of hooks)
+  const groupedTasks = useMemo(() => groupTasksByPriority(tasks), [tasks]);
+  const nonEmptyGroups = useMemo(() => getNonEmptyPriorityGroups(groupedTasks), [groupedTasks]);
+
   // Show loading state
   if (loading) {
     return <LoadingState />;
@@ -149,10 +153,6 @@ export function TaskList({
     }
     return <EmptyState message={emptyMessage} />;
   }
-
-  // Memoize grouped tasks to prevent recalculation on every render
-  const groupedTasks = useMemo(() => groupTasksByPriority(tasks), [tasks]);
-  const nonEmptyGroups = useMemo(() => getNonEmptyPriorityGroups(groupedTasks), [groupedTasks]);
 
   return (
     <div

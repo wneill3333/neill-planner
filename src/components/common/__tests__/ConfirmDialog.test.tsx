@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ConfirmDialog } from '../ConfirmDialog';
 
@@ -45,12 +45,12 @@ function getDialogElement() {
   return screen.queryByTestId('confirm-dialog');
 }
 
-function getConfirmButton() {
+function _getConfirmButton() {
   return screen.queryByRole('button', { name: /confirm/i }) ||
          screen.queryByText('Confirm')?.closest('button');
 }
 
-function getCancelButton() {
+function _getCancelButton() {
   return screen.queryByRole('button', { name: /cancel/i }) ||
          screen.queryByText('Cancel')?.closest('button');
 }

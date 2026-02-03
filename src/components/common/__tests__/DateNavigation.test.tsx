@@ -126,6 +126,90 @@ describe('DateNavigation', () => {
   });
 
   // =============================================================================
+  // Today Indicator Tests
+  // =============================================================================
+
+  describe('Today Indicator', () => {
+    it('should show today indicator when today is selected', () => {
+      const handleDateChange = vi.fn();
+      render(<DateNavigation selectedDate="2026-02-02" onDateChange={handleDateChange} />);
+
+      const todayIndicator = screen.getByTestId('today-indicator');
+      expect(todayIndicator).toBeInTheDocument();
+      expect(todayIndicator).toHaveTextContent('Today');
+    });
+
+    it('should not show today indicator when other dates are selected', () => {
+      const handleDateChange = vi.fn();
+      render(<DateNavigation selectedDate="2026-02-01" onDateChange={handleDateChange} />);
+
+      expect(screen.queryByTestId('today-indicator')).not.toBeInTheDocument();
+    });
+
+    it('should apply amber styling to date display when today is selected', () => {
+      const handleDateChange = vi.fn();
+      render(<DateNavigation selectedDate="2026-02-02" onDateChange={handleDateChange} />);
+
+      const dateDisplay = screen.getByTestId('date-display');
+      expect(dateDisplay).toHaveClass('text-amber-700');
+      expect(dateDisplay).not.toHaveClass('text-gray-800');
+    });
+
+    it('should apply neutral styling to date display when other dates are selected', () => {
+      const handleDateChange = vi.fn();
+      render(<DateNavigation selectedDate="2026-02-01" onDateChange={handleDateChange} />);
+
+      const dateDisplay = screen.getByTestId('date-display');
+      expect(dateDisplay).toHaveClass('text-gray-800');
+      expect(dateDisplay).not.toHaveClass('text-amber-700');
+    });
+
+    it('should update today indicator when date changes to/from today', () => {
+      const handleDateChange = vi.fn();
+      const { rerender } = render(
+        <DateNavigation selectedDate="2026-02-01" onDateChange={handleDateChange} />
+      );
+
+      // Should not show indicator for non-today date
+      expect(screen.queryByTestId('today-indicator')).not.toBeInTheDocument();
+      expect(screen.getByTestId('date-display')).toHaveClass('text-gray-800');
+
+      // Rerender with today's date
+      rerender(<DateNavigation selectedDate="2026-02-02" onDateChange={handleDateChange} />);
+
+      // Should show indicator for today
+      expect(screen.getByTestId('today-indicator')).toBeInTheDocument();
+      expect(screen.getByTestId('date-display')).toHaveClass('text-amber-700');
+
+      // Rerender with different date
+      rerender(<DateNavigation selectedDate="2026-02-03" onDateChange={handleDateChange} />);
+
+      // Should not show indicator again
+      expect(screen.queryByTestId('today-indicator')).not.toBeInTheDocument();
+      expect(screen.getByTestId('date-display')).toHaveClass('text-gray-800');
+    });
+
+    it('should have aria-label on today indicator', () => {
+      const handleDateChange = vi.fn();
+      render(<DateNavigation selectedDate="2026-02-02" onDateChange={handleDateChange} />);
+
+      const todayIndicator = screen.getByTestId('today-indicator');
+      expect(todayIndicator).toHaveAttribute('aria-label', 'Today');
+    });
+
+    it('should apply amber badge styling to today indicator', () => {
+      const handleDateChange = vi.fn();
+      render(<DateNavigation selectedDate="2026-02-02" onDateChange={handleDateChange} />);
+
+      const todayIndicator = screen.getByTestId('today-indicator');
+      expect(todayIndicator).toHaveClass('bg-amber-100');
+      expect(todayIndicator).toHaveClass('text-amber-800');
+      expect(todayIndicator).toHaveClass('border-amber-200');
+      expect(todayIndicator).toHaveClass('rounded-full');
+    });
+  });
+
+  // =============================================================================
   // Navigation Button Tests
   // =============================================================================
 

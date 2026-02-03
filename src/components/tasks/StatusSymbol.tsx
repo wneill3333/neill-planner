@@ -21,7 +21,6 @@ import {
   getStatusLabel,
   getStatusDescription,
   getNextStatus,
-  getPreviousStatus,
 } from '../../utils/statusUtils';
 
 // =============================================================================

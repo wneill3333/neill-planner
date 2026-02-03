@@ -5,7 +5,7 @@
  * Uses @dnd-kit's SortableContext to enable sorting within the group.
  */
 
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { Task, Category, PriorityLetter } from '../../types';
 import { SortableTaskItem } from './SortableTaskItem';
@@ -46,7 +46,7 @@ export interface SortablePriorityGroupProps {
  * Renders a priority group header and wraps tasks in SortableContext
  * to enable reordering within the group.
  */
-export function SortablePriorityGroup({
+export const SortablePriorityGroup = React.memo(function SortablePriorityGroup({
   priorityLetter,
   tasks,
   categoriesMap = {},
@@ -127,6 +127,6 @@ export function SortablePriorityGroup({
       </div>
     </section>
   );
-}
+});
 
 export default SortablePriorityGroup;

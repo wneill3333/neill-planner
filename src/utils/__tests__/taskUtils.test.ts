@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import type { Task, PriorityLetter, TaskStatus } from '../../types';
+import type { Task } from '../../types';
 import {
   PRIORITY_COLORS,
   PRIORITY_COLOR_CLASSES,

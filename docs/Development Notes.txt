@@ -1,0 +1,29 @@
+
+https://claude.ai/chat/fdf1c2c5-f3c6-4857-b0e3-c04b8d4f2d41
+
+MCP LIST
+claude mcp add --transport http context7 https://mcp.context7.com/mcp
+
+
+firebase config:
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyC25NZQdr1hcFoAlhjelaeZSDn3Pkt2qmg",
+  authDomain: "neill-planner.firebaseapp.com",
+  projectId: "neill-planner",
+  storageBucket: "neill-planner.firebasestorage.app",
+  messagingSenderId: "805078437907",
+  appId: "1:805078437907:web:b05352952c635c9b236fe6",
+  measurementId: "G-8CG24BW2VK"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);

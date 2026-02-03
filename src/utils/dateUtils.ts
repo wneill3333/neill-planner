@@ -30,6 +30,20 @@ export function formatDisplayDate(date: Date | string): string {
   return format(dateObj, 'EEEE, MMMM d, yyyy');
 }
 
+/**
+ * Format a date as short abbreviated format
+ * @param date - Date object or ISO date string (YYYY-MM-DD)
+ * @returns Formatted date string like "Mon, Jan 1"
+ *
+ * @example
+ * formatShortDate('2026-01-24') // "Sat, Jan 24"
+ * formatShortDate(new Date(2026, 0, 1)) // "Thu, Jan 1"
+ */
+export function formatShortDate(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? parseISO(date) : startOfDay(date);
+  return format(dateObj, 'EEE, MMM d');
+}
+
 // =============================================================================
 // Date Manipulation
 // =============================================================================

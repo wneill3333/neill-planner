@@ -18,6 +18,7 @@ import {
   batchUpdateTasksAsync,
   fetchTasksByDateRange,
   reorderTasks,
+  reorderTasksAsync,
 } from './taskThunks';
 
 // =============================================================================
@@ -40,6 +41,8 @@ export interface TasksState {
   error: string | null;
   /** Sync status with backend */
   syncStatus: SyncStatus;
+  /** Previous priority numbers for rollback on reorder failure */
+  reorderRollbackState: Record<string, { letter: PriorityLetter; number: number }> | null;
 }
 
 /**
@@ -125,6 +128,7 @@ export const initialState: TasksState = {
   loading: false,
   error: null,
   syncStatus: 'synced',
+  reorderRollbackState: null,
 };
 
 // =============================================================================
@@ -264,6 +268,19 @@ export const taskSlice = createSlice({
       action: PayloadAction<{ taskIds: string[]; priorityLetter: PriorityLetter }>
     ) => {
       const { taskIds, priorityLetter } = action.payload;
+
+      // Store previous state for potential rollback
+      const rollbackState: Record<string, { letter: PriorityLetter; number: number }> = {};
+      taskIds.forEach((taskId) => {
+        const task = state.tasks[taskId];
+        if (task && task.priority.letter === priorityLetter) {
+          rollbackState[taskId] = {
+            letter: task.priority.letter,
+            number: task.priority.number,
+          };
+        }
+      });
+      state.reorderRollbackState = rollbackState;
 
       // Update priority numbers based on new order
       taskIds.forEach((taskId, index) => {
@@ -540,6 +557,35 @@ export const taskSlice = createSlice({
       .addCase(reorderTasks.rejected, (state, action) => {
         state.error = action.payload?.message || 'Failed to reorder tasks';
         state.syncStatus = 'error';
+      });
+
+    // ==========================================================================
+    // reorderTasksAsync (drag-and-drop persistence)
+    // ==========================================================================
+    builder
+      .addCase(reorderTasksAsync.pending, (state) => {
+        state.syncStatus = 'syncing';
+      })
+      .addCase(reorderTasksAsync.fulfilled, (state) => {
+        // Optimistic update already applied via reorderTasksLocal
+        // Just confirm sync status and clear rollback state
+        state.syncStatus = 'synced';
+        state.reorderRollbackState = null;
+      })
+      .addCase(reorderTasksAsync.rejected, (state, action) => {
+        state.error = action.payload?.message || 'Failed to save task order';
+        state.syncStatus = 'error';
+
+        // Rollback to previous state on failure
+        if (state.reorderRollbackState) {
+          for (const [taskId, previousPriority] of Object.entries(state.reorderRollbackState)) {
+            const task = state.tasks[taskId];
+            if (task) {
+              task.priority = previousPriority;
+            }
+          }
+          state.reorderRollbackState = null;
+        }
       });
   },
 });

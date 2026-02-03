@@ -10,7 +10,7 @@ import { useAuth } from '../auth';
 import { useSelectedDateTasks } from './hooks';
 import { useAppDispatch } from '../../store/hooks';
 import { useAnnouncement } from '../../hooks';
-import { updateTaskAsync } from './taskThunks';
+import { updateTaskAsync, reorderTasksAsync } from './taskThunks';
 import { reorderTasksLocal } from './taskSlice';
 import { TaskList, DraggableTaskList } from '../../components/tasks';
 import type { Task, PriorityLetter } from '../../types';
@@ -199,15 +199,43 @@ export function TaskListContainer({
 
   // Handle task reordering within a priority group
   const handleReorder = useCallback(
-    (taskIds: string[], priorityLetter: PriorityLetter) => {
+    async (taskIds: string[], priorityLetter: PriorityLetter) => {
+      if (!userId) {
+        console.error('Cannot reorder tasks: user not authenticated');
+        announce('Failed to reorder tasks: not authenticated');
+        return;
+      }
+
       // Optimistic local update - immediately reorder in UI
       dispatch(reorderTasksLocal({ taskIds, priorityLetter }));
       announce(`Tasks reordered in priority ${priorityLetter}`);
 
-      // Note: Persistence will be added in Step 3.6.2
-      // For now, the local state update provides immediate feedback
+      // Persist to Firestore
+      try {
+        await dispatch(reorderTasksAsync({ taskIds, priorityLetter, userId })).unwrap();
+        // Success - optimistic update is confirmed
+      } catch (err) {
+        console.error('Failed to persist task reorder:', err);
+
+        // Provide specific error messages
+        let errorMessage = 'Failed to save task order';
+
+        if (err instanceof Error) {
+          if (err.message.includes('permission') || err.message.includes('Unauthorized')) {
+            errorMessage = 'You do not have permission to reorder these tasks';
+          } else if (err.message.includes('network') || err.message.includes('offline')) {
+            errorMessage = 'Network error. Changes may not be saved.';
+          } else if (err.message.includes('not found')) {
+            errorMessage = 'Task not found. It may have been deleted.';
+          }
+        }
+
+        announce(errorMessage);
+        // Note: Optimistic update remains in place
+        // A future enhancement could revert to server state on error
+      }
     },
-    [dispatch, announce]
+    [dispatch, announce, userId]
   );
 
   // Show unauthenticated state if no user and not loading auth

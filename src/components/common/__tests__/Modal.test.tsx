@@ -27,7 +27,7 @@ vi.mock('../../../hooks/useFocusManagement', () => ({
 // Test Helpers
 // =============================================================================
 
-function createPortalRoot() {
+function _createPortalRoot() {
   const portalRoot = document.createElement('div');
   portalRoot.setAttribute('id', 'portal-root');
   document.body.appendChild(portalRoot);
@@ -38,7 +38,7 @@ function getModalElement() {
   return screen.queryByTestId('modal');
 }
 
-function getBackdrop() {
+function _getBackdrop() {
   const modal = getModalElement();
   return modal?.previousElementSibling;
 }

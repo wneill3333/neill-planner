@@ -46,3 +46,6 @@ export {
 
 // Task utilities
 export { groupTasksByPriority, sortTasksByPriority } from './taskUtils';
+
+// String utilities
+export { capitalizeWords } from './stringUtils';

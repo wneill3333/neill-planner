@@ -90,6 +90,9 @@ describe('DragHandle', () => {
     it('should spread attributes onto the button', () => {
       const attributes = {
         'aria-describedby': 'drag-instructions',
+        'aria-disabled': false,
+        'aria-pressed': undefined,
+        'aria-roledescription': 'sortable',
         tabIndex: 0,
         role: 'button' as const,
       };

@@ -7,7 +7,7 @@
  */
 
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import type { Task, CreateTaskInput, UpdateTaskInput } from '../../types';
+import type { Task, CreateTaskInput, UpdateTaskInput, PriorityLetter } from '../../types';
 import * as tasksService from '../../services/firebase/tasks.service';
 import type { RootState } from '../../store';
 import { selectTasksByDate } from './taskSlice';
@@ -291,6 +291,70 @@ export const reorderTasks = createAsyncThunk<
     }
 
     return { updates, hasChanges: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to reorder tasks';
+    return rejectWithValue({ message });
+  }
+});
+
+/**
+ * Payload for reordering tasks via drag-and-drop
+ */
+export interface ReorderTasksDragPayload {
+  /** Task IDs in new order */
+  taskIds: string[];
+  /** Priority letter of the group being reordered */
+  priorityLetter: PriorityLetter;
+  /** User ID for authorization */
+  userId: string;
+}
+
+/**
+ * Reorder tasks after drag-and-drop operation
+ *
+ * Recalculates priority numbers based on the new order and persists
+ * changes to Firestore. This is the persistence layer for drag-and-drop.
+ *
+ * The slice will handle optimistic updates via reorderTasksLocal before
+ * this thunk is called, so on success we just confirm the state.
+ */
+export const reorderTasksAsync = createAsyncThunk<
+  UpdateTaskInput[],
+  ReorderTasksDragPayload,
+  { state: RootState; rejectValue: ThunkError }
+>('tasks/reorderTasksAsync', async ({ taskIds, priorityLetter, userId }, { getState, rejectWithValue }) => {
+  try {
+    // Early return for empty input
+    if (taskIds.length === 0) {
+      return [];
+    }
+
+    const state = getState();
+
+    // Build update inputs with new priority numbers
+    const updates: UpdateTaskInput[] = taskIds.map((taskId, index) => {
+      const task = state.tasks.tasks[taskId];
+
+      // Verify task exists and belongs to the right priority group
+      if (!task || task.priority.letter !== priorityLetter) {
+        throw new Error(`Invalid task in reorder: ${taskId}`);
+      }
+
+      return {
+        id: taskId,
+        priority: {
+          letter: priorityLetter,
+          number: index + 1, // 1-based numbering
+        },
+      };
+    });
+
+    // Only call service if there are changes
+    if (updates.length > 0) {
+      await tasksService.batchUpdateTasks(updates, userId);
+    }
+
+    return updates;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to reorder tasks';
     return rejectWithValue({ message });

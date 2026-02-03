@@ -20,7 +20,7 @@ import {
   createMockUser,
   resetMockCounters,
 } from '../../../test/mockData';
-import type { User, Task } from '../../../types';
+import type { User } from '../../../types';
 
 // =============================================================================
 // Mocks

@@ -7,6 +7,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import {
   formatDisplayDate,
+  formatShortDate,
   addDays,
   isToday,
   parseISODate,
@@ -71,6 +72,121 @@ describe('dateUtils', () => {
       expect(formatDisplayDate('2026-02-02')).toContain('Monday');
       expect(formatDisplayDate('2026-02-07')).toContain('Saturday');
       expect(formatDisplayDate('2026-02-08')).toContain('Sunday');
+    });
+  });
+
+  // =============================================================================
+  // formatShortDate Tests
+  // =============================================================================
+
+  describe('formatShortDate', () => {
+    it('should format ISO string to short date display', () => {
+      const result = formatShortDate('2026-01-24');
+      expect(result).toBe('Sat, Jan 24');
+    });
+
+    it('should format Date object to short date display', () => {
+      const date = new Date(2026, 0, 24); // January 24, 2026
+      const result = formatShortDate(date);
+      expect(result).toBe('Sat, Jan 24');
+    });
+
+    it('should handle different months correctly', () => {
+      expect(formatShortDate('2026-02-02')).toBe('Mon, Feb 2');
+      expect(formatShortDate('2026-03-15')).toBe('Sun, Mar 15');
+      expect(formatShortDate('2026-12-25')).toBe('Fri, Dec 25');
+    });
+
+    it('should display single-digit days without leading zero', () => {
+      expect(formatShortDate('2026-01-01')).toBe('Thu, Jan 1');
+      expect(formatShortDate('2026-01-05')).toBe('Mon, Jan 5');
+      expect(formatShortDate('2026-01-09')).toBe('Fri, Jan 9');
+    });
+
+    it('should display double-digit days correctly', () => {
+      expect(formatShortDate('2026-01-10')).toBe('Sat, Jan 10');
+      expect(formatShortDate('2026-01-15')).toBe('Thu, Jan 15');
+      expect(formatShortDate('2026-01-31')).toBe('Sat, Jan 31');
+    });
+
+    it('should abbreviate day names correctly', () => {
+      expect(formatShortDate('2026-02-02')).toContain('Mon'); // Monday
+      expect(formatShortDate('2026-02-03')).toContain('Tue'); // Tuesday
+      expect(formatShortDate('2026-02-04')).toContain('Wed'); // Wednesday
+      expect(formatShortDate('2026-02-05')).toContain('Thu'); // Thursday
+      expect(formatShortDate('2026-02-06')).toContain('Fri'); // Friday
+      expect(formatShortDate('2026-02-07')).toContain('Sat'); // Saturday
+      expect(formatShortDate('2026-02-08')).toContain('Sun'); // Sunday
+    });
+
+    it('should abbreviate month names correctly', () => {
+      expect(formatShortDate('2026-01-15')).toContain('Jan'); // January
+      expect(formatShortDate('2026-02-15')).toContain('Feb'); // February
+      expect(formatShortDate('2026-03-15')).toContain('Mar'); // March
+      expect(formatShortDate('2026-04-15')).toContain('Apr'); // April
+      expect(formatShortDate('2026-05-15')).toContain('May'); // May
+      expect(formatShortDate('2026-06-15')).toContain('Jun'); // June
+      expect(formatShortDate('2026-07-15')).toContain('Jul'); // July
+      expect(formatShortDate('2026-08-15')).toContain('Aug'); // August
+      expect(formatShortDate('2026-09-15')).toContain('Sep'); // September
+      expect(formatShortDate('2026-10-15')).toContain('Oct'); // October
+      expect(formatShortDate('2026-11-15')).toContain('Nov'); // November
+      expect(formatShortDate('2026-12-15')).toContain('Dec'); // December
+    });
+
+    it('should handle leap year dates', () => {
+      // 2024 is a leap year
+      const result = formatShortDate('2024-02-29');
+      expect(result).toBe('Thu, Feb 29');
+    });
+
+    it('should handle year boundaries', () => {
+      expect(formatShortDate('2025-12-31')).toBe('Wed, Dec 31');
+      expect(formatShortDate('2026-01-01')).toBe('Thu, Jan 1');
+    });
+
+    it('should handle today correctly', () => {
+      // Mocked date is Feb 2, 2026
+      expect(formatShortDate('2026-02-02')).toBe('Mon, Feb 2');
+    });
+
+    it('should be shorter than formatDisplayDate', () => {
+      const isoDate = '2026-01-24';
+      const short = formatShortDate(isoDate);
+      const full = formatDisplayDate(isoDate);
+      expect(short.length).toBeLessThan(full.length);
+    });
+
+    it('should maintain consistent format structure', () => {
+      // Format should always be: "DDD, MMM D" where DDD=3 chars, MMM=3 chars, D=1-2 chars
+      const result = formatShortDate('2026-01-24');
+      const parts = result.split(', ');
+      expect(parts).toHaveLength(2);
+      expect(parts[0]).toHaveLength(3); // Day abbreviation (e.g., "Sat")
+
+      const monthDay = parts[1].split(' ');
+      expect(monthDay).toHaveLength(2);
+      expect(monthDay[0]).toHaveLength(3); // Month abbreviation (e.g., "Jan")
+      expect(parseInt(monthDay[1])).toBeGreaterThan(0); // Day number
+      expect(parseInt(monthDay[1])).toBeLessThanOrEqual(31); // Valid day
+    });
+
+    it('should handle Date object with different times correctly', () => {
+      // Should format the same regardless of time on the same day
+      const morning = new Date(2026, 1, 2, 8, 0, 0);
+      const evening = new Date(2026, 1, 2, 20, 30, 0);
+      expect(formatShortDate(morning)).toBe('Mon, Feb 2');
+      expect(formatShortDate(evening)).toBe('Mon, Feb 2');
+    });
+
+    it('should work with dates far in the future', () => {
+      expect(formatShortDate('2030-06-15')).toBe('Sat, Jun 15');
+      expect(formatShortDate('2050-12-25')).toBe('Sun, Dec 25');
+    });
+
+    it('should work with dates in the past', () => {
+      expect(formatShortDate('2020-01-01')).toBe('Wed, Jan 1');
+      expect(formatShortDate('2000-02-14')).toBe('Mon, Feb 14');
     });
   });
 

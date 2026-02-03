@@ -5,7 +5,7 @@
  * Includes title, description, priority, category, date, and time inputs.
  */
 
-import { useState, useEffect, useRef, useCallback, useMemo, type FormEvent } from 'react';
+import { useState, useEffect, useRef, useCallback, type FormEvent } from 'react';
 import type { Task, PriorityLetter, Category, CreateTaskInput, TaskStatus } from '../../types';
 import { TaskStatusSymbols, TaskStatusLabels } from '../../types';
 import { Input } from '../common/Input';
@@ -13,6 +13,7 @@ import { TextArea } from '../common/TextArea';
 import { Select, type SelectOption } from '../common/Select';
 import { DatePicker } from '../common/DatePicker';
 import { TimePicker } from '../common/TimePicker';
+import { CategorySelect } from '../categories/CategorySelect';
 
 // =============================================================================
 // Types
@@ -36,7 +37,7 @@ export interface TaskFormProps {
 interface FormData {
   title: string;
   description: string;
-  priorityLetter: PriorityLetter;
+  priority: string;
   categoryId: string;
   scheduledDate: Date | null;
   scheduledTime: string;
@@ -45,7 +46,7 @@ interface FormData {
 
 interface FormErrors {
   title?: string;
-  priorityLetter?: string;
+  priority?: string;
   scheduledDate?: string;
 }
 
@@ -53,12 +54,7 @@ interface FormErrors {
 // Constants
 // =============================================================================
 
-const PRIORITY_OPTIONS: SelectOption[] = [
-  { value: 'A', label: 'A' },
-  { value: 'B', label: 'B' },
-  { value: 'C', label: 'C' },
-  { value: 'D', label: 'D' },
-];
+// Priority options removed - now using text input
 
 const STATUS_OPTIONS: SelectOption[] = [
   { value: 'in_progress', label: `${TaskStatusSymbols.in_progress} ${TaskStatusLabels.in_progress}` },
@@ -89,9 +85,23 @@ function validateForm(data: FormData): FormErrors {
     errors.title = `Title must be ${TITLE_MAX_LENGTH} characters or less`;
   }
 
-  // Priority is required
-  if (!data.priorityLetter) {
-    errors.priorityLetter = 'Priority is required';
+  // Priority is required and must match pattern: letter (A-D) followed by optional number (1-99)
+  if (!data.priority.trim()) {
+    errors.priority = 'Priority is required';
+  } else {
+    // Match letter followed by optional digits (allow 1-3 digits for better validation error messages)
+    const priorityPattern = /^[A-Da-d](\d{1,3})?$/;
+    const match = data.priority.trim().match(priorityPattern);
+
+    if (!match) {
+      errors.priority = 'Priority must be a letter (A-D) optionally followed by a number (1-99)';
+    } else if (match[1]) {
+      // Check if number is in valid range (1-99)
+      const num = parseInt(match[1], 10);
+      if (num < 1 || num > 99) {
+        errors.priority = 'Priority number must be between 1 and 99';
+      }
+    }
   }
 
   // Scheduled date is required
@@ -114,14 +124,37 @@ function formatCreatedDate(date: Date): string {
 }
 
 /**
+ * Parse priority string into letter and optional number
+ * @param priorityStr - Priority string (e.g., "A1", "B", "C3")
+ * @returns Object with letter (A-D) and optional number (1-99)
+ * @example
+ * parsePriority("A1") // { letter: 'A', number: 1 }
+ * parsePriority("B") // { letter: 'B', number: undefined }
+ * parsePriority("invalid") // { letter: 'B' } (fallback)
+ */
+function parsePriority(priorityStr: string): { letter: PriorityLetter; number?: number } {
+  const match = priorityStr.trim().toUpperCase().match(/^([A-D])(\d+)?$/);
+  if (!match) {
+    // Fallback to B if invalid
+    return { letter: 'B' };
+  }
+  const letter = match[1] as PriorityLetter;
+  const number = match[2] ? parseInt(match[2], 10) : undefined;
+  return { letter, number };
+}
+
+/**
  * Convert form data to CreateTaskInput
  */
 function formDataToTaskInput(data: FormData, isEditMode: boolean): CreateTaskInput {
+  const parsedPriority = parsePriority(data.priority);
+
   const input: CreateTaskInput = {
     title: data.title.trim(),
     description: data.description.trim(),
     priority: {
-      letter: data.priorityLetter,
+      letter: parsedPriority.letter,
+      number: parsedPriority.number, // undefined if not provided, thunk will auto-generate
     },
     categoryId: data.categoryId || null,
     scheduledDate: data.scheduledDate,
@@ -163,50 +196,40 @@ export function TaskForm({
   isSubmitting = false,
   testId,
 }: TaskFormProps) {
-  // Form state
-  const [formData, setFormData] = useState<FormData>({
-    title: task?.title || '',
-    description: task?.description || '',
-    priorityLetter: task?.priority.letter || 'B',
-    categoryId: task?.categoryId || '',
-    scheduledDate: task?.scheduledDate || null,
-    scheduledTime: task?.scheduledTime || '',
-    status: task?.status || 'in_progress',
+  // Track previous task ID to detect when task prop changes
+  const prevTaskIdRef = useRef<string | null>(task?.id ?? null);
+
+  // Helper to create form data from task
+  const createFormDataFromTask = (t: Task | null): FormData => ({
+    title: t?.title || '',
+    description: t?.description || '',
+    priority: t ? `${t.priority.letter}${t.priority.number || ''}` : 'B',
+    categoryId: t?.categoryId || '',
+    scheduledDate: t?.scheduledDate || null,
+    scheduledTime: t?.scheduledTime || '',
+    status: t?.status || 'in_progress',
   });
 
+  // Form state
+  const [formData, setFormData] = useState<FormData>(() => createFormDataFromTask(task));
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-
-  // Track previous task ID to avoid unnecessary form resets
-  const prevTaskIdRef = useRef<string | null>(task?.id ?? null);
 
   // Determine if we're in edit mode
   const isEditMode = Boolean(task);
 
-  // Update form when task changes (edit mode) - compare by ID, not object reference
+  // Update form when task changes (edit mode) - sync props to state
+  // This is a legitimate pattern for responding to prop changes
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (task && task.id !== prevTaskIdRef.current) {
       prevTaskIdRef.current = task.id;
-      setFormData({
-        title: task.title,
-        description: task.description,
-        priorityLetter: task.priority.letter,
-        categoryId: task.categoryId || '',
-        scheduledDate: task.scheduledDate,
-        scheduledTime: task.scheduledTime || '',
-        status: task.status,
-      });
+      setFormData(createFormDataFromTask(task));
+      setErrors({});
+      setTouched({});
     }
   }, [task]);
-
-  // Memoize category options to prevent recreation on every render
-  const categoryOptions = useMemo<SelectOption[]>(() => [
-    { value: '', label: 'None (Uncategorized)' },
-    ...categories.map((cat) => ({
-      value: cat.id,
-      label: cat.name,
-    })),
-  ], [categories]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Handle field changes - memoized to prevent unnecessary child re-renders
   const handleChange = useCallback((field: keyof FormData, value: unknown) => {
@@ -243,7 +266,7 @@ export function TaskForm({
     // Mark all fields as touched
     setTouched({
       title: true,
-      priorityLetter: true,
+      priority: true,
       scheduledDate: true,
     });
 
@@ -311,28 +334,29 @@ export function TaskForm({
 
       {/* Priority and Category Row */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        {/* Priority Select */}
-        <Select
+        {/* Priority Input */}
+        <Input
           label="Priority"
-          options={PRIORITY_OPTIONS}
-          value={formData.priorityLetter}
-          onChange={(e) => handleChange('priorityLetter', e.target.value as PriorityLetter)}
-          onBlur={() => handleBlur('priorityLetter')}
-          error={getFieldError('priorityLetter')}
+          value={formData.priority}
+          onChange={(e) => handleChange('priority', e.target.value.toUpperCase())}
+          onBlur={() => handleBlur('priority')}
+          error={getFieldError('priority')}
+          placeholder="e.g., A1, B2, C"
           required
           fullWidth
+          maxLength={3}
           disabled={isSubmitting}
         />
 
         {/* Category Select */}
-        <Select
+        <CategorySelect
           label="Category"
-          options={categoryOptions}
-          value={formData.categoryId}
-          onChange={(e) => handleChange('categoryId', e.target.value)}
+          categories={categories}
+          value={formData.categoryId || null}
+          onChange={(categoryId) => handleChange('categoryId', categoryId || '')}
           helperText="Optional category for organization"
-          fullWidth
           disabled={isSubmitting}
+          testId="category-select"
         />
       </div>
 

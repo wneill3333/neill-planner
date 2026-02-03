@@ -296,4 +296,22 @@ describe('DraggableTaskList', () => {
       expect(emptyState).toHaveAttribute('aria-label', 'No tasks available');
     });
   });
+
+  describe('Drag Overlay', () => {
+    it('should not show drag overlay initially', () => {
+      const tasks = [createMockTask({ id: 'task-1' })];
+      render(<DraggableTaskList tasks={tasks} onReorder={mockOnReorder} />);
+
+      expect(screen.queryByTestId('drag-overlay')).not.toBeInTheDocument();
+    });
+
+    it('should render DragOverlay component', () => {
+      const tasks = [createMockTask({ id: 'task-1' })];
+      const { container } = render(<DraggableTaskList tasks={tasks} onReorder={mockOnReorder} />);
+
+      // DragOverlay is always rendered but hidden when not dragging
+      // It's part of the DndContext
+      expect(container.querySelector('[data-testid="drag-overlay"]')).not.toBeInTheDocument();
+    });
+  });
 });

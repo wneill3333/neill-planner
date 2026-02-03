@@ -5,7 +5,7 @@
  * Provides DndContext and handles drag events with collision detection.
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -13,11 +13,14 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragOverlay,
   type DragEndEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
 import type { Task, Category, PriorityLetter } from '../../types';
 import { SortablePriorityGroup } from './SortablePriorityGroup';
+import { TaskItem } from './TaskItem';
 import { groupTasksByPriority, getNonEmptyPriorityGroups } from '../../utils/taskUtils';
 
 // =============================================================================
@@ -98,6 +101,9 @@ export function DraggableTaskList({
   updatingTaskId = null,
   testId,
 }: DraggableTaskListProps) {
+  // Track the task being dragged for DragOverlay
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
+
   // Configure sensors for pointer and keyboard interaction
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -110,10 +116,23 @@ export function DraggableTaskList({
     })
   );
 
+  // Handle drag start - set the active task for overlay
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const { active } = event;
+      const task = tasks.find((t) => t.id === active.id);
+      setActiveTask(task || null);
+    },
+    [tasks]
+  );
+
   // Handle drag end event
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
+
+      // Clear active task
+      setActiveTask(null);
 
       // No change or dropped outside valid area
       if (!over || active.id === over.id) {
@@ -121,19 +140,19 @@ export function DraggableTaskList({
       }
 
       // Find the tasks involved
-      const activeTask = tasks.find((t) => t.id === active.id);
+      const draggedTask = tasks.find((t) => t.id === active.id);
       const overTask = tasks.find((t) => t.id === over.id);
 
-      if (!activeTask || !overTask) {
+      if (!draggedTask || !overTask) {
         return;
       }
 
       // Verify same priority group (no cross-priority dragging)
-      if (activeTask.priority.letter !== overTask.priority.letter) {
+      if (draggedTask.priority.letter !== overTask.priority.letter) {
         return;
       }
 
-      const priorityLetter = activeTask.priority.letter;
+      const priorityLetter = draggedTask.priority.letter;
 
       // Get tasks in this priority group, sorted by current number
       const priorityTasks = tasks
@@ -171,6 +190,7 @@ export function DraggableTaskList({
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
       <div
@@ -193,6 +213,29 @@ export function DraggableTaskList({
           />
         ))}
       </div>
+
+      {/* Drag Overlay - shows a copy of the task being dragged */}
+      <DragOverlay dropAnimation={null}>
+        {activeTask ? (
+          <div
+            className="bg-white rounded-lg shadow-2xl border-2 border-blue-500 opacity-90"
+            data-testid="drag-overlay"
+          >
+            <TaskItem
+              task={activeTask}
+              category={
+                activeTask.categoryId && categoriesMap[activeTask.categoryId]
+                  ? categoriesMap[activeTask.categoryId]
+                  : null
+              }
+              onClick={() => {}}
+              onStatusClick={() => {}}
+              onStatusCycleBackward={() => {}}
+              showCategoryColor={showCategoryColors}
+            />
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 }

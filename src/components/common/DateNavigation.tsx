@@ -138,16 +138,33 @@ function DateNavigationComponent({
 
       {/* Date Display */}
       <div
-        className="
+        className={`
           flex-1 text-center
           px-3 py-2 sm:px-4 sm:py-2.5
-          text-base sm:text-lg font-medium text-gray-800
+          text-base sm:text-lg font-medium
           min-w-0
-        "
+          transition-colors duration-150
+          ${isTodaySelected ? 'text-amber-700' : 'text-gray-800'}
+        `}
         data-testid="date-display"
         aria-live="polite"
         aria-atomic="true"
       >
+        {isTodaySelected && (
+          <span
+            className="
+              inline-block px-2 py-0.5 mb-1
+              text-xs font-semibold
+              bg-amber-100 text-amber-800
+              rounded-full
+              border border-amber-200
+            "
+            data-testid="today-indicator"
+            aria-label="Today"
+          >
+            Today
+          </span>
+        )}
         <span className="truncate block">{formattedDate}</span>
       </div>
 

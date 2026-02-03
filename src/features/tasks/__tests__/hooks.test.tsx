@@ -17,7 +17,6 @@ import { AuthContext, type AuthContextType } from '../../auth';
 import {
   createMockTask,
   createMockCategory,
-  createMockUser,
   resetMockCounters,
 } from '../../../test/mockData';
 import type { User } from '../../../types';

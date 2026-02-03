@@ -9,7 +9,7 @@
  * - Loading state tests
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TaskForm } from '../TaskForm';
@@ -122,7 +122,7 @@ describe('TaskForm - Rendering', () => {
     expect(dateInput).toBeRequired();
   });
 
-  it('should render category options', () => {
+  it('should render category select with color indicators', () => {
     const categories = [
       createMockCategory({ id: 'cat-1', name: 'Work' }),
       createMockCategory({ id: 'cat-2', name: 'Personal' }),
@@ -130,8 +130,9 @@ describe('TaskForm - Rendering', () => {
 
     render(<TaskForm categories={categories} onSubmit={() => {}} onCancel={() => {}} />);
 
-    const categorySelect = screen.getByLabelText(/category/i);
-    expect(categorySelect).toBeInTheDocument();
+    // CategorySelect component should be present
+    expect(screen.getByTestId('category-select')).toBeInTheDocument();
+    expect(screen.getByLabelText(/category/i)).toBeInTheDocument();
   });
 });
 
@@ -261,7 +262,7 @@ describe('TaskForm - Validation', () => {
     const user = userEvent.setup();
     render(<TaskForm onSubmit={() => {}} onCancel={() => {}} />);
 
-    const titleInput = screen.getByLabelText(/title/i);
+    const _titleInput = screen.getByLabelText(/title/i);
 
     // No errors initially
     expect(screen.queryByText(/title is required/i)).not.toBeInTheDocument();
@@ -283,11 +284,17 @@ describe('TaskForm - Validation', () => {
     const titleInput = screen.getByLabelText(/title/i);
     await user.type(titleInput, 'Valid Title');
 
-    // Priority should have a default value, so this test verifies the form accepts it
+    // Clear the default priority value
+    const priorityInput = screen.getByLabelText(/priority/i);
+    await user.clear(priorityInput);
+
     await user.click(screen.getByText(/create task/i));
 
-    // No priority error should appear as it defaults to 'B'
-    expect(screen.queryByText(/priority is required/i)).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/priority is required/i)).toBeInTheDocument();
+    });
+
+    expect(handleSubmit).not.toHaveBeenCalled();
   });
 
   it('should validate that scheduled date is required', async () => {
@@ -371,9 +378,11 @@ describe('TaskForm - Submission', () => {
     const dateInput = screen.getByLabelText(/scheduled date/i);
     fireEvent.change(dateInput, { target: { value: getFutureDateString() } });
 
-    // Select "None (Uncategorized)" option
-    const categorySelect = screen.getByLabelText(/category/i);
-    await user.selectOptions(categorySelect, '');
+    // Open category dropdown and select "None (Uncategorized)"
+    const categoryTrigger = screen.getByTestId('category-select-trigger');
+    await user.click(categoryTrigger);
+    const uncategorizedOption = screen.getByTestId('category-option-uncategorized');
+    await user.click(uncategorizedOption);
 
     await user.click(screen.getByText(/create task/i));
 
@@ -418,8 +427,9 @@ describe('TaskForm - Submission', () => {
     const dateInput = screen.getByLabelText(/scheduled date/i);
     fireEvent.change(dateInput, { target: { value: getFutureDateString() } });
 
-    const prioritySelect = screen.getByLabelText(/priority/i);
-    await user.selectOptions(prioritySelect, 'A');
+    const priorityInput = screen.getByLabelText(/priority/i);
+    await user.clear(priorityInput);
+    await user.type(priorityInput, 'A1');
 
     await user.click(screen.getByText(/create task/i));
 
@@ -427,6 +437,7 @@ describe('TaskForm - Submission', () => {
       expect(handleSubmit).toHaveBeenCalled();
       const callArgs = handleSubmit.mock.calls[0][0] as CreateTaskInput;
       expect(callArgs.priority.letter).toBe('A');
+      expect(callArgs.priority.number).toBe(1);
     });
   });
 
@@ -556,35 +567,217 @@ describe('TaskForm - Field Interactions', () => {
     expect(descriptionInput).toHaveValue('Task details');
   });
 
-  it('should update priority select on user selection', async () => {
+  it('should update priority input on user input', async () => {
     const user = userEvent.setup();
     render(<TaskForm onSubmit={() => {}} onCancel={() => {}} />);
 
-    const prioritySelect = screen.getByLabelText(/priority/i) as HTMLSelectElement;
-    await user.selectOptions(prioritySelect, 'C');
+    const priorityInput = screen.getByLabelText(/priority/i) as HTMLInputElement;
+    await user.clear(priorityInput);
+    await user.type(priorityInput, 'C3');
 
-    expect(prioritySelect.value).toBe('C');
+    expect(priorityInput.value).toBe('C3');
   });
 
   it('should have default priority of B', () => {
     render(<TaskForm onSubmit={() => {}} onCancel={() => {}} />);
 
-    const prioritySelect = screen.getByLabelText(/priority/i) as HTMLSelectElement;
-    expect(prioritySelect.value).toBe('B');
+    const priorityInput = screen.getByLabelText(/priority/i) as HTMLInputElement;
+    expect(priorityInput.value).toBe('B');
   });
 
-  it('should allow selecting category', async () => {
+  it('should convert priority input to uppercase', async () => {
     const user = userEvent.setup();
+    render(<TaskForm onSubmit={() => {}} onCancel={() => {}} />);
+
+    const priorityInput = screen.getByLabelText(/priority/i) as HTMLInputElement;
+    await user.clear(priorityInput);
+    await user.type(priorityInput, 'a1');
+
+    expect(priorityInput.value).toBe('A1');
+  });
+
+  it('should accept priority without number', async () => {
+    const user = userEvent.setup();
+    const handleSubmit = vi.fn();
+
+    render(<TaskForm onSubmit={handleSubmit} onCancel={() => {}} />);
+
+    await user.type(screen.getByLabelText(/title/i), 'Task');
+
+    const dateInput = screen.getByLabelText(/scheduled date/i);
+    fireEvent.change(dateInput, { target: { value: getFutureDateString() } });
+
+    const priorityInput = screen.getByLabelText(/priority/i);
+    await user.clear(priorityInput);
+    await user.type(priorityInput, 'C');
+
+    await user.click(screen.getByText(/create task/i));
+
+    await waitFor(() => {
+      expect(handleSubmit).toHaveBeenCalled();
+      const callArgs = handleSubmit.mock.calls[0][0] as CreateTaskInput;
+      expect(callArgs.priority.letter).toBe('C');
+      expect(callArgs.priority.number).toBeUndefined();
+    });
+  });
+
+  it('should show error for invalid priority pattern', async () => {
+    const user = userEvent.setup();
+    const handleSubmit = vi.fn();
+
+    render(<TaskForm onSubmit={handleSubmit} onCancel={() => {}} />);
+
+    const priorityInput = screen.getByLabelText(/priority/i);
+    await user.clear(priorityInput);
+    await user.type(priorityInput, 'E1'); // Invalid letter
+
+    await user.click(screen.getByText(/create task/i));
+
+    await waitFor(() => {
+      expect(screen.getByText(/priority must be a letter \(A-D\)/i)).toBeInTheDocument();
+    });
+
+    expect(handleSubmit).not.toHaveBeenCalled();
+  });
+
+  it('should show error for priority number too large', async () => {
+    const user = userEvent.setup();
+    const handleSubmit = vi.fn();
+
+    render(<TaskForm onSubmit={handleSubmit} onCancel={() => {}} />);
+
+    // Fill title to avoid title error
+    await user.type(screen.getByLabelText(/title/i), 'Valid Title');
+
+    const priorityInput = screen.getByLabelText(/priority/i) as HTMLInputElement;
+
+    // Use fireEvent.change to set a value that bypasses maxLength
+    fireEvent.change(priorityInput, { target: { value: 'A100' } });
+
+    await user.click(screen.getByText(/create task/i));
+
+    await waitFor(() => {
+      expect(screen.getByText(/priority number must be between 1 and 99/i)).toBeInTheDocument();
+    });
+
+    expect(handleSubmit).not.toHaveBeenCalled();
+  });
+
+  it('should show error for priority number zero', async () => {
+    const user = userEvent.setup();
+    const handleSubmit = vi.fn();
+
+    render(<TaskForm onSubmit={handleSubmit} onCancel={() => {}} />);
+
+    // Fill title to avoid title error
+    await user.type(screen.getByLabelText(/title/i), 'Valid Title');
+
+    const priorityInput = screen.getByLabelText(/priority/i) as HTMLInputElement;
+
+    // Use fireEvent.change to set value to A0
+    fireEvent.change(priorityInput, { target: { value: 'A0' } });
+
+    await user.click(screen.getByText(/create task/i));
+
+    await waitFor(() => {
+      expect(screen.getByText(/priority number must be between 1 and 99/i)).toBeInTheDocument();
+    });
+
+    expect(handleSubmit).not.toHaveBeenCalled();
+  });
+
+  it('should allow selecting category through custom dropdown', async () => {
+    const user = userEvent.setup();
+    const categories = [
+      createMockCategory({ id: 'cat-1', name: 'Work', color: '#EF4444' }),
+      createMockCategory({ id: 'cat-2', name: 'Personal', color: '#3B82F6' }),
+    ];
+
+    render(<TaskForm categories={categories} onSubmit={() => {}} onCancel={() => {}} />);
+
+    // Open the category dropdown
+    const categoryTrigger = screen.getByTestId('category-select-trigger');
+    await user.click(categoryTrigger);
+
+    // Select "Personal" category
+    const personalOption = screen.getByTestId('category-option-cat-2');
+    await user.click(personalOption);
+
+    // Verify "Personal" is now displayed
+    await waitFor(() => {
+      expect(screen.getByText('Personal')).toBeInTheDocument();
+    });
+  });
+
+  it('should display category color dots in dropdown', async () => {
+    const user = userEvent.setup();
+    const categories = [
+      createMockCategory({ id: 'cat-1', name: 'Work', color: '#EF4444' }),
+      createMockCategory({ id: 'cat-2', name: 'Personal', color: '#3B82F6' }),
+    ];
+
+    render(<TaskForm categories={categories} onSubmit={() => {}} onCancel={() => {}} />);
+
+    // Open the category dropdown
+    const categoryTrigger = screen.getByTestId('category-select-trigger');
+    await user.click(categoryTrigger);
+
+    // Verify categories are listed
+    expect(screen.getByText('Work')).toBeInTheDocument();
+    expect(screen.getByText('Personal')).toBeInTheDocument();
+
+    // Verify color dots are present (by checking for styled elements)
+    const workOption = screen.getByTestId('category-option-cat-1');
+    const colorDot = workOption.querySelector('[style*="background-color"]');
+    expect(colorDot).toBeInTheDocument();
+  });
+
+  it('should show selected category with color dot in trigger', async () => {
+    const categories = [
+      createMockCategory({ id: 'cat-1', name: 'Work', color: '#EF4444' }),
+    ];
+    const task = createMockTask({ categoryId: 'cat-1' });
+
+    render(<TaskForm task={task} categories={categories} onSubmit={() => {}} onCancel={() => {}} />);
+
+    // Verify selected category is displayed
+    expect(screen.getByText('Work')).toBeInTheDocument();
+
+    // Verify color dot is shown in trigger
+    const trigger = screen.getByTestId('category-select-trigger');
+    const colorDot = trigger.querySelector('[style*="background-color"]');
+    expect(colorDot).toBeInTheDocument();
+    expect(colorDot).toHaveStyle({ backgroundColor: '#EF4444' });
+  });
+
+  it('should submit form with selected category', async () => {
+    const user = userEvent.setup();
+    const handleSubmit = vi.fn();
     const categories = [
       createMockCategory({ id: 'cat-1', name: 'Work' }),
       createMockCategory({ id: 'cat-2', name: 'Personal' }),
     ];
 
-    render(<TaskForm categories={categories} onSubmit={() => {}} onCancel={() => {}} />);
+    render(<TaskForm categories={categories} onSubmit={handleSubmit} onCancel={() => {}} />);
 
-    const categorySelect = screen.getByLabelText(/category/i) as HTMLSelectElement;
-    await user.selectOptions(categorySelect, 'cat-2');
+    // Fill required fields
+    await user.type(screen.getByLabelText(/title/i), 'New Task');
+    const dateInput = screen.getByLabelText(/scheduled date/i);
+    fireEvent.change(dateInput, { target: { value: getFutureDateString() } });
 
-    expect(categorySelect.value).toBe('cat-2');
+    // Select a category
+    const categoryTrigger = screen.getByTestId('category-select-trigger');
+    await user.click(categoryTrigger);
+    const workOption = screen.getByTestId('category-option-cat-1');
+    await user.click(workOption);
+
+    // Submit form
+    await user.click(screen.getByText(/create task/i));
+
+    await waitFor(() => {
+      expect(handleSubmit).toHaveBeenCalled();
+      const callArgs = handleSubmit.mock.calls[0][0] as CreateTaskInput;
+      expect(callArgs.categoryId).toBe('cat-1');
+    });
   });
 });

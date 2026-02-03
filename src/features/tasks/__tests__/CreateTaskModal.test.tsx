@@ -9,7 +9,7 @@
  * - Error handling tests
  */
 
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CreateTaskModal } from '../CreateTaskModal';
@@ -168,7 +168,7 @@ describe('CreateTaskModal - Rendering', () => {
   });
 
   it('should pass categories to TaskForm', () => {
-    const categories = [
+    const _categories = [
       createMockCategory({ id: 'cat-1', name: 'Work' }),
       createMockCategory({ id: 'cat-2', name: 'Personal' }),
     ];
@@ -435,7 +435,7 @@ describe('CreateTaskModal - Cancel Behavior', () => {
     // Mock service to reject
     mockCreateTaskService.mockRejectedValue(new Error('Test error'));
 
-    const { rerender, unmount } = renderWithProviders(
+    const { unmount } = renderWithProviders(
       <CreateTaskModal isOpen={true} onClose={() => {}} />
     );
 

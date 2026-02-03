@@ -111,7 +111,19 @@ describe('DateNavigationContainer', () => {
     });
 
     it('should display today as default selected date', () => {
-      renderWithProviders(<DateNavigationContainer />);
+      const store = createTestStore({
+        tasks: {
+          tasks: {},
+          taskIdsByDate: {},
+          selectedDate: '2026-02-02', // Set to mocked today
+          loading: false,
+          error: null,
+          syncStatus: 'synced',
+          reorderRollbackState: null,
+        },
+      });
+
+      renderWithProviders(<DateNavigationContainer />, { store });
 
       // Default selectedDate should be today
       expect(screen.getByTestId('date-display')).toHaveTextContent('Monday, February 2, 2026');

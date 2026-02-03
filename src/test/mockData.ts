@@ -390,6 +390,7 @@ export function createMockTasksState(options: {
     loading: options.loading ?? false,
     error: options.error ?? null,
     syncStatus: options.syncStatus ?? 'synced',
+    reorderRollbackState: null,
   };
 }
 

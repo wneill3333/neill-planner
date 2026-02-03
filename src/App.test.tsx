@@ -98,19 +98,19 @@ describe('App', () => {
     await act(async () => {
       authStateCallback?.(null);
     });
-    // TasksPage shows "Tasks scheduled for" text
-    const tasksInfo = screen.getByText(/tasks scheduled for/i);
-    expect(tasksInfo).toBeInTheDocument();
+    // TasksPage should show the daily view with tabs
+    const tasksTab = screen.getByRole('tab', { name: /tasks/i });
+    expect(tasksTab).toBeInTheDocument();
   });
 
-  it('displays the create task button', async () => {
+  it('displays the add task button', async () => {
     renderWithProviders(<App />);
     await act(async () => {
       authStateCallback?.(null);
     });
-    // The floating action button has aria-label "Create new task"
-    const createButton = screen.getByLabelText(/create new task/i);
-    expect(createButton).toBeInTheDocument();
+    // The add task button has aria-label "Add new task"
+    const addButton = screen.getByLabelText(/add new task/i);
+    expect(addButton).toBeInTheDocument();
   });
 
   it('has proper semantic structure with header and main elements', async () => {
