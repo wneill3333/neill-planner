@@ -3,7 +3,7 @@
 **Project:** Neill Planner - Franklin-Covey Productivity Application
 **Created:** January 24, 2026
 **Status:** In Progress
-**Last Updated:** February 3, 2026 (Step 6.2.2 Display Recurring Instances Complete)
+**Last Updated:** February 3, 2026 (Step 6.3.1 Edit Recurring Options Complete)
 **Estimated Duration:** 18-27 days
 
 ---
@@ -17,14 +17,14 @@
 | Phase 3: Core Tasks | ✅ Complete | 59/59 |
 | Phase 4: Date & Daily View | ✅ Complete | 26/26 |
 | Phase 5: Categories | ✅ Complete | 15/15 |
-| Phase 6: Recurring Tasks | 🔄 In Progress | 4/20 |
+| Phase 6: Recurring Tasks | 🔄 In Progress | 5/20 |
 | Phase 7: Events & Calendar | ⬜ Not Started | 0/22 |
 | Phase 8: Notes System | ⬜ Not Started | 0/16 |
 | Phase 9: Google Calendar | ⬜ Not Started | 0/14 |
 | Phase 10: Reminders | ⬜ Not Started | 0/12 |
 | Phase 11: Offline Support | ⬜ Not Started | 0/12 |
 | Phase 12: Polish & Deploy | ⬜ Not Started | 0/18 |
-| **TOTAL** | | **154/261** |
+| **TOTAL** | | **155/261** |
 
 ---
 
@@ -1517,24 +1517,26 @@
 
 ## 6.3 Edit This/All Future Logic
 
-### Step 6.3.1: Edit Recurring Options
+### Step 6.3.1: Edit Recurring Options ✅ Completed 2026-02-03
 
-- [ ] **Create edit dialog**
-  - [ ] "Edit this occurrence only" option
-  - [ ] "Edit all future occurrences" option
+- [x] **Create edit dialog** ✅
+  - [x] "Edit this occurrence only" option
+  - [x] "Edit all future occurrences" option
 
-- [ ] **Implement "this only"**
-  - [ ] Create exception
-  - [ ] Store modification
+- [x] **Implement "this only"** ✅
+  - [x] Create materialized instance for specific date
+  - [x] Add date to parent's exception list
+  - [x] Implement rollback logic if parent update fails
 
-- [ ] **Implement "all future"**
-  - [ ] Update pattern
-  - [ ] Regenerate instances
+- [x] **Implement "all future"** ✅
+  - [x] Update parent task pattern
+  - [x] Changes propagate to future instances
 
-- [ ] **Write tests**
-  - [ ] Test dialog appears
-  - [ ] Test "this only" creates exception
-  - [ ] Test "all future" updates pattern
+- [x] **Write tests** ✅ 28 new tests passing
+  - [x] Test dialog appears (13 RecurringEditDialog tests)
+  - [x] Test "this only" creates exception (5 editRecurringInstanceOnly tests)
+  - [x] Test "all future" updates pattern (3 editRecurringFuture tests)
+  - [x] Test EditTaskModal integration (7 integration tests)
 
 ---
 

@@ -3,11 +3,105 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 3, 2026 (Step 6.2.2 - Display Recurring Instances)
+**Last Updated:** February 3, 2026 (Step 6.3.1 - Edit Recurring Options)
 
 ---
 
 ## SESSION LOG
+
+### SESSION: Step 6.3.1 - Edit Recurring Options
+**Date:** February 3, 2026
+**Duration:** Complete session
+**Status:** ✅ COMPLETED
+
+#### Summary
+Completed Step 6.3.1 by implementing edit options for recurring task instances. Created RecurringEditDialog component with two edit choices ("Edit this occurrence only" or "Edit all future occurrences"), implemented editRecurringInstanceOnly thunk with rollback logic for atomic operations, and editRecurringFuture thunk for updating parent tasks. Updated EditTaskModal to show dialog for recurring instances. 28 new tests passing, bringing total to 1952 tests across 66 test files.
+
+#### Key Achievements
+- **RecurringEditDialog Component** - `src/components/tasks/RecurringEditDialog.tsx`
+  - Modal dialog with two mutually exclusive edit options
+  - Full accessibility: keyboard navigation (Tab, Enter, Escape), ARIA attributes
+  - React.memo optimization to prevent unnecessary re-renders
+  - Button focus management and visual feedback
+  - 13 comprehensive tests
+
+- **editRecurringInstanceOnly Thunk** - `src/features/tasks/taskThunks.ts`
+  - Creates materialized instance for specific date
+  - Adds exception date to parent's `exceptions` array
+  - Implements rollback logic: if parent exception update fails, instance is deleted
+  - Type-safe error handling with descriptive messages
+  - 5 tests including rollback verification
+
+- **editRecurringFuture Thunk** - `src/features/tasks/taskThunks.ts`
+  - Updates parent task directly (pattern changes for all future instances)
+  - Changes propagate automatically via existing instance generation logic
+  - Proper error handling with rollback
+  - 3 tests verifying pattern update behavior
+
+- **EditTaskModal Updates** - `src/features/tasks/EditTaskModal.tsx`
+  - Shows RecurringEditDialog when editing recurring instances
+  - Routes to editRecurringInstanceOnly or editRecurringFuture based on user choice
+  - Uses useMemo to memoize isRecurringInstance check
+  - Seamless integration with existing edit workflow
+  - 7 integration tests
+
+- **taskSlice Updates** - `src/features/tasks/taskSlice.ts`
+  - Added extraReducers for editRecurringInstanceOnly and editRecurringFuture
+  - Updates parent task exceptions in `recurringParentTasks` state
+  - Updates parent task directly in `tasks` state for pattern changes
+  - State synchronization across both records
+
+#### Code Review Fixes Applied
+- Implemented rollback logic for atomic operations
+- Added React.memo to RecurringEditDialog for performance
+- Used useMemo for isRecurringInstance check to prevent effect re-runs
+- Date normalization with startOfDay to ensure consistent comparisons
+- State synchronization: parent exceptions updated in both `recurringParentTasks` and `tasks`
+
+#### Test Results
+- New tests: 28 (RecurringEditDialog 13 + editRecurringInstanceOnly 5 + editRecurringFuture 3 + EditTaskModal 7)
+- Before: 1924 tests passing across 65 test files
+- After: **1952 tests passing across 66 test files** (+28 tests)
+- All tests passing, 0 regressions
+- Status: PRODUCTION READY
+
+#### Progress Update
+- **Phase 6: 5/20 steps complete (25%)**
+- Total: 155/261 tasks complete (~59%)
+- Overall progress: ~59% complete
+
+#### Files Created/Modified
+- **Created:** `src/components/tasks/RecurringEditDialog.tsx` - Edit options dialog
+- **Created:** `src/components/tasks/__tests__/RecurringEditDialog.test.tsx` - 13 tests
+- **Modified:** `src/features/tasks/taskThunks.ts` - Added editRecurringInstanceOnly, editRecurringFuture thunks
+- **Modified:** `src/features/tasks/taskSlice.ts` - Added extraReducers for new thunks
+- **Modified:** `src/features/tasks/EditTaskModal.tsx` - Integrated RecurringEditDialog
+- **Modified:** `src/features/tasks/__tests__/EditTaskModal.test.tsx` - Added 7 integration tests
+
+#### Key Technical Decisions
+1. **Rollback logic for atomic operations** - If parent exception update fails after creating materialized instance, the instance is deleted to maintain consistency
+2. **React.memo on RecurringEditDialog** - Prevents unnecessary re-renders of dialog when component props haven't changed
+3. **useMemo for isRecurringInstance check** - Prevents effect re-runs in EditTaskModal
+4. **Date normalization with startOfDay** - Ensures consistent date comparison across time zones
+5. **State synchronization** - Parent exceptions updated in both `recurringParentTasks` and `tasks` Redux state for consistency
+
+#### Architecture Notes
+- RecurringEditDialog is a pure presentational component with no Firebase dependencies
+- Edit operations dispatch appropriate thunks based on user choice
+- Instances are materialized instances (stored as separate Task objects with dates and parent references)
+- Future instances are virtual (generated on-demand from parent pattern + exceptions)
+
+#### Next Steps
+1. **Step 6.3.2** - Delete Recurring Options
+   - Create delete dialog with "Delete this occurrence" vs "Delete all future" options
+   - Implement instance deletion by adding to exceptions
+   - Implement series end by setting pattern end date
+
+2. **Step 6.4.1** - Advanced Recurring Features (if needed)
+   - Modify pattern from instance
+   - Copy pattern to new task
+
+---
 
 ### SESSION: Step 6.2.2 - Display Recurring Instances
 **Date:** February 3, 2026
@@ -1295,14 +1389,16 @@ Implemented complete task editing workflow with delete confirmation, field updat
 - 5.2.1 Color Picker Component ✅ (completed as part of 5.1.2)
 - 5.3.1 Category Assignment in Task Form ✅
 
-### Phase 6: Recurring Tasks - 3/20 (15%) 🔄 IN PROGRESS
+### Phase 6: Recurring Tasks - 5/20 (25%) 🔄 IN PROGRESS
 
 **Completed:**
 - 6.1.1 Recurrence Pattern Form ✅
 - 6.1.2 Integrate Recurrence with Task Form ✅
 - 6.2.1 Instance Generation Logic ✅
+- 6.2.2 Display Recurring Instances ✅
+- 6.3.1 Edit Recurring Options ✅
 
-### Overall Project Progress: 153/261 (~59%)
+### Overall Project Progress: 155/261 (~59%)
 
 | Phase | Status | Progress |
 |-------|--------|----------|
@@ -1329,8 +1425,8 @@ Implemented complete task editing workflow with delete confirmation, field updat
 - **Build Tool:** Vite
 
 ### Test Status Summary
-- **Total Tests:** 1900 tests passing
-- **Test Files:** 63 files
+- **Total Tests:** 1952 tests passing
+- **Test Files:** 66 files
 - **Key Test Files:**
   - taskSlice.test.ts - 55 tests
   - taskThunks.test.ts - 33 tests (+ 13 reorderTasksAsync tests)
@@ -1352,6 +1448,10 @@ Implemented complete task editing workflow with delete confirmation, field updat
   - Icons.test.tsx - 33 tests
   - FloatingActionButton.test.tsx - 37 tests
   - RecurrenceForm.test.tsx - 36 tests
+  - recurringInstances.test.ts - 20 tests
+  - tasks.service.recurring.test.ts - 6 tests
+  - recurrenceUtils.test.ts - 62 tests
+  - RecurringEditDialog.test.tsx - 13 tests
 
 ---
 
