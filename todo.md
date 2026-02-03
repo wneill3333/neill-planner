@@ -3,7 +3,7 @@
 **Project:** Neill Planner - Franklin-Covey Productivity Application
 **Created:** January 24, 2026
 **Status:** In Progress
-**Last Updated:** February 2, 2026 (Step 6.2.1 Instance Generation Complete)
+**Last Updated:** February 3, 2026 (Step 6.2.2 Display Recurring Instances Complete)
 **Estimated Duration:** 18-27 days
 
 ---
@@ -17,14 +17,14 @@
 | Phase 3: Core Tasks | ✅ Complete | 59/59 |
 | Phase 4: Date & Daily View | ✅ Complete | 26/26 |
 | Phase 5: Categories | ✅ Complete | 15/15 |
-| Phase 6: Recurring Tasks | 🔄 In Progress | 3/20 |
+| Phase 6: Recurring Tasks | 🔄 In Progress | 4/20 |
 | Phase 7: Events & Calendar | ⬜ Not Started | 0/22 |
 | Phase 8: Notes System | ⬜ Not Started | 0/16 |
 | Phase 9: Google Calendar | ⬜ Not Started | 0/14 |
 | Phase 10: Reminders | ⬜ Not Started | 0/12 |
 | Phase 11: Offline Support | ⬜ Not Started | 0/12 |
 | Phase 12: Polish & Deploy | ⬜ Not Started | 0/18 |
-| **TOTAL** | | **153/261** |
+| **TOTAL** | | **154/261** |
 
 ---
 
@@ -1492,18 +1492,26 @@
 
 ### Step 6.2.2: Display Recurring Instances
 
-- [ ] **Update task fetching**
-  - [ ] Fetch parent recurring tasks
-  - [ ] Generate instances for date range
-  - [ ] Display instances
+- [x] **Update task fetching** ✅ Completed 2026-02-03
+  - [x] Fetch parent recurring tasks via `fetchRecurringTasks` thunk
+  - [x] Store in `recurringParentTasks` state
+  - [x] Generate instances for date using `selectTasksWithRecurringInstances` selector
+  - [x] Display instances mixed with regular tasks
+  - [x] Sort by priority (letter then number)
 
-- [ ] **Show recurrence indicator**
-  - [ ] (↻) icon on recurring instances
+- [x] **Show recurrence indicator** ✅ Completed 2026-02-03
+  - [x] (↻) icon on recurring instances (already supported via `isTaskRecurring` check in TaskItem)
+  - [x] Instance properties: `isRecurringInstance: true`, `recurrence: null`, `recurringParentId` set
 
-- [ ] **Write tests**
-  - [ ] Test instances appear on correct dates
-  - [ ] Test indicator visible
-  - [ ] Test linked to parent
+- [x] **Write tests** ✅ Completed 2026-02-03 (20 new tests passing)
+  - [x] Test instances appear on correct dates
+  - [x] Test instances combined with regular tasks
+  - [x] Test all recurrence patterns (daily, weekly, monthly, yearly)
+  - [x] Test end conditions respected
+  - [x] Test exceptions excluded
+  - [x] Test sorting by priority
+  - [x] Test instance properties correct
+  - [x] Test service layer (getRecurringTasks)
 
 ---
 
