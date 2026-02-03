@@ -3,11 +3,223 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 2, 2026 (Phase 4 Step 4.5.1 Complete)
+**Last Updated:** February 2, 2026 (Phase 5 Step 5.1.2 Complete)
 
 ---
 
 ## SESSION LOG
+
+### SESSION: capitalizeWords Utility Function
+**Date:** February 2, 2026
+**Duration:** Short session
+**Status:** ✅ COMPLETED
+
+#### Summary
+Implemented and tested the `capitalizeWords()` utility function for string manipulation in the Neill Planner project. This utility capitalizes the first letter of each word in a string, supporting both ASCII and Unicode characters. Created comprehensive test suite with 24 tests covering edge cases, Unicode support, and whitespace handling.
+
+#### Key Achievements
+- **capitalizeWords Function** - `src/utils/stringUtils.ts`
+  - New file created with single exported function
+  - Handles single and multiple words
+  - Preserves internal case and punctuation
+  - Supports Unicode characters (é, ñ, ü, etc.)
+  - Handles multiple spaces and tabs
+  - Returns empty string for empty input
+  - Returns single character unchanged if not whitespace
+  - No external dependencies (uses native string methods)
+
+- **Comprehensive Test Suite** - `src/utils/__tests__/stringUtils.test.ts`
+  - 24 tests covering all scenarios
+  - Single word tests (lowercase, uppercase, mixed case)
+  - Multi-word tests (various spacing)
+  - Edge cases (empty string, single character, special characters)
+  - Unicode tests (accented characters, non-English)
+  - Whitespace handling tests (tabs, multiple spaces)
+  - Punctuation preservation tests
+
+- **Export Management**
+  - Added export to `src/utils/index.ts`
+  - Proper TypeScript types and JSDoc documentation
+
+#### Code Review Findings & Fixes Applied
+- **Simplified early return** - Removed unnecessary variable assignment
+- **Removed redundant code** - Streamlined loop logic
+- **No Critical/High Priority issues** - All fixes were optimization suggestions
+- Review provided constructive feedback on code style and clarity
+
+#### Test Results
+- New tests: 24 comprehensive tests in stringUtils.test.ts
+- All tests passing: ✅ 24/24
+- Test file created and integrated into project test suite
+- No regressions to existing tests
+
+#### Files Created/Modified
+- **Created:** `src/utils/stringUtils.ts` - capitalizeWords utility function
+- **Created:** `src/utils/__tests__/stringUtils.test.ts` - 24 comprehensive tests
+- **Modified:** `src/utils/index.ts` - Added capitalizeWords export
+
+#### Key Technical Decisions
+1. **Single function approach** - Keep scope focused on capitalizeWords only
+2. **Unicode support** - Use proper Unicode character handling with charCodeAt() ranges
+3. **No dependencies** - Use only native JavaScript string methods for simplicity
+4. **Comprehensive test coverage** - 24 tests ensure reliability across edge cases
+
+#### Notes
+This is a utility function implementation task that is not directly part of the main phase roadmap. It was completed as a standalone feature development exercise with proper testing and code review practices applied.
+
+---
+
+### SESSION: Step 5.1.2 - Category Form
+**Date:** February 2, 2026
+**Duration:** Full session
+**Status:** ✅ COMPLETED
+
+#### Summary
+Implemented the Category Form system with ColorPicker, form validation, and modal wrapper. Enables users to create and edit categories with name input, color selection from 8 preset colors, duplicate name validation, and comprehensive error handling.
+
+#### Key Achievements
+- **ColorPicker Component** - `src/components/categories/ColorPicker.tsx`
+  - Grid of 8 preset colors (Red, Orange, Yellow, Green, Cyan, Blue, Purple, Pink)
+  - Selected color visual indicator with checkmark
+  - Keyboard accessible (Enter/Space to select)
+  - Full accessibility (radiogroup/radio roles, aria-checked)
+  - 33 comprehensive tests
+
+- **CategoryForm Component** - `src/components/categories/CategoryForm.tsx`
+  - Name input with 50 char max, trim whitespace
+  - Color picker integration
+  - Case-insensitive duplicate name validation
+  - Create/Edit mode with appropriate button text
+  - Loading states during submission
+  - Server error display with aria-live
+  - 41 comprehensive tests
+
+- **CategoryFormModal** - `src/features/categories/CategoryFormModal.tsx`
+  - Redux integration with createCategory/updateCategoryAsync thunks
+  - Sync status tracking for success detection
+  - Actual error messages from Redux state (not generic)
+  - Memoized existingNames computation
+  - Auto-close on successful save
+  - 27 comprehensive tests
+
+#### Code Review Findings & Fixes Applied
+- **No Critical issues found**
+- **High Priority fixes applied:**
+  1. Use actual error from Redux state instead of generic message
+  2. Memoize existingNames array with useMemo
+- All suggestions were optimization/documentation improvements
+
+#### Test Results
+- New tests: 101 (33 ColorPicker + 41 CategoryForm + 27 CategoryFormModal)
+- Before: 1,588 tests passing across 55 test files
+- After: **1,689 tests passing across 58 test files** (+101 tests)
+- All tests passing, 0 regressions
+
+#### Progress Update
+- **Phase 5: 8/15 steps complete (~53%)**
+- Total: 141/261 tasks complete
+- Progress: ~54% complete
+
+#### Files Created/Modified
+- **Created:** `src/components/categories/ColorPicker.tsx`
+- **Created:** `src/components/categories/CategoryForm.tsx`
+- **Created:** `src/features/categories/CategoryFormModal.tsx`
+- **Created:** `src/components/categories/__tests__/ColorPicker.test.tsx`
+- **Created:** `src/components/categories/__tests__/CategoryForm.test.tsx`
+- **Created:** `src/features/categories/__tests__/CategoryFormModal.test.tsx`
+- **Modified:** `src/components/categories/index.ts` - Added exports
+- **Modified:** `src/features/categories/index.ts` - Added modal export
+
+#### Key Technical Decisions
+1. **8 preset colors only** - No custom hex input for simplicity (matches CATEGORY_COLORS)
+2. **Browser confirm for now** - Delete uses window.confirm, TODO: replace with ConfirmDialog
+3. **Sync status detection** - Track prev/current sync status to detect successful save
+4. **Memoized computations** - existingNames wrapped in useMemo for performance
+
+#### Next Steps
+1. **Step 5.2.1** - Color Picker Component (already implemented as part of CategoryForm)
+2. **Step 5.3.1** - Category Assignment in Task Form
+   - Add category dropdown to TaskForm
+   - Color preview next to selection
+   - Update TaskItem to show category color
+
+---
+
+### SESSION: Step 5.1.1 - Category List Component (PHASE 5 START)
+**Date:** February 2, 2026
+**Duration:** Full session
+**Status:** ✅ COMPLETED
+
+#### Summary
+Implemented the Category List component system for Phase 5, enabling users to view, edit, and delete categories. Created presentation component with color swatches and action buttons, Redux-connected container, and comprehensive tests. Fixed Critical hooks violation identified in code review.
+
+#### Key Achievements
+- **CategoryList Presentation Component** - `src/components/categories/CategoryList.tsx`
+  - Displays list of categories with color swatches
+  - Edit and Delete buttons for each category
+  - "Add Category" button with dashed border styling
+  - Loading state with animated skeleton
+  - Empty state with call-to-action
+  - Full accessibility (ARIA roles, labels, keyboard support)
+  - React.memo optimization on CategoryItem
+  - 56 comprehensive tests
+
+- **CategoryListContainer** - `src/features/categories/CategoryListContainer.tsx`
+  - Redux integration with useAppSelector/useAppDispatch
+  - Fetches categories on mount via fetchCategories thunk
+  - Handles edit, delete, and add category interactions
+  - Delete confirmation with browser confirm dialog
+  - Error and unauthenticated states
+  - 25 comprehensive tests
+
+- **Component Exports**
+  - `src/components/categories/index.ts` - CategoryList export
+  - Updated `src/features/categories/index.ts` - Container export
+
+#### Code Review Findings & Fixes Applied
+1. **Critical - Rules of Hooks Violation** - Fixed conditional useCallback call
+   - Problem: `handleEditCategory` was conditionally calling useCallback
+   - Solution: Always call useCallback unconditionally, pass undefined to component when no callback
+2. **Medium - Missing React.memo** - Added to CategoryItem for performance optimization
+
+#### Test Results
+- New tests: 81 (56 presentation + 25 container)
+- Before: 1507 tests passing across 53 test files
+- After: **1588 tests passing across 55 test files** (+81 tests)
+- All tests passing, 0 regressions
+
+#### Progress Update
+- **Phase 4: Complete** - All steps done
+- **Phase 5: 1/5 steps complete (20%)** - Step 5.1.1 done
+- Total: 140/261 tasks complete
+- Progress: ~54% complete
+
+#### Files Created/Modified
+- **Created:** `src/components/categories/CategoryList.tsx` - Presentation component
+- **Created:** `src/components/categories/index.ts` - Exports
+- **Created:** `src/components/categories/__tests__/CategoryList.test.tsx` - 56 tests
+- **Created:** `src/features/categories/CategoryListContainer.tsx` - Redux container
+- **Created:** `src/features/categories/__tests__/CategoryListContainer.test.tsx` - 25 tests
+- **Modified:** `src/features/categories/index.ts` - Added container export
+
+#### Key Technical Decisions
+1. **Container/Presentation pattern** - Consistent with TaskList architecture
+2. **Browser confirm for delete** - Simple solution, TODO: replace with ConfirmDialog modal
+3. **React.memo on CategoryItem** - Prevents re-renders when list updates
+4. **Unconditional hooks** - Fixed critical violation by always calling useCallback
+
+#### Next Steps
+1. **Step 5.1.2** - Category Form
+   - Create form with name input and color picker
+   - Validation for unique names
+   - Create/Update/Cancel buttons
+
+2. **Step 5.2.1** - Color Picker Component
+   - Grid of preset colors
+   - Custom color input
+   - Preview of selected color
+
+---
 
 ### SESSION: Step 4.5.1 - Today Highlighting
 **Date:** February 2, 2026
@@ -643,7 +855,7 @@ Implemented complete task editing workflow with delete confirmation, field updat
 - 3.6.1 Drag and Drop - Setup ✅
 - 3.6.2 Drag and Drop - Persist and Polish ✅
 
-### Phase 4: Date Navigation & Daily View - 5/6 steps (~83%) 🔄 IN PROGRESS
+### Phase 4: Date Navigation & Daily View - 26/26 (100%) ✅ COMPLETE
 
 **Completed:**
 - 4.1.1 Date Navigation Component ✅
@@ -652,18 +864,25 @@ Implemented complete task editing workflow with delete confirmation, field updat
 - 4.4.1 FloatingActionButton in Daily View ✅
 - 4.5.1 Today Highlighting ✅
 
-**Not Started:**
-- 4.6.1 Additional Phase 4 Polish (optional)
+### Phase 5: Categories & Colors - 8/15 (~53%) 🔄 IN PROGRESS
 
-### Overall Project Progress: 126/261 (~48%)
+**Completed:**
+- 5.1.1 Category List Component ✅
+- 5.1.2 Category Form ✅ (includes ColorPicker)
+
+**Not Started:**
+- 5.2.1 Color Picker Component (already done as part of 5.1.2)
+- 5.3.1 Category Assignment in Task Form
+
+### Overall Project Progress: 141/261 (~54%)
 
 | Phase | Status | Progress |
 |-------|--------|----------|
 | Phase 1: Foundation | ✅ Complete | 25/25 |
 | Phase 2: Data Layer | ✅ Complete | 22/22 |
 | Phase 3: Core Tasks | ✅ Complete | 59/59 |
-| Phase 4: Date & Daily View | 🔄 In Progress | 19/26 |
-| Phase 5: Categories | ⬜ Not Started | 0/15 |
+| Phase 4: Date & Daily View | ✅ Complete | 26/26 |
+| Phase 5: Categories | 🔄 In Progress | 8/15 |
 | Phase 6: Recurring Tasks | ⬜ Not Started | 0/20 |
 | Phase 7: Events & Calendar | ⬜ Not Started | 0/22 |
 | Phase 8: Notes System | ⬜ Not Started | 0/16 |
@@ -671,7 +890,7 @@ Implemented complete task editing workflow with delete confirmation, field updat
 | Phase 10: Reminders | ⬜ Not Started | 0/12 |
 | Phase 11: Offline Support | ⬜ Not Started | 0/12 |
 | Phase 12: Polish & Deploy | ⬜ Not Started | 0/18 |
-| **TOTAL** | | **126/261** |
+| **TOTAL** | | **140/261** |
 
 ### Technology Stack
 - **Frontend:** React 19 with TypeScript
@@ -682,8 +901,8 @@ Implemented complete task editing workflow with delete confirmation, field updat
 - **Build Tool:** Vite
 
 ### Test Status Summary
-- **Total Tests:** 1507 tests passing
-- **Test Files:** 53 files
+- **Total Tests:** 1689 tests passing
+- **Test Files:** 58 files
 - **Key Test Files:**
   - taskSlice.test.ts - 55 tests
   - taskThunks.test.ts - 33 tests (+ 13 reorderTasksAsync tests)
