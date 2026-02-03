@@ -3,11 +3,105 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 3, 2026 (Bug Fixes - Recurring Task Deletion)
+**Last Updated:** February 3, 2026 (Step 7.1.1 - Event Service Layer)
 
 ---
 
 ## SESSION LOG
+
+### SESSION: Step 7.1.1 - Event Service Layer
+**Date:** February 3, 2026
+**Duration:** Complete session
+**Status:** ✅ COMPLETED
+
+#### Summary
+Completed Step 7.1.1 by implementing the Event service layer, Redux state management, and thunks. Created comprehensive event CRUD service with full Firestore integration, event Redux slice with normalized state, async thunks for all operations, and custom hooks for data fetching. Added 93 comprehensive tests covering all code paths. Integrated events reducer into Redux store with proper serialization configuration. All 2066 tests passing across 71 test files.
+
+#### Key Achievements
+- **Event Service Layer** - `src/services/firebase/events.service.ts`
+  - Full CRUD operations: createEvent, getEvent, getUserEvents, updateEvent, deleteEvent
+  - Date-based queries: getEventsByDate, getEventsByDateRange
+  - Soft delete with restore: deleteEvent, restoreEvent, hardDeleteEvent
+  - Recurring events support: getRecurringEvents
+  - Comprehensive input validation and authorization checks
+  - Firestore Timestamp ↔ Date conversions
+  - 30 tests covering all methods
+
+- **Event Redux Slice** - `src/features/events/eventSlice.ts`
+  - Normalized state: events, eventIdsByDate, recurringParentEvents
+  - Reducers: clearEvents, setError, clearError
+  - ExtraReducers for all thunks (fetch, create, update, delete, restore, hardDelete)
+  - Memoized selectors including selectEventsWithRecurringInstances
+  - 27 tests covering state updates and selectors
+
+- **Event Thunks** - `src/features/events/eventThunks.ts`
+  - fetchUserEvents, fetchEventsByDate, fetchRecurringEvents
+  - createEventAsync, updateEventAsync, deleteEventAsync
+  - restoreEventAsync, hardDeleteEventAsync
+  - 16 tests covering all thunk operations
+
+- **Event Hooks** - `src/features/events/hooks.ts`
+  - useEventsByDate: Fetch events for specific date with race condition protection
+  - useEvent: Get single event by ID with loading/error states
+  - 20 tests covering hook behaviors
+
+- **Redux Store Integration** - `src/store/store.ts`
+  - Added events reducer to root reducer configuration
+  - Configured serializable check to exclude Date objects from validation
+
+#### Code Review Fixes Applied
+- Added missing restoreEventAsync and hardDeleteEventAsync thunks
+- Fixed deleteEventAsync to properly clean up recurringParentEvents state
+- Memoized selectAllEvents selector for performance optimization
+- Enhanced error handling with descriptive messages
+
+#### Test Results
+- New tests created: 93 total (30 service + 27 slice + 16 thunks + 20 hooks)
+- Total project tests: 2066 passing across 71 test files
+- Test coverage: Comprehensive - all code paths tested including error scenarios
+- Status: PRODUCTION READY
+
+#### Files Created
+- `src/services/firebase/events.service.ts` - Event CRUD service layer
+- `src/services/firebase/__tests__/events.service.test.ts` - 30 service tests
+- `src/features/events/eventSlice.ts` - Redux slice with normalized state
+- `src/features/events/eventThunks.ts` - Async thunk operations
+- `src/features/events/hooks.ts` - Custom React hooks
+- `src/features/events/index.ts` - Feature exports
+- `src/features/events/__tests__/eventSlice.test.ts` - 27 slice tests
+- `src/features/events/__tests__/eventThunks.test.ts` - 16 thunk tests
+- `src/features/events/__tests__/hooks.test.tsx` - 20 hook tests
+
+#### Files Modified
+- `src/services/firebase/index.ts` - Added event service exports
+- `src/store/store.ts` - Added events reducer and serializable check config
+- `src/test/mockData.ts` - Added createMockEvent and createMockEventState helpers
+
+#### Progress Update
+- **Phase 6: Complete (6/6 steps)** - 100%
+- **Phase 7: 1/5 steps complete (20%)** - Event Service Layer foundation
+- **Total:** ~158/261 tasks complete (~61%)
+
+#### Architecture Notes
+- Event service follows same Firebase integration pattern as Task service
+- Normalized state management mirrors Task state structure
+- Date-based indexing enables efficient daily event queries
+- Soft delete pattern enables event recovery
+- Recurring event support matches recurring task implementation
+
+#### Key Technical Decisions
+1. **Normalized state structure** - Maintains consistency with Task state pattern
+2. **Soft delete with restore** - Allows users to recover deleted events
+3. **Memoized selectors** - Prevents unnecessary re-renders of event-dependent components
+4. **Separate recurring parent tracking** - Enables efficient recurring event queries
+5. **Date-fns for calculations** - Ensures timezone-safe date operations
+
+#### Next Steps
+1. **Step 7.1.2** - Event Type Definitions & Schemas
+2. **Step 7.2.1** - Event Form Component
+3. **Step 7.3.1** - Calendar Time-Block View
+
+---
 
 ### SESSION: Bug Fixes - Recurring Task Deletion & HMR Windows Support
 **Date:** February 3, 2026

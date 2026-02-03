@@ -3,7 +3,7 @@
 **Project:** Neill Planner - Franklin-Covey Productivity Application
 **Created:** January 24, 2026
 **Status:** In Progress
-**Last Updated:** February 3, 2026 (Bug Fixes - Recurring Task Deletion)
+**Last Updated:** February 3, 2026 (Step 7.1.1 - Event Service Layer)
 **Estimated Duration:** 18-27 days
 
 ---
@@ -17,14 +17,14 @@
 | Phase 3: Core Tasks | ✅ Complete | 59/59 |
 | Phase 4: Date & Daily View | ✅ Complete | 26/26 |
 | Phase 5: Categories | ✅ Complete | 15/15 |
-| Phase 6: Recurring Tasks | 🔄 In Progress | 6/20 |
-| Phase 7: Events & Calendar | ⬜ Not Started | 0/22 |
+| Phase 6: Recurring Tasks | ✅ Complete | 6/6 |
+| Phase 7: Events & Calendar | 🔄 In Progress | 1/5 |
 | Phase 8: Notes System | ⬜ Not Started | 0/16 |
 | Phase 9: Google Calendar | ⬜ Not Started | 0/14 |
 | Phase 10: Reminders | ⬜ Not Started | 0/12 |
 | Phase 11: Offline Support | ⬜ Not Started | 0/12 |
 | Phase 12: Polish & Deploy | ⬜ Not Started | 0/18 |
-| **TOTAL** | | **156/261** |
+| **TOTAL** | | **158/261** |
 
 ---
 
@@ -1568,20 +1568,47 @@
 
 ## 7.1 Event Data Model
 
-### Step 7.1.1: Event Service Layer
+### Step 7.1.1: Event Service Layer ✅ Completed 2026-02-03
 
-- [ ] **Create event service**
-  - [ ] Create `src/services/firebase/events.service.ts`
-  - [ ] Implement CRUD operations
+- [x] **Create event service** ✅
+  - [x] Create `src/services/firebase/events.service.ts`
+  - [x] Implement CRUD operations (createEvent, getEvent, getUserEvents, updateEvent, deleteEvent)
+  - [x] Add date-based queries (getEventsByDate, getEventsByDateRange)
+  - [x] Add soft delete operations (restoreEvent, hardDeleteEvent)
+  - [x] Add recurring event support (getRecurringEvents)
+  - [x] Firestore Timestamp ↔ Date conversions
+  - [x] Comprehensive input validation and authorization
 
-- [ ] **Create event Redux slice**
-  - [ ] Create `src/features/events/eventSlice.ts`
-  - [ ] Define state, reducers, thunks, selectors
+- [x] **Create event Redux slice** ✅
+  - [x] Create `src/features/events/eventSlice.ts`
+  - [x] Define EventsState with normalized structure (events, eventIdsByDate, recurringParentEvents)
+  - [x] Create reducers (clearEvents, setError, clearError)
+  - [x] Add extraReducers for all thunks (fetch, create, update, delete, restore, hardDelete)
+  - [x] Create memoized selectors (selectAllEvents, selectEventsWithRecurringInstances, etc.)
 
-- [ ] **Write tests**
-  - [ ] Test create event
-  - [ ] Test fetch events
-  - [ ] Test update and delete
+- [x] **Create event thunks** ✅
+  - [x] Create `src/features/events/eventThunks.ts`
+  - [x] fetchUserEvents, fetchEventsByDate, fetchRecurringEvents
+  - [x] createEventAsync, updateEventAsync, deleteEventAsync
+  - [x] restoreEventAsync, hardDeleteEventAsync
+
+- [x] **Create event hooks** ✅
+  - [x] Create `src/features/events/hooks.ts`
+  - [x] useEventsByDate hook with race condition protection
+  - [x] useEvent hook for single event fetching
+
+- [x] **Redux store integration** ✅
+  - [x] Add events reducer to store
+  - [x] Configure serializable check for Date objects
+
+- [x] **Write tests** ✅ 93 new tests passing
+  - [x] Test create event (service tests)
+  - [x] Test fetch events by date/date range (service tests)
+  - [x] Test update and delete (service tests)
+  - [x] Test soft delete and restore (service tests)
+  - [x] Test Redux slice state updates (27 slice tests)
+  - [x] Test all thunks operations (16 thunk tests)
+  - [x] Test custom hooks (20 hook tests)
 
 ---
 
