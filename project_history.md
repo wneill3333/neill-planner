@@ -3,11 +3,87 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 3, 2026 (Step 6.3.2 - Delete Recurring Options)
+**Last Updated:** February 3, 2026 (Bug Fixes - Recurring Task Deletion)
 
 ---
 
 ## SESSION LOG
+
+### SESSION: Bug Fixes - Recurring Task Deletion & HMR Windows Support
+**Date:** February 3, 2026
+**Duration:** Short session (post-completion follow-up)
+**Status:** ✅ COMPLETED
+
+#### Summary
+Applied critical bug fixes to Step 6.3.2 completion following implementation. Fixed RecurringDeleteDialog UI to show three equal options instead of unbalanced buttons. Fixed FlatTaskListContainer to use React dialog instead of native confirm(). Fixed thunks to use proper deletion operations (deleteRecurringFuture and deleteRecurringInstanceOnly). Added HMR file polling for Windows reliability. All 1973 tests passing, no regressions.
+
+#### Bug Fixes Applied
+1. **RecurringDeleteDialog - Three Equal Options**
+   - Changed Cancel from small button to full-width option
+   - Reordered: Delete all future → Delete this only → Cancel
+   - Added icon and description to Cancel button
+   - Updated test labels to match new button text
+   - File: `src/components/tasks/RecurringDeleteDialog.tsx`
+
+2. **FlatTaskListContainer - Use React Dialog**
+   - Was using native `window.confirm()` for deletion choices
+   - Now uses React `RecurringDeleteDialog` component
+   - Added `deletingTask` and `showDeleteDialog` state
+   - Proper modal integration with component lifecycle
+   - File: `src/features/tasks/FlatTaskListContainer.tsx`
+
+3. **FlatTaskListContainer - Correct Thunks Used**
+   - "Delete all future" was calling `deleteTask` (removes entire task)
+   - Fixed to use `deleteRecurringFuture` thunk (ends series, preserves past)
+   - "Delete this only" was manually updating exceptions
+   - Fixed to use `deleteRecurringInstanceOnly` thunk (proper exception handling)
+   - File: `src/features/tasks/FlatTaskListContainer.tsx`
+
+4. **Vite Config - HMR File Polling on Windows**
+   - Added `watch.usePolling: true` with 1 second interval
+   - Fixes hot module replacement reliability on Windows
+   - File: `vite.config.ts`
+
+5. **CLAUDE.md - Dev Server Port Documentation**
+   - Added note that dev server runs on http://localhost:5173
+   - File: `AI-Neill/CLAUDE.md`
+
+#### Git Commits Made
+1. `fix: Make Cancel a prominent third option in delete recurring dialog`
+2. `fix: Use React dialog for recurring task deletion in FlatTaskListContainer`
+3. `chore: Enable file polling for HMR on Windows`
+4. `fix: Use proper thunks for recurring task deletion`
+
+#### Files Modified
+- `src/components/tasks/RecurringDeleteDialog.tsx` - UI improvements
+- `src/components/tasks/__tests__/RecurringDeleteDialog.test.tsx` - Updated test labels
+- `src/components/tasks/index.ts` - Export RecurringDeleteDialog
+- `src/features/tasks/FlatTaskListContainer.tsx` - Dialog and thunk fixes
+- `vite.config.ts` - HMR polling
+- `AI-Neill/CLAUDE.md` - Dev server port documentation
+
+#### Test Results
+- All 1973 tests passing across 67 test files
+- No regressions from bug fixes
+- Status: PRODUCTION READY
+
+#### Progress Update
+- **Phase 6: 6/20 steps complete (30%)**
+- Total: 157/261 tasks complete (~60%)
+- Overall progress: ~60% complete
+
+#### Architecture Notes
+- RecurringDeleteDialog is now properly exported and reusable
+- FlatTaskListContainer now uses proper thunks for all deletion operations
+- Proper separation of concerns: UI dialog in FlatTaskListContainer, thunks handle business logic
+- Windows HMR reliability improved with file polling
+
+#### Next Steps
+1. **Continue Phase 6** - Recurring Tasks
+   - Step 6.3.2 now fully complete with all bug fixes
+   - Step 6.3.3 or 6.4.1 - Advanced features or next step
+
+---
 
 ### SESSION: Step 6.3.2 - Delete Recurring Options
 **Date:** February 3, 2026
