@@ -2111,6 +2111,7 @@ _Use this section to track progress, blockers, and decisions._
 | 2026-02-02 | Step 4.1.1 complete - Date Navigation Component. Created dateUtils.ts with formatDisplayDate, addDays, isToday, parseISODate, toISODateString, getTodayString. Created DateNavigation component with prev/next day buttons, Today button, keyboard shortcuts (Arrow keys, 'T'), full accessibility (ARIA labels, aria-live). Created DateNavigationContainer with Redux integration. Memoization with React.memo and custom arePropsEqual. Code review fixes applied: use getTodayString utility, add testId to arePropsEqual. 102 new tests (39 dateUtils + 44 DateNavigation + 19 Container). Total: 1214 tests passing across 45 test files. **Phase 4 Started!** |
 | 2026-02-02 | Step 5.1.1 complete - Category List Component. Created CategoryList presentation component with color swatches, edit/delete buttons, loading/empty states. Created CategoryListContainer with Redux integration. Code review identified Critical hooks violation (conditional useCallback), fixed. Added React.memo optimization to CategoryItem. 81 new tests (56 presentation + 25 container). Total: 1588 tests passing across 55 test files. **Phase 5 Started!** |
 | 2026-02-02 | Step 5.3.1 complete - Category Assignment in Task Form. Created CategorySelect custom dropdown component with color dots next to category names, full keyboard navigation (Arrow keys, Enter, Escape, Home, End), accessibility (ARIA listbox/option pattern), click-outside-to-close. Replaced native Select in TaskForm with CategorySelect. Code review optimizations applied: React.memo, useMemo for options, useCallback for handleKeyDown. 55 new tests. Total: 1763 tests passing across 60 test files. **Phase 5 Complete!** |
+| 2026-02-02 | UI Change - Priority input changed from dropdown to text field. Users now type "A1", "B2", "C" etc. directly. Added parsePriority() function, auto-uppercase, validation (letter A-D required, number 1-99 optional). 5 new tests. Total: 1768 tests passing across 60 test files. |
 
 ## Blockers
 
@@ -2130,6 +2131,7 @@ _Document key technical decisions._
 | Store dates as ISO strings in types | Easier JSON serialization and Firestore compatibility | 2026-01-25 |
 | Use string union types for enums | Better TypeScript inference and tree-shaking | 2026-01-25 |
 | Comprehensive type testing | Ensures type contracts are maintained; catches breaking changes early | 2026-01-25 |
+| Priority as text input (not dropdown) | Faster entry - user types "A1" directly instead of selecting letter then number; more intuitive for Franklin-Covey power users | 2026-02-02 |
 
 ---
 

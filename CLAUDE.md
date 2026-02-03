@@ -68,6 +68,10 @@ npm run test:run -- src/features/tasks/__tests__/taskSlice.test.ts
 ### Priority System
 
 A-B-C-D priorities (A=Vital, B=Important, C=Optional, D=Delegate) with auto-numbering:
+- **Input format**: Single text field where users type "A1", "B2", "C", etc.
+  - Letter (A-D) required, auto-converts to uppercase
+  - Number (1-99) optional - if omitted, auto-assigned by `getNextPriorityNumber()`
+  - Validation in `TaskForm.tsx` via `parsePriority()` function
 - `priorityUtils.ts` handles `getNextPriorityNumber()` and `reorderTasksInPriority()`
 - Tasks are grouped by letter, sorted by number within groups
 

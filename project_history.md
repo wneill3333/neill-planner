@@ -3,11 +3,53 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 2, 2026 (Phase 5 Step 5.1.2 Complete)
+**Last Updated:** February 2, 2026 (Priority Text Input UI Change)
 
 ---
 
 ## SESSION LOG
+
+### SESSION: Priority Input UI Change - Text Field
+**Date:** February 2, 2026
+**Duration:** Short session
+**Status:** ✅ COMPLETED
+
+#### Summary
+Changed the priority input in TaskForm from a dropdown to a single text field. Users can now type priority values like "A1", "B2", "C", etc. directly. This provides a faster, more intuitive input experience.
+
+#### Key Changes
+- **TaskForm Component** - `src/components/tasks/TaskForm.tsx`
+  - Replaced Select dropdown with Input text field
+  - Added `parsePriority()` function to parse "A1" format into letter and number
+  - Auto-uppercase conversion on input
+  - Placeholder: "e.g., A1, B2, C"
+  - Max length: 3 characters
+
+- **Validation Rules**
+  - Letter (A-D) is required
+  - Number (1-99) is optional
+  - Invalid patterns show specific error messages
+  - Examples: Valid (A, A1, B2, C10) | Invalid (E1, A0, A100, 1A)
+
+- **Form Data Structure**
+  - Changed `priorityLetter: PriorityLetter` to `priority: string`
+  - When editing, pre-fills with full priority (e.g., "A1")
+  - On submit, parses into `{ letter, number }` for backend
+
+#### Test Results
+- Updated 5 existing tests for new priority input
+- Added 5 new tests for priority validation edge cases
+- **1768 tests passing** across 60 test files
+
+#### Files Modified
+- `src/components/tasks/TaskForm.tsx` - Priority input change
+- `src/components/tasks/__tests__/TaskForm.test.tsx` - Updated tests
+
+#### Commit
+- Hash: 0ef58c2
+- Message: "Phase 4-5 complete + Priority input changed to text field"
+
+---
 
 ### SESSION: Step 5.3.1 - Category Assignment in Task Form (PHASE 5 COMPLETE)
 **Date:** February 2, 2026
