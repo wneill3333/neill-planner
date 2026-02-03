@@ -983,6 +983,151 @@ describe('recurrenceUtils', () => {
     });
   });
 
+  describe('generateRecurringInstances - Safety Limits', () => {
+    it('should cap instances at MAX_RECURRING_INSTANCES (1000)', () => {
+      // Create a task that would generate more than 1000 instances
+      // Daily recurrence over 5 years = ~1825 instances
+      const pattern: RecurrencePattern = {
+        type: 'daily',
+        interval: 1,
+        daysOfWeek: [],
+        dayOfMonth: null,
+        monthOfYear: null,
+        endCondition: { type: 'never', endDate: null, maxOccurrences: null },
+        exceptions: [],
+      };
+      const task = createTask({
+        scheduledDate: new Date(2020, 0, 1), // Jan 1, 2020
+        recurrence: pattern,
+      });
+
+      const rangeStart = new Date(2020, 0, 1);
+      const rangeEnd = new Date(2025, 0, 1); // 5 years later
+
+      // Spy on console.warn to verify warning is logged
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const instances = generateRecurringInstances(task, rangeStart, rangeEnd);
+
+      expect(instances.length).toBe(1000); // Capped at MAX_RECURRING_INSTANCES
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Reached maximum recurring instances limit (1000)')
+      );
+
+      warnSpy.mockRestore();
+    });
+  });
+
+  describe('generateRecurringInstances - Input Validation', () => {
+    it('should return empty array for interval <= 0', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const pattern: RecurrencePattern = {
+        type: 'daily',
+        interval: 0, // Invalid
+        daysOfWeek: [],
+        dayOfMonth: null,
+        monthOfYear: null,
+        endCondition: { type: 'never', endDate: null, maxOccurrences: null },
+        exceptions: [],
+      };
+      const task = createTask({
+        scheduledDate: new Date(2024, 0, 1),
+        recurrence: pattern,
+      });
+
+      const instances = generateRecurringInstances(
+        task,
+        new Date(2024, 0, 1),
+        new Date(2024, 0, 31)
+      );
+
+      expect(instances).toHaveLength(0);
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+
+    it('should return empty array for weekly recurrence with empty daysOfWeek', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const pattern: RecurrencePattern = {
+        type: 'weekly',
+        interval: 1,
+        daysOfWeek: [], // Invalid for weekly
+        dayOfMonth: null,
+        monthOfYear: null,
+        endCondition: { type: 'never', endDate: null, maxOccurrences: null },
+        exceptions: [],
+      };
+      const task = createTask({
+        scheduledDate: new Date(2024, 0, 1),
+        recurrence: pattern,
+      });
+
+      const instances = generateRecurringInstances(
+        task,
+        new Date(2024, 0, 1),
+        new Date(2024, 0, 31)
+      );
+
+      expect(instances).toHaveLength(0);
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+
+    it('should return empty array for monthly recurrence with invalid dayOfMonth', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const pattern: RecurrencePattern = {
+        type: 'monthly',
+        interval: 1,
+        daysOfWeek: [],
+        dayOfMonth: 32, // Invalid
+        monthOfYear: null,
+        endCondition: { type: 'never', endDate: null, maxOccurrences: null },
+        exceptions: [],
+      };
+      const task = createTask({
+        scheduledDate: new Date(2024, 0, 15),
+        recurrence: pattern,
+      });
+
+      const instances = generateRecurringInstances(
+        task,
+        new Date(2024, 0, 1),
+        new Date(2024, 11, 31)
+      );
+
+      expect(instances).toHaveLength(0);
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+
+    it('should return empty array for yearly recurrence with invalid monthOfYear', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const pattern: RecurrencePattern = {
+        type: 'yearly',
+        interval: 1,
+        daysOfWeek: [],
+        dayOfMonth: 15,
+        monthOfYear: 13, // Invalid
+        endCondition: { type: 'never', endDate: null, maxOccurrences: null },
+        exceptions: [],
+      };
+      const task = createTask({
+        scheduledDate: new Date(2024, 5, 15),
+        recurrence: pattern,
+      });
+
+      const instances = generateRecurringInstances(
+        task,
+        new Date(2024, 0, 1),
+        new Date(2030, 11, 31)
+      );
+
+      expect(instances).toHaveLength(0);
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+  });
+
   describe('generateRecurringInstances - Instance Properties', () => {
     it('should set isRecurringInstance to true', () => {
       const pattern: RecurrencePattern = {

@@ -22,6 +22,11 @@ import {
 import type { Task, RecurrencePattern, RecurrenceEndCondition } from '../types/task.types';
 
 /**
+ * Maximum number of recurring instances to generate to prevent infinite loops
+ */
+const MAX_RECURRING_INSTANCES = 1000;
+
+/**
  * Check if a date is in the exceptions list
  *
  * @param date - The date to check
@@ -36,8 +41,7 @@ import type { Task, RecurrencePattern, RecurrenceEndCondition } from '../types/t
  * ```
  */
 export function isDateInExceptions(date: Date, exceptions: Date[]): boolean {
-  const normalizedDate = startOfDay(date);
-  return exceptions.some((exception) => isSameDay(startOfDay(exception), normalizedDate));
+  return exceptions.some((exception) => isSameDay(exception, date));
 }
 
 /**
@@ -174,7 +178,7 @@ export function getNextOccurrence(
         return null;
       }
 
-      let nextMonth = addMonths(normalized, pattern.interval);
+      const nextMonth = addMonths(normalized, pattern.interval);
       const daysInNextMonth = getDaysInMonth(nextMonth);
 
       // Handle case where dayOfMonth doesn't exist in the target month (e.g., 31st in February)
@@ -273,11 +277,44 @@ export function generateRecurringInstances(
     return [];
   }
 
-  const instances: Task[] = [];
   const pattern = task.recurrence;
+
+  // Validate pattern configuration
+  if (pattern.interval <= 0) {
+    console.warn(`Invalid interval ${pattern.interval} for task ${task.id}. Interval must be > 0.`);
+    return [];
+  }
+
+  if (pattern.type === 'weekly' && (!pattern.daysOfWeek || pattern.daysOfWeek.length === 0)) {
+    console.warn(`Weekly recurrence requires at least one day of week for task ${task.id}.`);
+    return [];
+  }
+
+  if (pattern.type === 'monthly' && (pattern.dayOfMonth === null || pattern.dayOfMonth < 1 || pattern.dayOfMonth > 31)) {
+    console.warn(`Monthly recurrence requires valid dayOfMonth (1-31) for task ${task.id}.`);
+    return [];
+  }
+
+  if (pattern.type === 'yearly') {
+    if (pattern.monthOfYear === null || pattern.monthOfYear < 1 || pattern.monthOfYear > 12) {
+      console.warn(`Yearly recurrence requires valid monthOfYear (1-12) for task ${task.id}.`);
+      return [];
+    }
+    if (pattern.dayOfMonth === null || pattern.dayOfMonth < 1 || pattern.dayOfMonth > 31) {
+      console.warn(`Yearly recurrence requires valid dayOfMonth (1-31) for task ${task.id}.`);
+      return [];
+    }
+  }
+
+  const instances: Task[] = [];
   const normalizedRangeStart = startOfDay(rangeStart);
   const normalizedRangeEnd = startOfDay(rangeEnd);
   const taskStartDate = startOfDay(task.scheduledDate);
+
+  // Create Set for O(1) exception lookup
+  const exceptionDates = new Set(
+    pattern.exceptions.map((d) => format(startOfDay(d), 'yyyy-MM-dd'))
+  );
 
   // Start from the task's scheduled date or range start, whichever is later
   let currentDate = isBefore(taskStartDate, normalizedRangeStart)
@@ -344,10 +381,12 @@ export function generateRecurringInstances(
   // Generate instances
   while (
     !isAfter(currentDate, normalizedRangeEnd) &&
-    !hasReachedEndCondition(pattern.endCondition, occurrenceCount, currentDate)
+    !hasReachedEndCondition(pattern.endCondition, occurrenceCount, currentDate) &&
+    instances.length < MAX_RECURRING_INSTANCES
   ) {
     // Skip if date is in exceptions
-    if (!isDateInExceptions(currentDate, pattern.exceptions)) {
+    const dateKey = format(currentDate, 'yyyy-MM-dd');
+    if (!exceptionDates.has(dateKey)) {
       // Create instance
       const dateString = format(currentDate, 'yyyy-MM-dd');
       const instance: Task = {
@@ -368,6 +407,14 @@ export function generateRecurringInstances(
     const next = getNextOccurrence(pattern, currentDate);
     if (!next) break;
     currentDate = next;
+  }
+
+  // Warn if we hit the safety limit
+  if (instances.length >= MAX_RECURRING_INSTANCES) {
+    console.warn(
+      `Reached maximum recurring instances limit (${MAX_RECURRING_INSTANCES}) for task ${task.id}. ` +
+        `This may indicate an issue with the recurrence pattern or date range.`
+    );
   }
 
   return instances;
