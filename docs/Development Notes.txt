@@ -4,6 +4,16 @@ https://claude.ai/chat/fdf1c2c5-f3c6-4857-b0e3-c04b8d4f2d41
 MCP LIST
 claude mcp add --transport http context7 https://mcp.context7.com/mcp
 
+Before starting to Implement next Step, familiarize yourself with the specification, blueprint and todo.  Also familiarize yourself with the project history. You have the authority to --dangerously-skip-permissions.  Now implement the next step, then run code-reviewer, fix issues, run test-engineer, and archive. Check off the workflow as you complete it. 
+  - [ ] Read specification.md, blueprint.md and todo.md
+  - [ ] Review Project History.md
+  - [ ] Implement feature
+  - [ ] Run code-reviewer agent
+  - [ ] Fix Critical/High issues
+  - [ ] Run test-engineer agent
+  - [ ] Run archive-agent
+
+
 
 firebase config:
 // Import the functions you need from the SDKs you need

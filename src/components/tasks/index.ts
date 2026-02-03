@@ -13,3 +13,7 @@ export { TaskList, type TaskListProps } from './TaskList';
 export { SortableTaskItem, type SortableTaskItemProps } from './SortableTaskItem';
 export { SortablePriorityGroup, type SortablePriorityGroupProps } from './SortablePriorityGroup';
 export { DraggableTaskList, type DraggableTaskListProps } from './DraggableTaskList';
+
+// Forms
+export { TaskForm, type TaskFormProps } from './TaskForm';
+export { RecurrenceForm, type RecurrenceFormProps } from './RecurrenceForm';

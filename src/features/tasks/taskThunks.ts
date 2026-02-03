@@ -233,6 +233,26 @@ export const fetchTasksByDateRange = createAsyncThunk<
 });
 
 /**
+ * Fetch recurring tasks (tasks with recurrence patterns)
+ *
+ * Retrieves all recurring parent tasks for a user. These are tasks that have
+ * a recurrence pattern defined and will be used to generate instances for display.
+ */
+export const fetchRecurringTasks = createAsyncThunk<
+  Task[],
+  { userId: string },
+  { state: RootState; rejectValue: ThunkError }
+>('tasks/fetchRecurringTasks', async ({ userId }, { rejectWithValue }) => {
+  try {
+    const tasks = await tasksService.getRecurringTasks(userId);
+    return tasks;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch recurring tasks';
+    return rejectWithValue({ message });
+  }
+});
+
+/**
  * Payload for reordering tasks
  */
 export interface ReorderTasksPayload {

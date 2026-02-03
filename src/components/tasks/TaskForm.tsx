@@ -6,14 +6,23 @@
  */
 
 import { useState, useEffect, useRef, useCallback, type FormEvent } from 'react';
-import type { Task, PriorityLetter, Category, CreateTaskInput, TaskStatus } from '../../types';
+import type {
+  Task,
+  PriorityLetter,
+  Category,
+  CreateTaskInput,
+  TaskStatus,
+  RecurrencePattern,
+} from '../../types';
 import { TaskStatusSymbols, TaskStatusLabels } from '../../types';
 import { Input } from '../common/Input';
 import { TextArea } from '../common/TextArea';
 import { Select, type SelectOption } from '../common/Select';
 import { DatePicker } from '../common/DatePicker';
 import { TimePicker } from '../common/TimePicker';
+import { Toggle } from '../common/Toggle';
 import { CategorySelect } from '../categories/CategorySelect';
+import { RecurrenceForm } from './RecurrenceForm';
 
 // =============================================================================
 // Types
@@ -42,6 +51,7 @@ interface FormData {
   scheduledDate: Date | null;
   scheduledTime: string;
   status: TaskStatus;
+  recurrence: RecurrencePattern | null;
 }
 
 interface FormErrors {
@@ -67,6 +77,23 @@ const STATUS_OPTIONS: SelectOption[] = [
 // Validation constants
 const TITLE_MAX_LENGTH = 500;
 const DESCRIPTION_MAX_LENGTH = 5000;
+
+/**
+ * Default recurrence pattern used when enabling recurrence for the first time
+ */
+const DEFAULT_RECURRENCE_PATTERN: RecurrencePattern = {
+  type: 'daily',
+  interval: 1,
+  daysOfWeek: [],
+  dayOfMonth: null,
+  monthOfYear: null,
+  endCondition: {
+    type: 'never',
+    endDate: null,
+    maxOccurrences: null,
+  },
+  exceptions: [],
+};
 
 // =============================================================================
 // Helper Functions
@@ -159,6 +186,7 @@ function formDataToTaskInput(data: FormData, isEditMode: boolean): CreateTaskInp
     categoryId: data.categoryId || null,
     scheduledDate: data.scheduledDate,
     scheduledTime: data.scheduledTime || null,
+    recurrence: data.recurrence,
   };
 
   // Include status only in edit mode
@@ -208,6 +236,7 @@ export function TaskForm({
     scheduledDate: t?.scheduledDate || null,
     scheduledTime: t?.scheduledTime || '',
     status: t?.status || 'in_progress',
+    recurrence: t?.recurrence || null,
   });
 
   // Form state
@@ -254,6 +283,14 @@ export function TaskForm({
       [field]: true,
     }));
   }, []);
+
+  // Handle recurrence toggle - enables/disables recurrence with default pattern
+  const handleRecurrenceToggle = useCallback(
+    (checked: boolean) => {
+      handleChange('recurrence', checked ? DEFAULT_RECURRENCE_PATTERN : null);
+    },
+    [handleChange]
+  );
 
   // Handle form submission - memoized
   const handleSubmit = useCallback((e: FormEvent<HTMLFormElement>) => {
@@ -384,6 +421,26 @@ export function TaskForm({
           fullWidth
           disabled={isSubmitting}
         />
+      </div>
+
+      {/* Recurrence Section */}
+      <div className="space-y-4">
+        <Toggle
+          label="Repeat"
+          checked={formData.recurrence !== null}
+          onChange={handleRecurrenceToggle}
+          disabled={isSubmitting}
+          testId="repeat-toggle"
+        />
+
+        {formData.recurrence !== null && (
+          <RecurrenceForm
+            value={formData.recurrence}
+            onChange={(pattern) => handleChange('recurrence', pattern)}
+            disabled={isSubmitting}
+            testId="task-recurrence-form"
+          />
+        )}
       </div>
 
       {/* Edit Mode Only: Status and Created Date */}

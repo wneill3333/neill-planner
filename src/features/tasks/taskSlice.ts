@@ -6,8 +6,11 @@
  */
 
 import { createSlice, createSelector, type PayloadAction } from '@reduxjs/toolkit';
+import { startOfDay } from 'date-fns';
 import type { Task, SyncStatus, PriorityLetter } from '../../types';
 import type { RootState } from '../../store';
+import { generateRecurringInstances } from '../../utils/recurrenceUtils';
+import { sortTasksByPriority } from '../../utils/taskUtils';
 import {
   fetchTasksByDate,
   createTask as createTaskThunk,
@@ -17,6 +20,7 @@ import {
   restoreTask,
   batchUpdateTasksAsync,
   fetchTasksByDateRange,
+  fetchRecurringTasks,
   reorderTasks,
   reorderTasksAsync,
 } from './taskThunks';
@@ -33,6 +37,10 @@ export interface TasksState {
   tasks: Record<string, Task>;
   /** Task IDs indexed by date (ISO date string) for quick lookup */
   taskIdsByDate: Record<string, string[]>;
+  /** Recurring parent tasks (tasks with recurrence patterns) indexed by ID */
+  recurringParentTasks: Record<string, Task>;
+  /** Whether recurring parent tasks have been loaded */
+  recurringTasksLoaded: boolean;
   /** Currently selected date (ISO date string) */
   selectedDate: string;
   /** Loading state */
@@ -124,6 +132,8 @@ function removeTaskFromDateIndex(
 export const initialState: TasksState = {
   tasks: {},
   taskIdsByDate: {},
+  recurringParentTasks: {},
+  recurringTasksLoaded: false,
   selectedDate: getTodayString(),
   loading: false,
   error: null,
@@ -254,6 +264,8 @@ export const taskSlice = createSlice({
     clearTasks: (state) => {
       state.tasks = {};
       state.taskIdsByDate = {};
+      state.recurringParentTasks = {};
+      state.recurringTasksLoaded = false;
       state.error = null;
     },
 
@@ -531,6 +543,28 @@ export const taskSlice = createSlice({
       });
 
     // ==========================================================================
+    // fetchRecurringTasks
+    // ==========================================================================
+    builder
+      .addCase(fetchRecurringTasks.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchRecurringTasks.fulfilled, (state, action) => {
+        state.loading = false;
+        state.recurringTasksLoaded = true;
+
+        // Store recurring parent tasks
+        for (const task of action.payload) {
+          state.recurringParentTasks[task.id] = task;
+        }
+      })
+      .addCase(fetchRecurringTasks.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || 'Failed to fetch recurring tasks';
+      });
+
+    // ==========================================================================
     // reorderTasks
     // ==========================================================================
     builder
@@ -642,6 +676,48 @@ export const selectTasksByDate = createSelector(
   (tasks, taskIdsByDate, date): Task[] => {
     const taskIds = taskIdsByDate[date] || [];
     return taskIds.map((id) => tasks[id]).filter((task): task is Task => !!task);
+  }
+);
+
+/**
+ * Select tasks for a specific date, including recurring task instances.
+ *
+ * Combines regular tasks with generated instances from recurring parent tasks.
+ * Uses createSelector for memoization to prevent unnecessary re-renders.
+ *
+ * @param state - Redux state
+ * @param date - ISO date string (YYYY-MM-DD)
+ * @returns Array of tasks including both regular tasks and recurring instances, sorted by priority
+ */
+export const selectTasksWithRecurringInstances = createSelector(
+  [
+    (state: RootState) => state.tasks.tasks,
+    (state: RootState) => state.tasks.taskIdsByDate,
+    (state: RootState) => state.tasks.recurringParentTasks,
+    (_state: RootState, date: string) => date,
+  ],
+  (tasks, taskIdsByDate, recurringParentTasks, date): Task[] => {
+    // Get regular tasks for the date
+    const taskIds = taskIdsByDate[date] || [];
+    const regularTasks = taskIds.map((id) => tasks[id]).filter((task): task is Task => !!task);
+
+    // Parse date string to Date object (using UTC to avoid timezone issues)
+    const [year, month, day] = date.split('-').map(Number);
+    const dateObj = startOfDay(new Date(year, month - 1, day));
+
+    // Generate instances for all recurring parent tasks
+    const recurringInstances: Task[] = [];
+    for (const parentTask of Object.values(recurringParentTasks)) {
+      // Generate instances for this single date
+      const instances = generateRecurringInstances(parentTask, dateObj, dateObj);
+      recurringInstances.push(...instances);
+    }
+
+    // Combine regular tasks and instances
+    const allTasks = [...regularTasks, ...recurringInstances];
+
+    // Sort by priority (letter then number)
+    return sortTasksByPriority(allTasks);
   }
 );
 

@@ -613,3 +613,33 @@ export async function getAllTasksForUser(userId: string): Promise<Task[]> {
     throw new Error(`Failed to fetch all tasks: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
+
+/**
+ * Get all recurring tasks (tasks with recurrence patterns) for a user
+ * @param userId - The user's ID
+ * @returns Array of recurring parent tasks (tasks with recurrence !== null)
+ * @throws {ValidationError} If userId is invalid
+ */
+export async function getRecurringTasks(userId: string): Promise<Task[]> {
+  validateUserId(userId);
+
+  try {
+    const q = query(
+      collection(db, TASKS_COLLECTION),
+      where('userId', '==', userId),
+      where('deletedAt', '==', null),
+      orderBy('scheduledDate')
+    );
+
+    const querySnapshot = await getDocs(q);
+
+    // Filter for tasks with recurrence patterns (client-side filtering since Firestore
+    // doesn't support != null queries combined with other where clauses efficiently)
+    return querySnapshot.docs
+      .map(firestoreToTask)
+      .filter(task => task.recurrence !== null);
+  } catch (error) {
+    console.error('Error fetching recurring tasks:', error);
+    throw new Error(`Failed to fetch recurring tasks: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}

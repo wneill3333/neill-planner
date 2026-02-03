@@ -780,4 +780,147 @@ describe('TaskForm - Field Interactions', () => {
       expect(callArgs.categoryId).toBe('cat-1');
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // Recurrence Integration Tests
+  // ---------------------------------------------------------------------------
+
+  describe('Recurrence Integration', () => {
+    it('should render Repeat toggle', () => {
+      render(<TaskForm onSubmit={() => {}} onCancel={() => {}} />);
+
+      expect(screen.getByTestId('repeat-toggle')).toBeInTheDocument();
+      expect(screen.getByText('Repeat')).toBeInTheDocument();
+    });
+
+    it('should not show RecurrenceForm by default', () => {
+      render(<TaskForm onSubmit={() => {}} onCancel={() => {}} />);
+
+      expect(screen.queryByTestId('task-recurrence-form')).not.toBeInTheDocument();
+    });
+
+    it('should show RecurrenceForm when Repeat toggle is enabled', async () => {
+      const user = userEvent.setup();
+      render(<TaskForm onSubmit={() => {}} onCancel={() => {}} />);
+
+      await user.click(screen.getByTestId('repeat-toggle'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('task-recurrence-form')).toBeInTheDocument();
+      });
+    });
+
+    it('should hide RecurrenceForm when Repeat toggle is disabled', async () => {
+      const user = userEvent.setup();
+      render(<TaskForm onSubmit={() => {}} onCancel={() => {}} />);
+
+      // Enable recurrence
+      await user.click(screen.getByTestId('repeat-toggle'));
+      expect(screen.getByTestId('task-recurrence-form')).toBeInTheDocument();
+
+      // Disable recurrence
+      await user.click(screen.getByTestId('repeat-toggle'));
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('task-recurrence-form')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should submit with null recurrence when toggle is off', async () => {
+      const user = userEvent.setup();
+      const handleSubmit = vi.fn();
+
+      render(<TaskForm onSubmit={handleSubmit} onCancel={() => {}} />);
+
+      // Fill required fields
+      await user.type(screen.getByLabelText(/title/i), 'Non-recurring task');
+      const dateInput = screen.getByLabelText(/scheduled date/i);
+      fireEvent.change(dateInput, { target: { value: getFutureDateString() } });
+
+      // Submit without enabling recurrence
+      await user.click(screen.getByText(/create task/i));
+
+      await waitFor(() => {
+        expect(handleSubmit).toHaveBeenCalled();
+        const callArgs = handleSubmit.mock.calls[0][0] as CreateTaskInput;
+        expect(callArgs.recurrence).toBeNull();
+      });
+    });
+
+    it('should submit with recurrence pattern when toggle is on', async () => {
+      const user = userEvent.setup();
+      const handleSubmit = vi.fn();
+
+      render(<TaskForm onSubmit={handleSubmit} onCancel={() => {}} />);
+
+      // Fill required fields
+      await user.type(screen.getByLabelText(/title/i), 'Recurring task');
+      const dateInput = screen.getByLabelText(/scheduled date/i);
+      fireEvent.change(dateInput, { target: { value: getFutureDateString() } });
+
+      // Enable recurrence
+      await user.click(screen.getByTestId('repeat-toggle'));
+
+      // Submit
+      await user.click(screen.getByText(/create task/i));
+
+      await waitFor(() => {
+        expect(handleSubmit).toHaveBeenCalled();
+        const callArgs = handleSubmit.mock.calls[0][0] as CreateTaskInput;
+        expect(callArgs.recurrence).not.toBeNull();
+        expect(callArgs.recurrence?.type).toBe('daily');
+        expect(callArgs.recurrence?.interval).toBe(1);
+      });
+    });
+
+    it('should initialize toggle from existing task recurrence', () => {
+      const task = createMockTask({
+        recurrence: {
+          type: 'weekly',
+          interval: 1,
+          daysOfWeek: [1, 3, 5],
+          dayOfMonth: null,
+          monthOfYear: null,
+          endCondition: { type: 'never', endDate: null, maxOccurrences: null },
+          exceptions: [],
+        },
+      });
+
+      render(<TaskForm task={task} onSubmit={() => {}} onCancel={() => {}} />);
+
+      // Toggle should be on
+      const toggle = screen.getByTestId('repeat-toggle');
+      expect(toggle).toHaveAttribute('aria-checked', 'true');
+
+      // RecurrenceForm should be visible
+      expect(screen.getByTestId('task-recurrence-form')).toBeInTheDocument();
+    });
+
+    it('should allow changing recurrence type', async () => {
+      const user = userEvent.setup();
+      const handleSubmit = vi.fn();
+
+      render(<TaskForm onSubmit={handleSubmit} onCancel={() => {}} />);
+
+      // Fill required fields
+      await user.type(screen.getByLabelText(/title/i), 'Weekly task');
+      const dateInput = screen.getByLabelText(/scheduled date/i);
+      fireEvent.change(dateInput, { target: { value: getFutureDateString() } });
+
+      // Enable recurrence
+      await user.click(screen.getByTestId('repeat-toggle'));
+
+      // Change to weekly
+      await user.selectOptions(screen.getByTestId('task-recurrence-form-type'), 'weekly');
+
+      // Submit
+      await user.click(screen.getByText(/create task/i));
+
+      await waitFor(() => {
+        expect(handleSubmit).toHaveBeenCalled();
+        const callArgs = handleSubmit.mock.calls[0][0] as CreateTaskInput;
+        expect(callArgs.recurrence?.type).toBe('weekly');
+      });
+    });
+  });
 });

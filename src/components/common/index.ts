@@ -14,6 +14,7 @@ export { DragHandle } from './DragHandle';
 export { DateNavigation } from './DateNavigation';
 export { Tabs } from './Tabs';
 export { TabPanel } from './TabPanel';
+export { Toggle } from './Toggle';
 
 // Export types
 export type { InputProps } from './Input';
@@ -27,3 +28,4 @@ export type { DragHandleProps } from './DragHandle';
 export type { DateNavigationProps } from './DateNavigation';
 export type { TabsProps, Tab } from './Tabs';
 export type { TabPanelProps } from './TabPanel';
+export type { ToggleProps } from './Toggle';

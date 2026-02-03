@@ -8,14 +8,14 @@
 import { useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
-  selectTasksByDate,
+  selectTasksWithRecurringInstances,
   selectTasksLoading,
   selectTasksError,
   selectTasksSyncStatus,
   selectTasksLoadedForDate,
   selectSelectedDate,
 } from './taskSlice';
-import { fetchTasksByDate, updateTaskAsync } from './taskThunks';
+import { fetchTasksByDate, fetchRecurringTasks, updateTaskAsync } from './taskThunks';
 import { selectCategoriesMap, selectCategoriesInitialized } from '../categories/categorySlice';
 import { fetchCategories } from '../categories/categoryThunks';
 import type { Task, Category, TaskStatus } from '../../types';
@@ -106,11 +106,13 @@ export function useTasksByDate(date: string, userId: string | null): UseTasksByD
 
   // Ref to track if a fetch is in progress to prevent race conditions
   const tasksFetchInProgressRef = useRef(false);
+  const recurringTasksFetchInProgressRef = useRef(false);
   const categoriesFetchInProgressRef = useRef(false);
 
   // Memoize selectors to prevent creating new function references on every render
   const selectTasksForDate = useMemo(
-    () => (state: Parameters<typeof selectTasksByDate>[0]) => selectTasksByDate(state, date),
+    () => (state: Parameters<typeof selectTasksWithRecurringInstances>[0]) =>
+      selectTasksWithRecurringInstances(state, date),
     [date]
   );
   const selectIsLoadedForDate = useMemo(
@@ -124,6 +126,7 @@ export function useTasksByDate(date: string, userId: string | null): UseTasksByD
   const error = useAppSelector(selectTasksError);
   const syncStatus = useAppSelector(selectTasksSyncStatus);
   const isLoaded = useAppSelector(selectIsLoadedForDate);
+  const recurringTasksLoaded = useAppSelector((state) => state.tasks.recurringTasksLoaded);
   const categoriesMap = useAppSelector(selectCategoriesMap);
   const categoriesInitialized = useAppSelector(selectCategoriesInitialized);
 
@@ -160,6 +163,39 @@ export function useTasksByDate(date: string, userId: string | null): UseTasksByD
       tasksFetchInProgressRef.current = false;
     };
   }, [dispatch, userId, date, isLoaded]);
+
+  // Fetch recurring tasks if not already loaded - with race condition protection
+  useEffect(() => {
+    // Early return if conditions not met
+    if (!userId || recurringTasksLoaded) return;
+
+    // Use atomic flag check to prevent race condition
+    if (recurringTasksFetchInProgressRef.current) return;
+
+    recurringTasksFetchInProgressRef.current = true;
+    let aborted = false;
+
+    const fetchData = async () => {
+      try {
+        await dispatch(fetchRecurringTasks({ userId })).unwrap();
+      } catch (error) {
+        if (!aborted) {
+          console.error('Failed to fetch recurring tasks:', error);
+        }
+      } finally {
+        if (!aborted) {
+          recurringTasksFetchInProgressRef.current = false;
+        }
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      aborted = true;
+      recurringTasksFetchInProgressRef.current = false;
+    };
+  }, [dispatch, userId, recurringTasksLoaded]);
 
   // Fetch categories if not initialized - with race condition protection
   useEffect(() => {
@@ -206,9 +242,10 @@ export function useTasksByDate(date: string, userId: string | null): UseTasksByD
   // Memoized update task status function
   const updateTaskStatus = useCallback(
     async (taskId: string, status: TaskStatus) => {
-      await dispatch(updateTaskAsync({ id: taskId, status }));
+      if (!userId) return;
+      await dispatch(updateTaskAsync({ id: taskId, status, userId }));
     },
-    [dispatch]
+    [dispatch, userId]
   );
 
   return {
