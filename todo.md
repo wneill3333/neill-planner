@@ -3,7 +3,7 @@
 **Project:** Neill Planner - Franklin-Covey Productivity Application
 **Created:** January 24, 2026
 **Status:** In Progress
-**Last Updated:** February 2, 2026 (Step 6.1.1 Complete)
+**Last Updated:** February 2, 2026 (Step 6.1.2 Complete)
 **Estimated Duration:** 18-27 days
 
 ---
@@ -17,14 +17,14 @@
 | Phase 3: Core Tasks | ✅ Complete | 59/59 |
 | Phase 4: Date & Daily View | ✅ Complete | 26/26 |
 | Phase 5: Categories | ✅ Complete | 15/15 |
-| Phase 6: Recurring Tasks | 🔄 In Progress | 1/20 |
+| Phase 6: Recurring Tasks | 🔄 In Progress | 2/20 |
 | Phase 7: Events & Calendar | ⬜ Not Started | 0/22 |
 | Phase 8: Notes System | ⬜ Not Started | 0/16 |
 | Phase 9: Google Calendar | ⬜ Not Started | 0/14 |
 | Phase 10: Reminders | ⬜ Not Started | 0/12 |
 | Phase 11: Offline Support | ⬜ Not Started | 0/12 |
 | Phase 12: Polish & Deploy | ⬜ Not Started | 0/18 |
-| **TOTAL** | | **151/261** |
+| **TOTAL** | | **152/261** |
 
 ---
 
@@ -1450,20 +1450,20 @@
 
 ---
 
-### Step 6.1.2: Integrate Recurrence with Task Form
+### Step 6.1.2: Integrate Recurrence with Task Form ✅ Completed 2026-02-02
 
-- [ ] **Update TaskForm**
-  - [ ] Add "Repeat" toggle
-  - [ ] Show RecurrenceForm when enabled
-  - [ ] Save pattern with task
+- [x] **Update TaskForm** ✅
+  - [x] Add Toggle component for enabling/disabling recurrence
+  - [x] Show RecurrenceForm when enabled
+  - [x] Save pattern with task
 
-- [ ] **Update TaskItem**
-  - [ ] Show recurrence icon
+- [x] **Update TaskItem** ✅
+  - [x] Show recurrence icon (already implemented)
 
-- [ ] **Write tests**
-  - [ ] Test toggle shows/hides form
-  - [ ] Test pattern saved
-  - [ ] Test icon displayed
+- [x] **Write tests** ✅
+  - [x] Test toggle shows/hides form (8 tests)
+  - [x] Test pattern saved
+  - [x] Test icon displayed
 
 ---
 
@@ -2123,6 +2123,7 @@ _Use this section to track progress, blockers, and decisions._
 | 2026-02-02 | Step 5.3.1 complete - Category Assignment in Task Form. Created CategorySelect custom dropdown component with color dots next to category names, full keyboard navigation (Arrow keys, Enter, Escape, Home, End), accessibility (ARIA listbox/option pattern), click-outside-to-close. Replaced native Select in TaskForm with CategorySelect. Code review optimizations applied: React.memo, useMemo for options, useCallback for handleKeyDown. 55 new tests. Total: 1763 tests passing across 60 test files. **Phase 5 Complete!** |
 | 2026-02-02 | UI Change - Priority input changed from dropdown to text field. Users now type "A1", "B2", "C" etc. directly. Added parsePriority() function, auto-uppercase, validation (letter A-D required, number 1-99 optional). 5 new tests. Total: 1768 tests passing across 60 test files. |
 | 2026-02-02 | Step 6.1.1 complete - RecurrenceForm component. Supports daily/weekly/monthly/yearly/custom recurrence types with button toggles. Interval input, days of week checkboxes (Su-Sa), day/month selectors, end conditions (never/date/occurrences). Touched state validation for UX. Full accessibility support (ARIA, keyboard nav). Code review fixes: prop sync, stale closure fixes. 36 new tests. Total: 1804 tests passing across 61 test files. **Phase 6 Started!** |
+| 2026-02-02 | Step 6.1.2 complete - Recurrence integration with Task Form. Created Toggle component (reusable switch with accessibility). Updated TaskForm to add Repeat toggle, conditional RecurrenceForm display, default recurrence pattern when enabled. Added 34 new tests (26 Toggle + 8 TaskForm recurrence integration). Total: 1838 tests passing across 62 test files. **Phase 6: 2/20 complete (10%).** |
 
 ## Blockers
 

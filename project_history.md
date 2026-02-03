@@ -3,11 +3,89 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 2, 2026 (Priority Text Input UI Change)
+**Last Updated:** February 2, 2026 (Step 6.1.2 - Recurrence Integration)
 
 ---
 
 ## SESSION LOG
+
+### SESSION: Step 6.1.2 - Integrate Recurrence with Task Form
+**Date:** February 2, 2026
+**Duration:** Complete session
+**Status:** ✅ COMPLETED
+
+#### Summary
+Completed Step 6.1.2 by integrating the RecurrenceForm component with TaskForm. Created a reusable Toggle component for enabling/disabling recurrence patterns. Users can now click the Repeat toggle to show/hide the RecurrenceForm, and recurrence patterns are saved with tasks. 34 new tests passing, bringing total to 1838 tests across 62 test files.
+
+#### Key Achievements
+- **Toggle Component** - `src/components/common/Toggle.tsx`
+  - Reusable toggle switch for enabling/disabling features
+  - Complete accessibility: role="switch", aria-checked, keyboard navigation (Space to toggle)
+  - Click and keyboard support (Enter/Space to toggle)
+  - Loading state with spinner during updates
+  - Size variants (sm, md, lg)
+  - Full ARIA attributes (aria-label, aria-disabled, aria-busy)
+  - Memoized with React.memo for performance
+  - 26 comprehensive tests covering all interactions
+
+- **TaskForm Recurrence Integration** - `src/components/tasks/TaskForm.tsx`
+  - Added Toggle import and RecurrenceForm import
+  - Added recurrence to FormData type
+  - DEFAULT_RECURRENCE_PATTERN constant for new patterns
+  - Memoized handleRecurrenceToggle callback with useCallback
+  - Conditional RecurrenceForm rendering based on toggle state
+  - Recurrence data passed to onSubmit handler
+  - 8 new integration tests
+
+- **Component Exports** - Updated `src/components/common/index.ts`
+  - Added Toggle export for reuse across application
+  - RecurrenceForm already exported from Step 6.1.1
+
+#### Code Review Issues Fixed
+- Memoized Toggle handlers (handleClick, handleKeyDown) with useCallback
+- Extracted DEFAULT_RECURRENCE_PATTERN constant for maintainability
+- Created memoized handleRecurrenceToggle in TaskForm
+- Verified prop synchronization between Toggle and form state
+
+#### Test Results
+- New tests: 34 (26 Toggle + 8 TaskForm recurrence integration)
+- Before: 1804 tests passing across 61 test files
+- After: **1838 tests passing across 62 test files** (+34 tests)
+- All tests passing, 0 regressions
+- Status: PRODUCTION READY
+
+#### Progress Update
+- **Phase 6: 2/20 steps complete (10%)**
+- Total: 152/261 tasks complete (~58%)
+- Overall progress: ~58% complete
+
+#### Files Created/Modified
+- **Created:** `src/components/common/Toggle.tsx` - Toggle switch component with full accessibility
+- **Created:** `src/components/common/__tests__/Toggle.test.tsx` - 26 comprehensive tests
+- **Modified:** `src/components/tasks/TaskForm.tsx` - Added Toggle and RecurrenceForm integration
+- **Modified:** `src/components/tasks/__tests__/TaskForm.test.tsx` - Added 8 recurrence integration tests
+- **Modified:** `src/components/common/index.ts` - Added Toggle export
+
+#### Key Technical Decisions
+1. **Reusable Toggle component** - Can be used throughout app for feature toggles (notifications, dark mode, etc.)
+2. **Role="switch" accessibility** - Standard ARIA pattern for toggle controls
+3. **Space key to toggle** - Familiar keyboard interaction for users
+4. **DEFAULT_RECURRENCE_PATTERN constant** - Provides sensible defaults when toggle is enabled
+5. **Memoization strategy** - Both component and handlers memoized for performance
+
+#### Next Steps
+1. **Step 6.2.1** - Instance Generation Logic
+   - Create recurrenceUtils.ts with generateRecurringInstances function
+   - Handle all pattern types (daily, weekly, monthly, yearly, custom)
+   - Respect end conditions and exceptions
+   - Create comprehensive tests for edge cases
+
+2. **Step 6.2.2** - Display Recurring Instances
+   - Update task fetching to generate instances for date range
+   - Display recurring task instances on correct dates
+   - Show recurrence indicator (↻) on instances
+
+---
 
 ### SESSION: Step 6.1.1 - Recurrence Pattern Form (PHASE 6 STARTED)
 **Date:** February 2, 2026
@@ -1042,7 +1120,13 @@ Implemented complete task editing workflow with delete confirmation, field updat
 - 5.2.1 Color Picker Component ✅ (completed as part of 5.1.2)
 - 5.3.1 Category Assignment in Task Form ✅
 
-### Overall Project Progress: 151/261 (~58%)
+### Phase 6: Recurring Tasks - 2/20 (10%) 🔄 IN PROGRESS
+
+**Completed:**
+- 6.1.1 Recurrence Pattern Form ✅
+- 6.1.2 Integrate Recurrence with Task Form ✅
+
+### Overall Project Progress: 152/261 (~58%)
 
 | Phase | Status | Progress |
 |-------|--------|----------|
@@ -1051,14 +1135,14 @@ Implemented complete task editing workflow with delete confirmation, field updat
 | Phase 3: Core Tasks | ✅ Complete | 59/59 |
 | Phase 4: Date & Daily View | ✅ Complete | 26/26 |
 | Phase 5: Categories | ✅ Complete | 15/15 |
-| Phase 6: Recurring Tasks | 🔄 In Progress | 1/20 |
+| Phase 6: Recurring Tasks | 🔄 In Progress | 2/20 |
 | Phase 7: Events & Calendar | ⬜ Not Started | 0/22 |
 | Phase 8: Notes System | ⬜ Not Started | 0/16 |
 | Phase 9: Google Calendar | ⬜ Not Started | 0/14 |
 | Phase 10: Reminders | ⬜ Not Started | 0/12 |
 | Phase 11: Offline Support | ⬜ Not Started | 0/12 |
 | Phase 12: Polish & Deploy | ⬜ Not Started | 0/18 |
-| **TOTAL** | | **148/261** |
+| **TOTAL** | | **152/261** |
 
 ### Technology Stack
 - **Frontend:** React 19 with TypeScript
@@ -1069,8 +1153,8 @@ Implemented complete task editing workflow with delete confirmation, field updat
 - **Build Tool:** Vite
 
 ### Test Status Summary
-- **Total Tests:** 1804 tests passing
-- **Test Files:** 61 files
+- **Total Tests:** 1838 tests passing
+- **Test Files:** 62 files
 - **Key Test Files:**
   - taskSlice.test.ts - 55 tests
   - taskThunks.test.ts - 33 tests (+ 13 reorderTasksAsync tests)
