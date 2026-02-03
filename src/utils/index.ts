@@ -49,3 +49,11 @@ export { groupTasksByPriority, sortTasksByPriority } from './taskUtils';
 
 // String utilities
 export { capitalizeWords } from './stringUtils';
+
+// Recurrence utilities
+export {
+  generateRecurringInstances,
+  getNextOccurrence,
+  isDateInExceptions,
+  hasReachedEndCondition,
+} from './recurrenceUtils';
