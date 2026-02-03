@@ -3,7 +3,7 @@
 **Project:** Neill Planner - Franklin-Covey Productivity Application
 **Created:** January 24, 2026
 **Status:** In Progress
-**Last Updated:** February 3, 2026 (Step 6.3.1 Edit Recurring Options Complete)
+**Last Updated:** February 3, 2026 (Step 6.3.2 - Delete Recurring Options Complete)
 **Estimated Duration:** 18-27 days
 
 ---
@@ -17,14 +17,14 @@
 | Phase 3: Core Tasks | ✅ Complete | 59/59 |
 | Phase 4: Date & Daily View | ✅ Complete | 26/26 |
 | Phase 5: Categories | ✅ Complete | 15/15 |
-| Phase 6: Recurring Tasks | 🔄 In Progress | 5/20 |
+| Phase 6: Recurring Tasks | 🔄 In Progress | 6/20 |
 | Phase 7: Events & Calendar | ⬜ Not Started | 0/22 |
 | Phase 8: Notes System | ⬜ Not Started | 0/16 |
 | Phase 9: Google Calendar | ⬜ Not Started | 0/14 |
 | Phase 10: Reminders | ⬜ Not Started | 0/12 |
 | Phase 11: Offline Support | ⬜ Not Started | 0/12 |
 | Phase 12: Polish & Deploy | ⬜ Not Started | 0/18 |
-| **TOTAL** | | **155/261** |
+| **TOTAL** | | **156/261** |
 
 ---
 
@@ -1540,22 +1540,22 @@
 
 ---
 
-### Step 6.3.2: Delete Recurring Options
+### Step 6.3.2: Delete Recurring Options ✅ Completed 2026-02-03
 
-- [ ] **Create delete dialog**
-  - [ ] "Delete this occurrence" option
-  - [ ] "Delete all future" option
+- [x] **Create delete dialog** ✅
+  - [x] "Delete this occurrence" option
+  - [x] "Delete all future" option
 
-- [ ] **Implement "this only"**
-  - [ ] Add to exceptions
+- [x] **Implement "this only"** ✅
+  - [x] Add to exceptions
 
-- [ ] **Implement "all future"**
-  - [ ] Set end date to today
+- [x] **Implement "all future"** ✅
+  - [x] Set end date to day before instance
 
-- [ ] **Write tests**
-  - [ ] Test dialog appears
-  - [ ] Test "this only" adds exception
-  - [ ] Test "all future" ends series
+- [x] **Write tests** ✅ 24 new tests passing
+  - [x] Test dialog appears (14 RecurringDeleteDialog tests)
+  - [x] Test "this only" adds exception (5 deleteRecurringInstanceOnly tests)
+  - [x] Test "all future" ends series (5 deleteRecurringFuture tests)
 
 ---
 
