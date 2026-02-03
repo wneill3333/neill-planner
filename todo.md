@@ -3,7 +3,7 @@
 **Project:** Neill Planner - Franklin-Covey Productivity Application
 **Created:** January 24, 2026
 **Status:** In Progress
-**Last Updated:** February 2, 2026 (Step 6.1.2 Complete)
+**Last Updated:** February 2, 2026 (Step 6.2.1 Complete)
 **Estimated Duration:** 18-27 days
 
 ---
@@ -17,14 +17,14 @@
 | Phase 3: Core Tasks | ✅ Complete | 59/59 |
 | Phase 4: Date & Daily View | ✅ Complete | 26/26 |
 | Phase 5: Categories | ✅ Complete | 15/15 |
-| Phase 6: Recurring Tasks | 🔄 In Progress | 2/20 |
+| Phase 6: Recurring Tasks | 🔄 In Progress | 3/20 |
 | Phase 7: Events & Calendar | ⬜ Not Started | 0/22 |
 | Phase 8: Notes System | ⬜ Not Started | 0/16 |
 | Phase 9: Google Calendar | ⬜ Not Started | 0/14 |
 | Phase 10: Reminders | ⬜ Not Started | 0/12 |
 | Phase 11: Offline Support | ⬜ Not Started | 0/12 |
 | Phase 12: Polish & Deploy | ⬜ Not Started | 0/18 |
-| **TOTAL** | | **152/261** |
+| **TOTAL** | | **153/261** |
 
 ---
 
@@ -1471,18 +1471,22 @@
 
 ### Step 6.2.1: Instance Generation Logic
 
-- [ ] **Create recurrence utilities**
-  - [ ] Create `src/utils/recurrenceUtils.ts`
-  - [ ] Implement generateRecurringInstances
-  - [ ] Handle all pattern types
-  - [ ] Respect end conditions
-  - [ ] Handle exceptions
+- [x] **Create recurrence utilities** ✅ Completed 2026-02-02
+  - [x] Create `src/utils/recurrenceUtils.ts`
+  - [x] Implement generateRecurringInstances
+  - [x] Handle all pattern types (daily, weekly, monthly, yearly)
+  - [x] Respect end conditions (never, date, occurrences)
+  - [x] Handle exceptions (skip dates)
+  - [x] Handle edge cases (Feb 29, month-end dates)
 
-- [ ] **Write tests**
-  - [ ] Test daily generates correct dates
-  - [ ] Test weekly handles days
-  - [ ] Test monthly edge cases
-  - [ ] Test end conditions
+- [x] **Write tests** ✅ Completed 2026-02-02 (57 tests passing)
+  - [x] Test daily generates correct dates
+  - [x] Test weekly handles days (single and multiple)
+  - [x] Test monthly edge cases (31st on shorter months)
+  - [x] Test yearly edge cases (Feb 29 on non-leap years)
+  - [x] Test end conditions (never, date, occurrences)
+  - [x] Test exceptions are excluded
+  - [x] Test instance properties (ID format, parent reference, inheritance)
 
 ---
 
