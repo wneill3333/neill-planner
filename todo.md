@@ -3,7 +3,7 @@
 **Project:** Neill Planner - Franklin-Covey Productivity Application
 **Created:** January 24, 2026
 **Status:** In Progress
-**Last Updated:** February 3, 2026 (Step 7.1.1 - Event Service Layer)
+**Last Updated:** February 3, 2026 (Step 7.2.1 - Event Form Component)
 **Estimated Duration:** 18-27 days
 
 ---
@@ -18,13 +18,13 @@
 | Phase 4: Date & Daily View | ✅ Complete | 26/26 |
 | Phase 5: Categories | ✅ Complete | 15/15 |
 | Phase 6: Recurring Tasks | ✅ Complete | 6/6 |
-| Phase 7: Events & Calendar | 🔄 In Progress | 1/5 |
+| Phase 7: Events & Calendar | 🔄 In Progress | 2/5 |
 | Phase 8: Notes System | ⬜ Not Started | 0/16 |
 | Phase 9: Google Calendar | ⬜ Not Started | 0/14 |
 | Phase 10: Reminders | ⬜ Not Started | 0/12 |
 | Phase 11: Offline Support | ⬜ Not Started | 0/12 |
 | Phase 12: Polish & Deploy | ⬜ Not Started | 0/18 |
-| **TOTAL** | | **158/261** |
+| **TOTAL** | | **159/261** |
 
 ---
 
@@ -1616,18 +1616,18 @@
 
 ### Step 7.2.1: Event Form
 
-- [ ] **Create EventForm component**
-  - [ ] Title, description
-  - [ ] Start time, end time pickers
-  - [ ] Location
-  - [ ] Category
-  - [ ] Confidential toggle with alternate title
-  - [ ] Recurrence (reuse RecurrenceForm)
+- [x] **Create EventForm component** ✅ Completed 2026-02-03
+  - [x] Title, description
+  - [x] Start time, end time pickers
+  - [x] Location
+  - [x] Category
+  - [x] Confidential toggle with alternate title
+  - [x] Recurrence (reuse RecurrenceForm)
 
-- [ ] **Write tests**
-  - [ ] Test all fields
-  - [ ] Test time validation
-  - [ ] Test confidential field
+- [x] **Write tests** ✅ Completed 2026-02-03
+  - [x] Test all fields
+  - [x] Test time validation
+  - [x] Test confidential field
 
 ---
 
