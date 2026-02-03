@@ -43,3 +43,18 @@ export {
   getCategoryCount,
   categoryNameExists,
 } from './categories.service';
+
+// Event service functions
+export {
+  createEvent,
+  getEvent,
+  getUserEvents,
+  getEventsByDate,
+  getEventsByDateRange,
+  updateEvent,
+  deleteEvent,
+  hardDeleteEvent,
+  restoreEvent,
+  getRecurringEvents,
+  getAllEventsForUser,
+} from './events.service';

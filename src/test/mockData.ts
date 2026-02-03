@@ -45,7 +45,6 @@ export interface CreateMockTaskOptions {
   title?: string;
   description?: string;
   scheduledDate?: Date | null;
-  scheduledTime?: string | null;
   priorityLetter?: PriorityLetter;
   priorityNumber?: number;
   status?: TaskStatus;
@@ -102,7 +101,6 @@ export function createMockTask(options: CreateMockTaskOptions = {}): Task {
     },
     status: options.status ?? 'in_progress',
     scheduledDate: options.scheduledDate !== undefined ? options.scheduledDate : defaultDate,
-    scheduledTime: options.scheduledTime ?? null,
     recurrence,
     linkedNoteIds: options.linkedNoteIds ?? [],
     linkedEventId: options.linkedEventId ?? null,
@@ -298,15 +296,20 @@ export interface CreateMockEventOptions {
   id?: string;
   userId?: string;
   title?: string;
-  description?: string | null;
-  date?: string;
-  startTime?: string;
-  endTime?: string;
-  location?: string | null;
+  description?: string;
+  startTime?: Date;
+  endTime?: Date;
+  location?: string;
   categoryId?: string | null;
   isConfidential?: boolean;
   alternateTitle?: string | null;
-  googleEventId?: string | null;
+  recurrence?: RecurrencePattern | null;
+  linkedTaskIds?: string[];
+  linkedNoteIds?: string[];
+  googleCalendarId?: string | null;
+  isRecurringInstance?: boolean;
+  recurringParentId?: string | null;
+  instanceDate?: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date | null;
@@ -314,29 +317,33 @@ export interface CreateMockEventOptions {
 
 /**
  * Create a mock event with sensible defaults
+ * Matches the actual Event type from types/event.types.ts
  */
 export function createMockEvent(options: CreateMockEventOptions = {}): Event {
   eventCounter++;
   const id = options.id ?? `event-${eventCounter}`;
   const now = new Date();
+  const defaultStart = new Date('2024-01-15T09:00:00.000Z');
+  const defaultEnd = new Date('2024-01-15T10:00:00.000Z');
 
   return {
     id,
     userId: options.userId ?? 'user-1',
     title: options.title ?? `Test Event ${eventCounter}`,
-    description: options.description ?? null,
-    date: options.date ?? '2024-01-15',
-    startTime: options.startTime ?? '09:00',
-    endTime: options.endTime ?? '10:00',
-    location: options.location ?? null,
+    description: options.description ?? '',
+    startTime: options.startTime ?? defaultStart,
+    endTime: options.endTime ?? defaultEnd,
+    location: options.location ?? '',
     categoryId: options.categoryId ?? null,
-    isAllDay: false,
-    recurrence: null,
-    linkedTaskIds: [],
-    linkedNoteIds: [],
     isConfidential: options.isConfidential ?? false,
     alternateTitle: options.alternateTitle ?? null,
-    googleEventId: options.googleEventId ?? null,
+    recurrence: options.recurrence ?? null,
+    linkedTaskIds: options.linkedTaskIds ?? [],
+    linkedNoteIds: options.linkedNoteIds ?? [],
+    googleCalendarId: options.googleCalendarId ?? null,
+    isRecurringInstance: options.isRecurringInstance ?? false,
+    recurringParentId: options.recurringParentId ?? null,
+    instanceDate: options.instanceDate ?? null,
     createdAt: options.createdAt ?? now,
     updatedAt: options.updatedAt ?? now,
     deletedAt: options.deletedAt ?? null,
@@ -349,6 +356,7 @@ export function createMockEvent(options: CreateMockEventOptions = {}): Event {
 
 import type { TasksState } from '../features/tasks/taskSlice';
 import type { CategoriesState } from '../features/categories/categorySlice';
+import type { EventsState } from '../features/events/eventSlice';
 
 /**
  * Get ISO date string from a Date object
@@ -367,6 +375,8 @@ export function createMockTasksState(options: {
   loading?: boolean;
   error?: string | null;
   syncStatus?: 'synced' | 'syncing' | 'error' | 'offline';
+  recurringParentTasks?: Record<string, Task>;
+  recurringTasksLoaded?: boolean;
 } = {}): TasksState {
   const tasks = options.tasks ?? [];
   const tasksRecord: Record<string, Task> = {};
@@ -390,6 +400,8 @@ export function createMockTasksState(options: {
     loading: options.loading ?? false,
     error: options.error ?? null,
     syncStatus: options.syncStatus ?? 'synced',
+    recurringParentTasks: options.recurringParentTasks ?? {},
+    recurringTasksLoaded: options.recurringTasksLoaded ?? false,
     reorderRollbackState: null,
   };
 }
@@ -420,5 +432,42 @@ export function createMockCategoriesState(options: {
     error: options.error ?? null,
     syncStatus: options.syncStatus ?? 'synced',
     initialized: options.initialized ?? true,
+  };
+}
+
+/**
+ * Create a mock events state
+ */
+export function createMockEventsState(options: {
+  events?: Event[];
+  loading?: boolean;
+  error?: string | null;
+  syncStatus?: 'synced' | 'syncing' | 'error' | 'offline';
+  recurringParentEvents?: Record<string, Event>;
+  recurringEventsLoaded?: boolean;
+} = {}): EventsState {
+  const events = options.events ?? [];
+  const eventsRecord: Record<string, Event> = {};
+  const eventIdsByDate: Record<string, string[]> = {};
+
+  for (const event of events) {
+    eventsRecord[event.id] = event;
+    const dateKey = getDateString(event.startTime);
+    if (dateKey) {
+      if (!eventIdsByDate[dateKey]) {
+        eventIdsByDate[dateKey] = [];
+      }
+      eventIdsByDate[dateKey].push(event.id);
+    }
+  }
+
+  return {
+    events: eventsRecord,
+    eventIdsByDate,
+    recurringParentEvents: options.recurringParentEvents ?? {},
+    recurringEventsLoaded: options.recurringEventsLoaded ?? false,
+    loading: options.loading ?? false,
+    error: options.error ?? null,
+    syncStatus: options.syncStatus ?? 'synced',
   };
 }

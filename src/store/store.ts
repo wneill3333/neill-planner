@@ -8,6 +8,7 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import taskReducer from '../features/tasks/taskSlice';
 import categoryReducer from '../features/categories/categorySlice';
+import eventReducer from '../features/events/eventSlice';
 
 // =============================================================================
 // Root Reducer
@@ -19,6 +20,7 @@ import categoryReducer from '../features/categories/categorySlice';
 const rootReducer = combineReducers({
   tasks: taskReducer,
   categories: categoryReducer,
+  events: eventReducer,
 });
 
 // =============================================================================
@@ -44,17 +46,26 @@ export const store = configureStore({
           'categories/fetchCategories/fulfilled',
           'categories/createCategory/fulfilled',
           'categories/updateCategoryAsync/fulfilled',
+          'events/fetchUserEvents/fulfilled',
+          'events/fetchEventsByDate/fulfilled',
+          'events/createEvent/fulfilled',
+          'events/updateEventAsync/fulfilled',
+          'events/fetchRecurringEvents/fulfilled',
         ],
-        // Ignore these paths in the state (Date objects in tasks and categories)
+        // Ignore these paths in the state (Date objects in tasks, categories, and events)
         ignoredPaths: [
           'tasks.tasks',
           'categories.categories',
+          'events.events',
+          'events.recurringParentEvents',
         ],
         // Ignore Date values in action payloads
         ignoredActionPaths: [
           'payload.tasks',
           'payload.task',
           'payload.category',
+          'payload.events',
+          'payload.event',
           'payload',
           'meta.arg',
         ],
