@@ -3,7 +3,7 @@
 **Project:** Neill Planner - Franklin-Covey Productivity Application
 **Created:** January 24, 2026
 **Status:** In Progress
-**Last Updated:** February 3, 2026 (Step 7.2.1 - Event Form Component)
+**Last Updated:** February 3, 2026 (Step 7.3.1 - Calendar Time-Block View)
 **Estimated Duration:** 18-27 days
 
 ---
@@ -18,13 +18,13 @@
 | Phase 4: Date & Daily View | ✅ Complete | 26/26 |
 | Phase 5: Categories | ✅ Complete | 15/15 |
 | Phase 6: Recurring Tasks | ✅ Complete | 6/6 |
-| Phase 7: Events & Calendar | 🔄 In Progress | 2/5 |
+| Phase 7: Events & Calendar | 🔄 In Progress | 3/5 |
 | Phase 8: Notes System | ⬜ Not Started | 0/16 |
 | Phase 9: Google Calendar | ⬜ Not Started | 0/14 |
 | Phase 10: Reminders | ⬜ Not Started | 0/12 |
 | Phase 11: Offline Support | ⬜ Not Started | 0/12 |
 | Phase 12: Polish & Deploy | ⬜ Not Started | 0/18 |
-| **TOTAL** | | **159/261** |
+| **TOTAL** | | **160/261** |
 
 ---
 
@@ -1633,20 +1633,29 @@
 
 ## 7.3 Calendar Time-Block View
 
-### Step 7.3.1: Calendar Time-Block View
+### Step 7.3.1: Calendar Time-Block View ✅ Completed 2026-02-03
 
-- [ ] **Create TimeBlockCalendar component**
-  - [ ] Vertical time slots
-  - [ ] Events as blocks
-  - [ ] Height based on duration
-  - [ ] Handle overlapping events
-  - [ ] Click empty slot to create
+- [x] **Create TimeBlockCalendar component** ✅
+  - [x] Vertical time slots (6 AM - 10 PM, 16 hours)
+  - [x] Events as blocks with category colors
+  - [x] Height based on duration (1px per minute)
+  - [x] Handle overlapping events (side-by-side columns)
+  - [x] Click empty slot to create event (rounded to 30 min)
+  - [x] Current time indicator (red line, today only)
+  - [x] Recurrence and confidential icons
+  - [x] Keyboard navigation support
 
-- [ ] **Write tests**
-  - [ ] Test time slots render
-  - [ ] Test events positioned
-  - [ ] Test overlap handling
-  - [ ] Test click creates event
+- [x] **Write tests** ✅ 20 tests passing
+  - [x] Test time slots render (16 hours)
+  - [x] Test events positioned correctly
+  - [x] Test event height based on duration
+  - [x] Test overlap handling (2+ events)
+  - [x] Test click creates event
+  - [x] Test category colors applied
+  - [x] Test recurrence/confidential icons
+  - [x] Test current time indicator
+  - [x] Test keyboard navigation
+  - [x] Test edge cases (short events, out of range)
 
 ---
 
