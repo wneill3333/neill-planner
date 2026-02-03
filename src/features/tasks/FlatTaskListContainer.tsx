@@ -12,7 +12,7 @@ import { useSelectedDateTasks } from './hooks';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { selectRecurringParentTasks } from './taskSlice';
 import { useAnnouncement } from '../../hooks';
-import { updateTaskAsync, forwardTaskAsync, deleteTask, batchUpdateTasksAsync, editRecurringInstanceOnly } from './taskThunks';
+import { updateTaskAsync, forwardTaskAsync, deleteTask, batchUpdateTasksAsync, deleteRecurringInstanceOnly, deleteRecurringFuture } from './taskThunks';
 import { FlatTaskList, DraggableFlatTaskList, ForwardDateModal, RecurringDeleteDialog } from '../../components/tasks';
 import type { Task, TaskStatus, PriorityLetter, UpdateTaskInput } from '../../types';
 import { getStatusLabel } from '../../utils/statusUtils';
@@ -273,17 +273,31 @@ export function FlatTaskListContainer({
 
     const isVirtualInstance = deletingTask.isRecurringInstance && deletingTask.recurringParentId;
     const parentId = isVirtualInstance ? deletingTask.recurringParentId! : deletingTask.id;
+    const instanceDate = deletingTask.instanceDate ?? deletingTask.scheduledDate;
+
+    if (!instanceDate) {
+      console.error('Cannot delete: missing instance date');
+      announce('Failed to delete: missing date');
+      setDeletingTask(null);
+      return;
+    }
 
     setShowDeleteDialog(false);
     setUpdatingTaskId(deletingTask.id);
 
     try {
-      announce('Deleting all future occurrences');
-      await dispatch(deleteTask({ taskId: parentId, userId })).unwrap();
-      announce('Recurring task deleted');
+      announce('Ending recurring series');
+      await dispatch(
+        deleteRecurringFuture({
+          userId,
+          parentTaskId: parentId,
+          instanceDate,
+        })
+      ).unwrap();
+      announce('Recurring series ended');
     } catch (err) {
-      console.error('Failed to delete recurring task:', err);
-      announce('Failed to delete task');
+      console.error('Failed to end recurring series:', err);
+      announce('Failed to end recurring series');
     } finally {
       setUpdatingTaskId(null);
       setDeletingTask(null);
@@ -295,54 +309,29 @@ export function FlatTaskListContainer({
     if (!userId || !deletingTask) return;
 
     const isVirtualInstance = deletingTask.isRecurringInstance && deletingTask.recurringParentId;
-    const isRecurringParent = deletingTask.recurrence !== null;
+    const parentId = isVirtualInstance ? deletingTask.recurringParentId! : deletingTask.id;
+    const instanceDate = deletingTask.instanceDate ?? deletingTask.scheduledDate;
+
+    if (!instanceDate) {
+      console.error('Cannot delete: missing instance date');
+      announce('Failed to delete: missing date');
+      setDeletingTask(null);
+      return;
+    }
 
     setShowDeleteDialog(false);
     setUpdatingTaskId(deletingTask.id);
 
     try {
-      if (isVirtualInstance && deletingTask.recurringParentId && deletingTask.instanceDate) {
-        // Skip just this instance - add date to parent's exceptions
-        const parentTask = recurringParentTasks[deletingTask.recurringParentId];
-        if (!parentTask || !parentTask.recurrence) {
-          throw new Error('Parent recurring task not found');
-        }
-
-        announce('Skipping this occurrence');
-        const normalizedDate = startOfDay(deletingTask.instanceDate);
-        const updatedExceptions = [...parentTask.recurrence.exceptions, normalizedDate];
-
-        await dispatch(
-          updateTaskAsync({
-            id: deletingTask.recurringParentId,
-            recurrence: {
-              ...parentTask.recurrence,
-              exceptions: updatedExceptions,
-            },
-            userId,
-          })
-        ).unwrap();
-
-        announce('Occurrence skipped');
-      } else if (isRecurringParent && deletingTask.scheduledDate) {
-        // This is the parent task on its original date - skip this instance
-        announce('Skipping this occurrence');
-        const normalizedDate = startOfDay(deletingTask.scheduledDate);
-        const updatedExceptions = [...(deletingTask.recurrence?.exceptions || []), normalizedDate];
-
-        await dispatch(
-          updateTaskAsync({
-            id: deletingTask.id,
-            recurrence: {
-              ...deletingTask.recurrence!,
-              exceptions: updatedExceptions,
-            },
-            userId,
-          })
-        ).unwrap();
-
-        announce('Occurrence skipped');
-      }
+      announce('Skipping this occurrence');
+      await dispatch(
+        deleteRecurringInstanceOnly({
+          userId,
+          parentTaskId: parentId,
+          instanceDate,
+        })
+      ).unwrap();
+      announce('Occurrence skipped');
     } catch (err) {
       console.error('Failed to skip occurrence:', err);
       announce('Failed to skip occurrence');
@@ -350,7 +339,7 @@ export function FlatTaskListContainer({
       setUpdatingTaskId(null);
       setDeletingTask(null);
     }
-  }, [dispatch, announce, userId, deletingTask, recurringParentTasks]);
+  }, [dispatch, announce, userId, deletingTask]);
 
   // Handle cancel/close delete dialog
   const handleDeleteDialogClose = useCallback(() => {
