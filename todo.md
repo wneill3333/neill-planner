@@ -3,7 +3,7 @@
 **Project:** Neill Planner - Franklin-Covey Productivity Application
 **Created:** January 24, 2026
 **Status:** In Progress
-**Last Updated:** February 2, 2026 (Step 6.2.1 Complete)
+**Last Updated:** February 2, 2026 (Step 6.2.1 Instance Generation Complete)
 **Estimated Duration:** 18-27 days
 
 ---
@@ -2128,6 +2128,7 @@ _Use this section to track progress, blockers, and decisions._
 | 2026-02-02 | UI Change - Priority input changed from dropdown to text field. Users now type "A1", "B2", "C" etc. directly. Added parsePriority() function, auto-uppercase, validation (letter A-D required, number 1-99 optional). 5 new tests. Total: 1768 tests passing across 60 test files. |
 | 2026-02-02 | Step 6.1.1 complete - RecurrenceForm component. Supports daily/weekly/monthly/yearly/custom recurrence types with button toggles. Interval input, days of week checkboxes (Su-Sa), day/month selectors, end conditions (never/date/occurrences). Touched state validation for UX. Full accessibility support (ARIA, keyboard nav). Code review fixes: prop sync, stale closure fixes. 36 new tests. Total: 1804 tests passing across 61 test files. **Phase 6 Started!** |
 | 2026-02-02 | Step 6.1.2 complete - Recurrence integration with Task Form. Created Toggle component (reusable switch with accessibility). Updated TaskForm to add Repeat toggle, conditional RecurrenceForm display, default recurrence pattern when enabled. Added 34 new tests (26 Toggle + 8 TaskForm recurrence integration). Total: 1838 tests passing across 62 test files. **Phase 6: 2/20 complete (10%).** |
+| 2026-02-02 | Step 6.2.1 complete - Instance Generation Logic. Created recurrenceUtils.ts (~400 lines) with generateRecurringInstances, getNextOccurrence, isDateInExceptions, hasReachedEndCondition. Supports daily, weekly, monthly, yearly recurrence with all end conditions and exception dates. Handles edge cases (Feb 29, month-end). Safety limit 1000 instances. Added 62 comprehensive tests. Total: 1900 tests passing across 63 test files. **Phase 6: 3/20 complete (15%).** |
 
 ## Blockers
 
