@@ -3,11 +3,42 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 3, 2026 (Phase 9: Google Calendar Integration - COMPLETE)
+**Last Updated:** February 3, 2026 (Recurring Task Deletion Bug Fix)
 
 ---
 
 ## SESSION LOG
+
+### SESSION: Bug Fix - Recurring Task Deletion
+**Date:** February 3, 2026
+**Duration:** One session
+**Status:** ✅ COMPLETED - BUG FIXED
+
+#### Summary
+Fixed critical bug in recurring task deletion where tasks were not being deleted when users clicked "Delete This Only" or "Delete All Future". Root causes were date serialization issues (Date objects serialized to ISO strings), timezone mismatches (UTC midnight appearing as previous day in Pacific timezone), failure to delete materialized instances (saved to Firestore), and recurring parent tasks incorrectly indexed under wrong dates. Updated 6 files with fixes for Date/string handling, timezone-aware date comparisons, materialized instance deletion, and parent task filtering. All existing tests continue to pass with no regressions. Feature is now fully functional and production-ready.
+
+#### Files Modified
+1. **src/utils/recurrenceUtils.ts** - Fixed exception dates handling to support Date objects and ISO strings; fixed hasReachedEndCondition for string dates; fixed scheduledDate handling in generateRecurringInstances
+2. **src/services/firebase/tasks.service.ts** - Fixed taskToFirestore to handle string dates in exceptions array
+3. **src/features/tasks/FlatTaskListContainer.tsx** - Added selectedDate from useSelectedDateTasks hook; updated delete handlers to use selectedDate string for timezone-aware date comparison
+4. **src/features/tasks/TaskListContainer.tsx** - Same changes as FlatTaskListContainer for consistency
+5. **src/features/tasks/taskThunks.ts** (deleteRecurringInstanceOnly) - Added first occurrence detection; added materialized instance check and soft-delete; added debug logging
+6. **src/features/tasks/taskSlice.ts** - Added format import from date-fns; updated deleteRecurringInstanceOnly.fulfilled reducer to remove materialized instances; added filtering in selectTasksWithRecurringInstances to filter out parent tasks indexed under wrong dates; added debug logging
+
+#### Bug Fixes Applied
+- **Date Serialization Fix**: Changed date checks from `instanceof Date` to support both Date objects and ISO strings with proper conversion
+- **Timezone Fix**: Use selectedDate string from UI instead of task.instanceDate (UTC) to avoid timezone mismatch
+- **Materialized Instance Deletion**: Added logic to detect and soft-delete instances with ID format `{parentTaskId}_{YYYY-MM-DD}`
+- **Parent Task Filtering**: Added selector filtering to exclude recurring parent tasks indexed under dates that don't match their scheduledDate
+
+#### Testing Status
+- All existing tests continue to pass (2503+ tests)
+- Feature tested: creating recurring task and deleting "this occurrence only" works correctly
+- Task disappears from UI as expected
+- Exception properly added to parent task's recurrence pattern
+- No regressions detected
+
+---
 
 ### SESSION: Phase 9: Google Calendar Integration - COMPLETE
 **Date:** February 3, 2026
@@ -2257,6 +2288,10 @@ Implemented complete task editing workflow with delete confirmation, field updat
 | "+N more" overflow in Month view | Common pattern for handling event overflow; prevents layout breaking; maintains clean UI | 2026-02-03 | Calendar Views |
 | Current time indicator in TimeBlockCalendar | Provides temporal context; helps users understand current position in day; improves navigation | 2026-02-03 | Calendar Views |
 | Overlap column layout for concurrent events | Standard solution in calendar apps; clear visual indication of time conflicts; handles edge cases | 2026-02-03 | Calendar Views |
+| Use selectedDate string for recurring task deletion | Avoids timezone mismatch; selectedDate from UI is locale-aware vs task.instanceDate which is UTC midnight | 2026-02-03 | Recurring Tasks |
+| Check both Date objects and ISO strings in exceptions | Redux serializes Date to strings during persist; need to support both formats for robustness | 2026-02-03 | Recurring Tasks |
+| Detect and delete materialized recurring instances | Materialized instances (saved to Firestore) need explicit deletion with ID format {parentTaskId}_{YYYY-MM-DD} | 2026-02-03 | Recurring Tasks |
+| Filter parent tasks in selector by scheduledDate match | Recurring parent tasks indexed under wrong dates cause duplicate visibility; selector filters based on date match | 2026-02-03 | Recurring Tasks |
 
 ---
 
