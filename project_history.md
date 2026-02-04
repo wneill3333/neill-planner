@@ -3,11 +3,116 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 4, 2026 (None Category Feature + Phase 12 Complete)
+**Last Updated:** February 4, 2026 (Calendar Integration Fix & Enhancements)
 
 ---
 
 ## SESSION LOG
+
+### SESSION: Calendar Integration Fix & Enhancements
+**Date:** February 4, 2026
+**Duration:** Enhancement and archival session
+**Status:** ✅ COMPLETED - Calendar Fully Integrated
+
+#### Summary
+Fixed Calendar tab in DailyView by wiring up TimeBlockCalendar component and related event management functionality. Calendar tab now displays fully functional time-block calendar showing events from 6 AM to 10 PM with drag-and-drop support. Implemented event creation through direct calendar interaction, editing/deletion via event modals, and drag-based time adjustment with 5-minute snapping. Enhanced TimeBlockCalendar with increased readability (80px hour height), improved time label styling, and @dnd-kit drag-drop integration. Updated TimePicker with 5-minute interval snapping. All features auto-sync to Firebase and Google Calendar (if connected). Three files modified with complete integration and quality improvements.
+
+#### Key Achievements
+
+**Calendar Integration**
+- Imported TimeBlockCalendar component into DailyView
+- Added event modal state for create/edit operations
+- Implemented event handlers: handleCreateEvent, handleEventClick, handleEventUpdate, handleEventDelete, handleEventTimeChange
+- Added "Add Event" button and modal dialogs
+- Replaced placeholder with fully functional calendar component
+
+**TimeBlockCalendar Improvements**
+- Increased HOUR_HEIGHT from 60px to 80px for better readability
+- Enhanced time label styling with larger text and better contrast
+- Changed time snapping from 30 minutes to 5 minutes
+- Integrated @dnd-kit for drag-and-drop functionality
+- Added onEventTimeChange prop for dragged event updates
+- Fixed bug where dragged events disappeared (was using selectedDate instead of event.startTime)
+
+**TimePicker Enhancement**
+- Added step prop (default 300 seconds = 5 minutes)
+- Added roundToStep function for time snapping
+- Supports multiple interval configurations
+
+#### Files Modified (3)
+1. F:\AI\Planner\planner-app\src\features\tasks\DailyView.tsx - Calendar integration, event modals
+2. F:\AI\Planner\planner-app\src\components\events\TimeBlockCalendar.tsx - Drag-drop, readability improvements
+3. F:\AI\Planner\planner-app\src\components\common\TimePicker.tsx - 5-minute intervals
+
+#### Features Now Operational
+- View events as time blocks across working hours (6 AM - 10 PM)
+- Click empty calendar area to create new event at specific time
+- Click existing event to edit or delete
+- Drag events vertically to change start time (5-minute snapping)
+- Events automatically sync to Firebase and Google Calendar
+- Full keyboard accessibility maintained
+- Responsive design across all screen sizes
+
+#### Code Quality
+- No TypeScript errors or warnings
+- Proper state management integration
+- Seamless interaction with Redux event management
+- Maintained existing test suite compatibility
+- Production-ready implementation
+
+---
+
+**Date:** February 4, 2026
+**Duration:** Enhancement and archival session
+**Status:** ✅ COMPLETED - Calendar Fully Integrated
+
+#### Summary
+Fixed Calendar tab in DailyView by wiring up TimeBlockCalendar component and related event management functionality. Calendar tab now displays fully functional time-block calendar showing events from 6 AM to 10 PM with drag-and-drop support. Implemented event creation through direct calendar interaction, editing/deletion via event modals, and drag-based time adjustment with 5-minute snapping. Enhanced TimeBlockCalendar with increased readability (80px hour height), improved time label styling, and @dnd-kit drag-drop integration. Updated TimePicker with 5-minute interval snapping. All features auto-sync to Firebase and Google Calendar (if connected). Three files modified with complete integration and quality improvements.
+
+#### Key Achievements
+
+**Calendar Integration**
+- Imported TimeBlockCalendar component into DailyView
+- Added event modal state for create/edit operations
+- Implemented event handlers: handleCreateEvent, handleEventClick, handleEventUpdate, handleEventDelete, handleEventTimeChange
+- Added "Add Event" button and modal dialogs
+- Replaced placeholder with fully functional calendar component
+
+**TimeBlockCalendar Improvements**
+- Increased HOUR_HEIGHT from 60px to 80px for better readability
+- Enhanced time label styling with larger text and better contrast
+- Changed time snapping from 30 minutes to 5 minutes
+- Integrated @dnd-kit for drag-and-drop functionality
+- Added onEventTimeChange prop for dragged event updates
+- Fixed bug where dragged events disappeared (was using selectedDate instead of event.startTime)
+
+**TimePicker Enhancement**
+- Added step prop (default 300 seconds = 5 minutes)
+- Added roundToStep function for time snapping
+- Supports multiple interval configurations
+
+#### Files Modified (3)
+1. F:\AI\Planner\planner-app\src\features\tasks\DailyView.tsx - Calendar integration, event modals
+2. F:\AI\Planner\planner-app\src\components\events\TimeBlockCalendar.tsx - Drag-drop, readability improvements
+3. F:\AI\Planner\planner-app\src\components\common\TimePicker.tsx - 5-minute intervals
+
+#### Features Now Operational
+- View events as time blocks across working hours (6 AM - 10 PM)
+- Click empty calendar area to create new event at specific time
+- Click existing event to edit or delete
+- Drag events vertically to change start time (5-minute snapping)
+- Events automatically sync to Firebase and Google Calendar
+- Full keyboard accessibility maintained
+- Responsive design across all screen sizes
+
+#### Code Quality
+- No TypeScript errors or warnings
+- Proper state management integration
+- Seamless interaction with Redux event management
+- Maintained existing test suite compatibility
+- Production-ready implementation
+
+---
 
 ### SESSION: None Category Feature Implementation
 **Date:** February 4, 2026
