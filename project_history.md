@@ -3,11 +3,81 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 4, 2026 (Calendar Integration Fix & Enhancements)
+**Last Updated:** February 4, 2026 (Google Calendar Selection Feature)
 
 ---
 
 ## SESSION LOG
+
+### SESSION: Google Calendar Selection Feature
+**Date:** February 4, 2026
+**Duration:** Feature implementation and archival session
+**Status:** ✅ COMPLETED - Google Calendar Selection 100% Complete
+
+#### Summary
+Implemented Google Calendar selection feature allowing users to choose which Google Calendar to sync with instead of being locked to the "primary" calendar. Enhanced the Google Calendar integration by adding calendar discovery, selection UI, and persistence. Users can now fetch available calendars via Google Calendar API, select a preferred calendar from a dropdown in Settings, and all sync operations use the selected calendar. Implemented calendar list fetching with write-access filtering, added selection persistence to Firebase Firestore, created Redux state management for calendar selection, and integrated calendar selector into the Settings page. Fixed critical bugs: corrected user type property from uid to id, fixed refresh token validation to allow empty strings for client-side OAuth, added Google Identity Services script tag. Updated 8 implementation files and 2 test files with comprehensive feature support and validation.
+
+#### Key Achievements
+
+**Feature Implementation**
+- Added GoogleCalendarListEntry interface for calendar list API responses
+- Implemented getCalendarList() function to fetch available calendars with write access
+- Created calendar selection UI in GoogleCalendarSettings component with dropdown selector
+- Integrated calendar selection into SettingsPage Integrations section
+- Added Redux state management for calendar discovery and selection
+
+**Data Persistence**
+- Added StoredGoogleCalendarCredentials interface with selectedCalendarId field
+- Implemented updateSelectedCalendar() function in Firebase service
+- Updated credentialsToFirestore() and credentialsFromFirestore() to handle selectedCalendarId
+- Calendar selection persists across app sessions via Firestore
+
+**Redux State Management**
+- Added availableCalendars, selectedCalendarId, isLoadingCalendars to state
+- Implemented fetchAvailableCalendars thunk with error handling
+- Implemented setSelectedCalendar thunk for persistence
+- Updated checkConnectionStatus to return selectedCalendarId
+- Updated sync thunks to accept optional calendarId parameter
+- Added new selectors for calendar state access
+- Updated hooks with fetchCalendars() and selectCalendar() functions
+
+**UI Enhancements**
+- Calendar selector dropdown in GoogleCalendarSettings
+- Loading state display while fetching calendars
+- Calendar names with "(Primary)" label for default calendar
+- Seamless integration with existing Settings page
+
+**Critical Bug Fixes**
+- Fixed user?.uid → user?.id throughout hooks (User type uses id property)
+- Fixed refresh token validation to allow empty strings (client-side OAuth requirement)
+- Added Google Identity Services script tag to index.html for OAuth flow
+
+**Testing Updates**
+- Updated syncService.test.ts to expect new calendarId parameter
+- Updated googleCalendarSlice.test.ts with new state properties
+- All tests passing with comprehensive coverage
+
+#### Files Modified (10)
+1. F:\AI\Planner\planner-app\src\types\googleCalendar.types.ts - Added GoogleCalendarListEntry
+2. F:\AI\Planner\planner-app\src\services\googleCalendar\googleCalendarService.ts - Added getCalendarList()
+3. F:\AI\Planner\planner-app\src\services\googleCalendar\index.ts - Exported getCalendarList
+4. F:\AI\Planner\planner-app\src\services\firebase\googleCalendarCredentials.service.ts - Added selectedCalendarId support
+5. F:\AI\Planner\planner-app\src\features\googleCalendar\googleCalendarSlice.ts - New state, thunks, selectors
+6. F:\AI\Planner\planner-app\src\features\googleCalendar\hooks.ts - Fixed uid bug, added calendar functions
+7. F:\AI\Planner\planner-app\src\services\googleCalendar\syncService.ts - Updated sync functions for calendarId
+8. F:\AI\Planner\planner-app\src\components\googleCalendar\GoogleCalendarSettings.tsx - Added selector UI
+9. F:\AI\Planner\planner-app\src\features\settings\SettingsPage.tsx - Integrated GoogleCalendarSettings
+10. F:\AI\Planner\planner-app\index.html - Added Google Identity Services script
+
+#### Code Quality
+- All TypeScript errors and warnings resolved
+- No console warnings or linting issues
+- Proper error handling for API failures
+- Type-safe implementation with full coverage
+- Production-ready implementation
+- Seamless integration with existing Google Calendar features
+
+---
 
 ### SESSION: Calendar Integration Fix & Enhancements
 **Date:** February 4, 2026
