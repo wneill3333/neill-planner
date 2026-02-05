@@ -3,11 +3,93 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 5, 2026 (Recurring Tasks Bug Fix - Exception Handling & Deduplication)
+**Last Updated:** February 5, 2026 (Recurring Task Bug Fixes - Timezone, Custom Start Date, AfterCompletion)
 
 ---
 
 ## SESSION LOG
+
+### SESSION: Recurring Task Bug Fixes - Timezone, Custom Start Date, AfterCompletion
+**Date:** February 5, 2026
+**Duration:** Bug fix and feature implementation session
+**Status:** ✅ COMPLETED - Timezone Bug Fixed, Custom Start Date Added, AfterCompletion Pattern Fixed
+
+#### Summary
+Fixed critical timezone bug causing tasks to appear on yesterday's date in western timezones, added custom start date picker for recurring tasks, and implemented missing afterCompletion recurrence pattern handling. Root cause of timezone bug: `normalizeToDateString()` and date parsing logic were using UTC components instead of local components, causing date shift when crossing timezone boundaries. Fixed by changing `getUTCFullYear()` to `getFullYear()` and using `parseISODateString()` for proper local midnight creation. Added DatePicker to AddTaskFormSimple allowing users to set custom start dates for recurring tasks. Implemented missing handler in FlatTaskListContainer to detect afterCompletion pattern type and call `completeAfterCompletionTask` thunk instead of standard update, properly triggering next instance creation. All 81 dateUtils tests pass with 5 new timezone boundary tests added. Build succeeds and dev server runs correctly.
+
+#### Key Achievements
+
+**Timezone Bug Fix**
+- Fixed `normalizeToDateString()` in dateUtils.ts: Changed UTC components to local components
+- Fixed date parsing throughout codebase: Changed `new Date("YYYY-MM-DD")` to `parseISODateString()` in:
+  - CreateTaskModal.tsx
+  - DailyView.tsx
+  - NoteFormModal.tsx
+  - NoteListContainer.tsx
+- Added comprehensive timezone boundary tests (5 new test cases)
+- Result: Tasks now appear on correct date across all timezones
+
+**Custom Start Date for Recurring Tasks**
+- Added DatePicker to AddTaskFormSimple component
+- Added `customStartDate: Date | null` to FormData interface
+- Shows Start Date picker when recurring is enabled
+- Helper text guides users: "The recurring task will begin on this date"
+- Users can now create recurring tasks starting on any date, not just today
+
+**AfterCompletion Recurrence Pattern Fix**
+- Enhanced `handleStatusChange` in FlatTaskListContainer to check for afterCompletion pattern type
+- When completing afterCompletion task:
+  - Looks up pattern from Redux state to detect `type === 'afterCompletion'`
+  - Calls `completeAfterCompletionTask` thunk instead of `updateTaskAsync`
+  - Thunk marks task complete AND creates next instance X days in the future
+- Result: AfterCompletion recurring tasks now properly generate next instances
+
+#### Files Modified (8)
+1. F:\AI\Planner\planner-app\src\utils\dateUtils.ts - Fixed UTC to local date conversion
+2. F:\AI\Planner\planner-app\src\utils\__tests__\dateUtils.test.ts - Added 5 timezone boundary tests
+3. F:\AI\Planner\planner-app\src\features\tasks\CreateTaskModal.tsx - Fixed date parsing
+4. F:\AI\Planner\planner-app\src\features\tasks\DailyView.tsx - Fixed date parsing
+5. F:\AI\Planner\planner-app\src\features\notes\NoteFormModal.tsx - Fixed date parsing
+6. F:\AI\Planner\planner-app\src\features\notes\NoteListContainer.tsx - Fixed date parsing
+7. F:\AI\Planner\planner-app\src\components\tasks\AddTaskFormSimple.tsx - Added custom start date picker
+8. F:\AI\Planner\planner-app\src\features\tasks\FlatTaskListContainer.tsx - Fixed afterCompletion handling
+
+#### Testing & Quality
+- All 81 dateUtils tests pass (existing + 5 new timezone tests)
+- TypeScript compilation passes with no errors
+- Build succeeds without errors
+- Dev server runs correctly
+- No console warnings or errors
+- Type-safe implementation with proper null checks
+- Comprehensive timezone boundary testing
+
+#### Technical Details
+**Timezone Fix Implementation:**
+```typescript
+// Before (broken)
+const year = date.getUTCFullYear();
+const month = date.getUTCMonth();
+const day = date.getUTCDate();
+
+// After (fixed)
+const year = date.getFullYear();
+const month = date.getMonth();
+const day = date.getDate();
+```
+
+**Date Parsing Fix:**
+```typescript
+// Before (broken in western timezones)
+const dateObj = new Date("2026-02-05");
+
+// After (correct local midnight)
+const dateObj = parseISODateString("2026-02-05");
+```
+
+#### Commits
+- Pending: Session summary for 2026-02-05 (will be committed by Archive Agent)
+
+---
 
 ### SESSION: Recurring Tasks Bug Fix - Exception Handling & Deduplication
 **Date:** February 5, 2026
