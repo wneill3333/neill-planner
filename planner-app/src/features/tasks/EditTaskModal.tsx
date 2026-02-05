@@ -17,7 +17,6 @@ import { Modal } from '../../components/common/Modal';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { RecurringEditDialog } from '../../components/tasks/RecurringEditDialog';
 import { AddTaskFormSimple } from '../../components/tasks/AddTaskFormSimple';
-import { RecurrenceFormSimple } from '../../components/tasks/RecurrenceFormSimple';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   updateTaskAsync,
@@ -247,8 +246,7 @@ export function EditTaskModal({
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editMode, setEditMode] = useState<'thisOnly' | 'allFuture' | null>(null);
 
-  // State for editing recurrence pattern (new system)
-  const [editedRecurrence, setEditedRecurrence] = useState<LegacyRecurrencePattern | null>(null);
+  // Original recurrence pattern for comparison (new system pattern-based instances)
   const [originalRecurrence, setOriginalRecurrence] = useState<LegacyRecurrencePattern | null>(null);
 
   // Check if this is a pattern-based instance (new system)
@@ -270,7 +268,6 @@ export function EditTaskModal({
       setShowRecurringDialog(true);
       setShowTaskForm(false);
       setEditMode(null);
-      setEditedRecurrence(null);
       setOriginalRecurrence(null);
     } else if (isOpen) {
       // For pattern-based instances or non-recurring tasks, show form directly
@@ -282,10 +279,8 @@ export function EditTaskModal({
       if (isPatternBasedInstance && recurringPattern) {
         const legacyFormat = patternToLegacyFormat(recurringPattern);
         setOriginalRecurrence(legacyFormat);
-        setEditedRecurrence(legacyFormat);
       } else {
         setOriginalRecurrence(null);
-        setEditedRecurrence(null);
       }
     }
   }, [isOpen, isLegacyRecurringInstance, isPatternBasedInstance, recurringPattern]);
@@ -317,20 +312,6 @@ export function EditTaskModal({
   }, [onClose]);
 
   /**
-   * Handle recurrence pattern change
-   */
-  const handleRecurrenceChange = useCallback((pattern: LegacyRecurrencePattern | null) => {
-    setEditedRecurrence(pattern);
-  }, []);
-
-  /**
-   * Check if recurrence pattern has been modified
-   */
-  const hasRecurrenceChanged = useMemo(() => {
-    return !areRecurrencePatternsEqual(originalRecurrence, editedRecurrence);
-  }, [originalRecurrence, editedRecurrence]);
-
-  /**
    * Handle form submission (update)
    */
   const handleSubmit = useCallback(
@@ -359,21 +340,22 @@ export function EditTaskModal({
             })
           ).unwrap();
 
-          // If recurrence pattern was modified, update the pattern as well
-          if (hasRecurrenceChanged && editedRecurrence && task.recurringPatternId) {
+          // If recurrence pattern was modified via the form, update the pattern
+          const formRecurrenceChanged = !areRecurrencePatternsEqual(originalRecurrence, data.recurrence ?? null);
+          if (formRecurrenceChanged && data.recurrence && task.recurringPatternId) {
             await dispatch(
               updateRecurringPatternThunk({
                 input: {
                   id: task.recurringPatternId,
-                  type: editedRecurrence.type,
-                  interval: editedRecurrence.interval,
-                  daysOfWeek: editedRecurrence.daysOfWeek,
-                  dayOfMonth: editedRecurrence.dayOfMonth,
-                  monthOfYear: editedRecurrence.monthOfYear,
-                  nthWeekday: editedRecurrence.nthWeekday,
-                  specificDatesOfMonth: editedRecurrence.specificDatesOfMonth,
-                  daysAfterCompletion: editedRecurrence.daysAfterCompletion,
-                  endCondition: editedRecurrence.endCondition,
+                  type: data.recurrence.type,
+                  interval: data.recurrence.interval,
+                  daysOfWeek: data.recurrence.daysOfWeek,
+                  dayOfMonth: data.recurrence.dayOfMonth,
+                  monthOfYear: data.recurrence.monthOfYear,
+                  nthWeekday: data.recurrence.nthWeekday,
+                  specificDatesOfMonth: data.recurrence.specificDatesOfMonth,
+                  daysAfterCompletion: data.recurrence.daysAfterCompletion,
+                  endCondition: data.recurrence.endCondition,
                 },
                 userId: user.id,
               })
@@ -437,7 +419,7 @@ export function EditTaskModal({
         setIsSubmitting(false);
       }
     },
-    [dispatch, user, task, isPatternBasedInstance, isLegacyRecurringInstance, editMode, hasRecurrenceChanged, editedRecurrence, onSuccess, onClose]
+    [dispatch, user, task, isPatternBasedInstance, isLegacyRecurringInstance, editMode, originalRecurrence, onSuccess, onClose]
   );
 
   /**
@@ -507,14 +489,14 @@ export function EditTaskModal({
   const isProcessing = isSubmitting || isDeleting;
 
   // Determine the recurrence to show in the form
-  // - Pattern-based instances: don't show recurrence (independent instance)
+  // - Pattern-based instances: use originalRecurrence (from pattern, editable via form toggle)
   // - Legacy "all future" mode: use parent's recurrence
   // - Legacy "this only" mode: don't show recurrence (editing single instance)
   // - Regular tasks: use the task's own recurrence
   const formRecurrence = useMemo(() => {
-    // Pattern-based instances are independent - no recurrence editing
+    // Pattern-based instances: show the pattern's recurrence in the form
     if (isPatternBasedInstance) {
-      return null;
+      return originalRecurrence;
     }
     if (isLegacyRecurringInstance && editMode === 'allFuture') {
       return parentTask?.recurrence || null;
@@ -524,7 +506,7 @@ export function EditTaskModal({
     }
     // Regular task - use its own recurrence
     return task.recurrence;
-  }, [isPatternBasedInstance, isLegacyRecurringInstance, editMode, parentTask, task.recurrence]);
+  }, [isPatternBasedInstance, isLegacyRecurringInstance, editMode, parentTask, task.recurrence, originalRecurrence]);
 
   return (
     <>
@@ -572,28 +554,6 @@ export function EditTaskModal({
               </svg>
               <p className="text-sm text-red-700">{error}</p>
             </div>
-          </div>
-        )}
-
-        {/* Pattern-based instance - Recurrence settings shown directly */}
-        {isPatternBasedInstance && recurringPattern && (
-          <div className="mb-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-amber-600 text-lg">↻</span>
-              <span className="text-sm font-medium text-gray-700">Recurrence Pattern</span>
-              {hasRecurrenceChanged && (
-                <span className="text-xs text-amber-600 font-medium">(modified)</span>
-              )}
-            </div>
-            <RecurrenceFormSimple
-              value={editedRecurrence}
-              onChange={handleRecurrenceChange}
-              disabled={isSubmitting}
-              testId="edit-recurrence-form"
-            />
-            <p className="mt-2 text-xs text-gray-500">
-              Changes to the pattern will apply to all future instances.
-            </p>
           </div>
         )}
 
