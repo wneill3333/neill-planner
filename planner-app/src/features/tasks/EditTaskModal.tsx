@@ -343,6 +343,7 @@ export function EditTaskModal({
           // If recurrence pattern was modified via the form, update the pattern
           const formRecurrenceChanged = !areRecurrencePatternsEqual(originalRecurrence, data.recurrence ?? null);
           if (formRecurrenceChanged && data.recurrence && task.recurringPatternId) {
+            // Convert undefined to null for Firestore compatibility
             await dispatch(
               updateRecurringPatternThunk({
                 input: {
@@ -350,11 +351,11 @@ export function EditTaskModal({
                   type: data.recurrence.type,
                   interval: data.recurrence.interval,
                   daysOfWeek: data.recurrence.daysOfWeek,
-                  dayOfMonth: data.recurrence.dayOfMonth,
-                  monthOfYear: data.recurrence.monthOfYear,
-                  nthWeekday: data.recurrence.nthWeekday,
-                  specificDatesOfMonth: data.recurrence.specificDatesOfMonth,
-                  daysAfterCompletion: data.recurrence.daysAfterCompletion,
+                  dayOfMonth: data.recurrence.dayOfMonth ?? null,
+                  monthOfYear: data.recurrence.monthOfYear ?? null,
+                  nthWeekday: data.recurrence.nthWeekday ?? null,
+                  specificDatesOfMonth: data.recurrence.specificDatesOfMonth ?? null,
+                  daysAfterCompletion: data.recurrence.daysAfterCompletion ?? null,
                   endCondition: data.recurrence.endCondition,
                 },
                 userId: user.id,

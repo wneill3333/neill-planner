@@ -366,21 +366,56 @@ export async function updateRecurringPattern(
       throw new ValidationError('Unauthorized access to pattern', 'id', 'UNAUTHORIZED');
     }
 
-    // Build update object
+    // Build update object - only include defined values
     const updateData: Record<string, unknown> = {
-      ...updates,
       updatedAt: new Date(),
     };
 
-    // Sanitize string inputs if provided
+    // Only add fields that are explicitly provided (not undefined)
     if (updates.title !== undefined) {
       updateData.title = sanitizeString(updates.title);
     }
     if (updates.description !== undefined) {
       updateData.description = sanitizeString(updates.description);
     }
+    if (updates.categoryId !== undefined) {
+      updateData.categoryId = updates.categoryId;
+    }
+    if (updates.startTime !== undefined) {
+      updateData.startTime = updates.startTime;
+    }
+    if (updates.duration !== undefined) {
+      updateData.duration = updates.duration;
+    }
+    if (updates.type !== undefined) {
+      updateData.type = updates.type;
+    }
+    if (updates.interval !== undefined) {
+      updateData.interval = updates.interval;
+    }
+    if (updates.daysOfWeek !== undefined) {
+      updateData.daysOfWeek = updates.daysOfWeek;
+    }
+    if (updates.dayOfMonth !== undefined) {
+      updateData.dayOfMonth = updates.dayOfMonth;
+    }
+    if (updates.monthOfYear !== undefined) {
+      updateData.monthOfYear = updates.monthOfYear;
+    }
+    if (updates.nthWeekday !== undefined) {
+      updateData.nthWeekday = updates.nthWeekday;
+    }
+    if (updates.specificDatesOfMonth !== undefined) {
+      updateData.specificDatesOfMonth = updates.specificDatesOfMonth;
+    }
+    if (updates.daysAfterCompletion !== undefined) {
+      updateData.daysAfterCompletion = updates.daysAfterCompletion;
+    }
+    if (updates.endCondition !== undefined) {
+      updateData.endCondition = updates.endCondition;
+    }
 
-    // Handle priority separately
+    // Handle priority separately (nested updates)
     if (updates.priority) {
       if (updates.priority.letter !== undefined) {
         updateData['priority.letter'] = updates.priority.letter;
