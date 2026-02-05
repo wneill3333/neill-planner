@@ -18,7 +18,6 @@ import {
   startOfDay,
   isBefore,
   isAfter,
-  format,
   getDaysInMonth,
   getDay,
   setDate,
@@ -53,6 +52,46 @@ export function isDateInExceptions(date: Date | string, exceptions: (Date | stri
   const dateString = normalizeToDateString(date);
   if (!dateString) return false;
   return exceptions.some((exception) => normalizeToDateString(exception) === dateString);
+}
+
+/**
+ * Add a new exception date to an existing exceptions array, with deduplication.
+ * Returns a new array of Date objects suitable for Firebase storage.
+ *
+ * @param existingExceptions - Current exceptions array (Date objects or ISO strings)
+ * @param newException - The new exception date to add (Date or string)
+ * @returns Deduplicated array of Date objects
+ *
+ * @example
+ * ```ts
+ * const existing = [new Date('2026-01-15')];
+ * const result = addExceptionWithDedup(existing, new Date('2026-01-20'));
+ * // result: [Date('2026-01-15'), Date('2026-01-20')]
+ *
+ * // Deduplicates if already exists
+ * const result2 = addExceptionWithDedup(existing, '2026-01-15');
+ * // result2: [Date('2026-01-15')] - not duplicated
+ * ```
+ */
+export function addExceptionWithDedup(
+  existingExceptions: (Date | string)[],
+  newException: Date | string
+): Date[] {
+  // Normalize all existing exceptions to date strings for dedup
+  const existingStrings = new Set<string>();
+  for (const exc of existingExceptions) {
+    const str = normalizeToDateString(exc);
+    if (str) existingStrings.add(str);
+  }
+
+  // Add the new exception if not already present
+  const newString = normalizeToDateString(newException);
+  if (newString) {
+    existingStrings.add(newString);
+  }
+
+  // Convert back to Date objects for Firebase storage
+  return Array.from(existingStrings).map((str) => toDateObject(str));
 }
 
 /**
@@ -341,6 +380,29 @@ export function generateRecurringInstances(
     pattern.exceptions.map((d) => normalizeToDateString(d)).filter(Boolean)
   );
 
+  // DEBUG: Log exception information for troubleshooting
+  if (pattern.exceptions.length > 0) {
+    // Check for invalid or duplicate exceptions
+    const invalidExceptions = pattern.exceptions.filter((d) => !normalizeToDateString(d));
+    const hasDuplicates = pattern.exceptions.length !== exceptionDates.size;
+
+    if (invalidExceptions.length > 0 || hasDuplicates) {
+      const rawList = pattern.exceptions.map((d) => {
+        if (d instanceof Date) return d.toISOString().split('T')[0];
+        if (typeof d === 'object' && d !== null) return `Object:${JSON.stringify(d)}`;
+        return `${typeof d}:${String(d)}`;
+      }).join(', ');
+      const validList = Array.from(exceptionDates).join(', ');
+
+      if (invalidExceptions.length > 0) {
+        console.warn(`[DEBUG] Task ${task.id} (${task.title}) has ${invalidExceptions.length} INVALID exceptions that could not be parsed`);
+      }
+      if (hasDuplicates) {
+        console.log(`[DEBUG] Task ${task.id} (${task.title}) has ${pattern.exceptions.length - exceptionDates.size} DUPLICATE exceptions - Raw(${pattern.exceptions.length}): [${rawList}] → Unique(${exceptionDates.size}): [${validList}]`);
+      }
+    }
+  }
+
   // Get instance modifications map for O(1) lookup
   const instanceModifications: Record<string, InstanceModification> = pattern.instanceModifications || {};
 
@@ -368,7 +430,8 @@ export function generateRecurringInstances(
     }
 
     while (isBefore(countDate, normalizedRangeStart)) {
-      const dateKey = format(countDate, 'yyyy-MM-dd');
+      // Use normalizeToDateString for consistent UTC-based comparison
+      const dateKey = normalizeToDateString(countDate);
       if (!exceptionDates.has(dateKey)) {
         occurrenceCount++;
       }
@@ -444,12 +507,14 @@ export function generateRecurringInstances(
     instances.length < MAX_RECURRING_INSTANCES
   ) {
     // Skip if date is in exceptions
-    const dateKey = format(currentDate, 'yyyy-MM-dd');
+    // Use normalizeToDateString for consistent UTC-based comparison with exceptionDates Set
+    const dateKey = normalizeToDateString(currentDate);
+
     if (!exceptionDates.has(dateKey)) {
       // Create instance
       // Note: priority.number is set to 0 to indicate it needs auto-numbering
       // The selector will assign the actual number based on existing tasks for that day
-      const dateString = format(currentDate, 'yyyy-MM-dd');
+      const dateString = normalizeToDateString(currentDate);
 
       // Check for instance-specific modifications
       const modification = instanceModifications[dateString];

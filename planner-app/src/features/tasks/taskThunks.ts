@@ -7,13 +7,14 @@
  */
 
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { startOfDay, subDays, format } from 'date-fns';
+import { startOfDay, subDays } from 'date-fns';
 import type { Task, CreateTaskInput, UpdateTaskInput, PriorityLetter } from '../../types';
 import * as tasksService from '../../services/firebase/tasks.service';
 import type { RootState } from '../../store';
 import { selectTasksByDate } from './taskSlice';
 import { getNextPriorityNumber, reorderAllTasks, getTasksWithChangedPriority } from '../../utils/priorityUtils';
 import { normalizeToDateString, toDateObject, isSameDateString } from '../../utils/dateUtils';
+import { addExceptionWithDedup } from '../../utils/recurrenceUtils';
 
 // =============================================================================
 // Types
@@ -247,6 +248,16 @@ export const fetchRecurringTasks = createAsyncThunk<
 >('tasks/fetchRecurringTasks', async ({ userId }, { rejectWithValue }) => {
   try {
     const tasks = await tasksService.getRecurringTasks(userId);
+
+    // DEBUG: Log all recurring tasks loaded from Firebase
+    console.log(`%c[LOAD] Loaded ${tasks.length} recurring tasks from Firebase`, 'color: blue; font-weight: bold');
+    tasks.forEach((task) => {
+      if (task.recurrence && task.recurrence.exceptions.length > 0) {
+        const exceptionDates = task.recurrence.exceptions.map((e: Date | string) => normalizeToDateString(e)).join(', ');
+        console.log(`  "${task.title}" exceptions: [${exceptionDates}]`);
+      }
+    });
+
     return tasks;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to fetch recurring tasks';
@@ -545,11 +556,9 @@ export const editRecurringInstanceOnly = createAsyncThunk<
     // Create the materialized instance
     newTask = await tasksService.createTask(materializedInstance, userId);
 
-    // Update the parent task to add this date to exceptions
-    // Normalize the date before adding to exceptions
-    const normalizedInstanceDate = startOfDay(instanceDate);
+    // Update the parent task to add this date to exceptions (with deduplication)
     try {
-      const updatedExceptions = [...parentTask.recurrence.exceptions, normalizedInstanceDate];
+      const updatedExceptions = addExceptionWithDedup(parentTask.recurrence.exceptions, instanceDate);
       await tasksService.updateTask(
         {
           id: parentTaskId,
@@ -641,7 +650,8 @@ export const updateRecurringInstanceStatus = createAsyncThunk<
         throw new Error('Parent task has no scheduled date');
       }
 
-      const dateString = format(startOfDay(instanceDate), 'yyyy-MM-dd');
+      // Use normalizeToDateString for consistent date handling (handles Date objects and ISO strings)
+      const dateString = normalizeToDateString(instanceDate);
 
       // Update the parent task's instanceModifications to store this status
       const currentModifications = task.recurrence.instanceModifications || {};
@@ -710,7 +720,8 @@ export const updateRecurringInstanceStatus = createAsyncThunk<
       throw new Error('Parent task is not a recurring task');
     }
 
-    const dateString = format(startOfDay(instanceDate), 'yyyy-MM-dd');
+    // Use normalizeToDateString for consistent date handling (handles Date objects and ISO strings)
+    const dateString = normalizeToDateString(instanceDate);
 
     // Update the parent task's instanceModifications
     const currentModifications = parentTask.recurrence.instanceModifications || {};
@@ -800,24 +811,20 @@ export const deleteRecurringInstanceOnly = createAsyncThunk<
       throw new Error('Invalid instance date');
     }
 
-    // Convert to Date objects for operations that need them
-    const normalizedInstanceDate = toDateObject(instanceDateString);
+    // Convert parent date to Date object for operations that need it
     const normalizedParentDate = toDateObject(parentDateString);
 
     // Check if we're deleting the first occurrence using string comparison
     const isDeletingFirstOccurrence = isSameDateString(instanceDate, parentTask.scheduledDate);
 
-    // Collect existing exceptions as normalized date strings, then convert back to Date objects
-    // This ensures consistent handling regardless of how they were stored
-    const existingExceptionStrings = parentTask.recurrence.exceptions
-      .map((e: Date | string) => normalizeToDateString(e))
-      .filter(Boolean);
+    // Add the new exception with deduplication (handles Date objects and ISO strings consistently)
+    const updatedExceptions = addExceptionWithDedup(parentTask.recurrence.exceptions, instanceDate);
 
-    // Add the new exception (as Date object for Firebase compatibility)
-    const updatedExceptions = [
-      ...existingExceptionStrings.map((s: string) => toDateObject(s)),
-      normalizedInstanceDate
-    ];
+    // DEBUG: Log exception being added
+    console.log(`%c[DELETE] Adding exception for "${parentTask.title}"`, 'color: red; font-weight: bold');
+    console.log(`  Instance date: ${instanceDateString}`);
+    console.log(`  Before: [${parentTask.recurrence.exceptions.map((e: Date | string) => normalizeToDateString(e)).join(', ')}]`);
+    console.log(`  After:  [${updatedExceptions.map((e: Date) => normalizeToDateString(e)).join(', ')}]`);
 
     // Import getNextOccurrence dynamically to calculate next occurrence
     const { getNextOccurrence } = await import('../../utils/recurrenceUtils');
@@ -873,6 +880,10 @@ export const deleteRecurringInstanceOnly = createAsyncThunk<
     }
 
     const updatedTask = await tasksService.updateTask(updatePayload, userId);
+
+    // DEBUG: Log the result
+    console.log(`%c[DELETE] Saved to Firebase successfully`, 'color: green; font-weight: bold');
+    console.log(`  Exceptions now: [${updatedTask.recurrence?.exceptions?.map((e: Date | string) => normalizeToDateString(e)).join(', ') || 'none'}]`);
 
     return updatedTask;
   } catch (error) {
@@ -932,6 +943,30 @@ export const deleteRecurringFuture = createAsyncThunk<
     return updatedTask;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to delete future recurring instances';
+    return rejectWithValue({ message });
+  }
+});
+
+// =============================================================================
+// Cleanup Thunk for Duplicate Exceptions
+// =============================================================================
+
+/**
+ * Clean up duplicate exception dates in all recurring tasks
+ *
+ * This fixes corrupted data where the same date appears multiple times
+ * in a recurring task's exceptions array.
+ */
+export const cleanupDuplicateExceptions = createAsyncThunk<
+  { tasksChecked: number; tasksCleaned: number; totalDuplicatesRemoved: number },
+  { userId: string },
+  { state: RootState; rejectValue: ThunkError }
+>('tasks/cleanupDuplicateExceptions', async ({ userId }, { rejectWithValue }) => {
+  try {
+    const result = await tasksService.cleanupAllDuplicateExceptions(userId);
+    return result;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to cleanup duplicate exceptions';
     return rejectWithValue({ message });
   }
 });
