@@ -141,6 +141,28 @@ function patternToLegacyFormat(pattern: RecurringPattern): LegacyRecurrencePatte
 }
 
 /**
+ * Safely convert a date-like value to a timestamp for comparison.
+ * Handles Date objects, strings (from JSON), Firestore Timestamps, and null/undefined.
+ */
+function toTimestamp(date: Date | string | { toDate?: () => Date } | null | undefined): number | null {
+  if (date == null) return null;
+  // Handle Firestore Timestamp objects
+  if (typeof date === 'object' && 'toDate' in date && typeof date.toDate === 'function') {
+    return date.toDate().getTime();
+  }
+  // Handle Date objects
+  if (date instanceof Date) {
+    return isNaN(date.getTime()) ? null : date.getTime();
+  }
+  // Handle string dates
+  if (typeof date === 'string') {
+    const parsed = new Date(date);
+    return isNaN(parsed.getTime()) ? null : parsed.getTime();
+  }
+  return null;
+}
+
+/**
  * Check if two recurrence patterns are equal (for detecting changes)
  */
 function areRecurrencePatternsEqual(a: LegacyRecurrencePattern | null, b: LegacyRecurrencePattern | null): boolean {
@@ -150,15 +172,15 @@ function areRecurrencePatternsEqual(a: LegacyRecurrencePattern | null, b: Legacy
   return (
     a.type === b.type &&
     a.interval === b.interval &&
-    JSON.stringify(a.daysOfWeek) === JSON.stringify(b.daysOfWeek) &&
+    JSON.stringify(a.daysOfWeek?.slice().sort()) === JSON.stringify(b.daysOfWeek?.slice().sort()) &&
     a.dayOfMonth === b.dayOfMonth &&
     a.monthOfYear === b.monthOfYear &&
     JSON.stringify(a.nthWeekday) === JSON.stringify(b.nthWeekday) &&
-    JSON.stringify(a.specificDatesOfMonth) === JSON.stringify(b.specificDatesOfMonth) &&
+    JSON.stringify(a.specificDatesOfMonth?.slice().sort()) === JSON.stringify(b.specificDatesOfMonth?.slice().sort()) &&
     a.daysAfterCompletion === b.daysAfterCompletion &&
     a.endCondition.type === b.endCondition.type &&
     a.endCondition.maxOccurrences === b.endCondition.maxOccurrences &&
-    (a.endCondition.endDate?.getTime() ?? null) === (b.endCondition.endDate?.getTime() ?? null)
+    toTimestamp(a.endCondition.endDate) === toTimestamp(b.endCondition.endDate)
   );
 }
 
@@ -326,7 +348,13 @@ export function EditTaskModal({
 
       try {
         // Pattern-based instances: edit task directly, and optionally update pattern
+        // NOTE: These are two separate operations. If the pattern update fails after
+        // the task update succeeds, we show a partial success message.
         if (isPatternBasedInstance) {
+          let taskUpdateSucceeded = false;
+          let patternUpdateFailed = false;
+          let patternError = '';
+
           // First, update the task instance
           await dispatch(
             updateTaskAsync({
@@ -339,28 +367,44 @@ export function EditTaskModal({
               scheduledDate: data.scheduledDate,
             })
           ).unwrap();
+          taskUpdateSucceeded = true;
 
           // If recurrence pattern was modified via the form, update the pattern
           const formRecurrenceChanged = !areRecurrencePatternsEqual(originalRecurrence, data.recurrence ?? null);
           if (formRecurrenceChanged && data.recurrence && task.recurringPatternId) {
-            // Convert undefined to null for Firestore compatibility
-            await dispatch(
-              updateRecurringPatternThunk({
-                input: {
-                  id: task.recurringPatternId,
-                  type: data.recurrence.type,
-                  interval: data.recurrence.interval,
-                  daysOfWeek: data.recurrence.daysOfWeek,
-                  dayOfMonth: data.recurrence.dayOfMonth ?? null,
-                  monthOfYear: data.recurrence.monthOfYear ?? null,
-                  nthWeekday: data.recurrence.nthWeekday ?? null,
-                  specificDatesOfMonth: data.recurrence.specificDatesOfMonth ?? null,
-                  daysAfterCompletion: data.recurrence.daysAfterCompletion ?? null,
-                  endCondition: data.recurrence.endCondition,
-                },
-                userId: user.id,
-              })
-            ).unwrap();
+            try {
+              // Convert undefined to null for Firestore compatibility
+              await dispatch(
+                updateRecurringPatternThunk({
+                  input: {
+                    id: task.recurringPatternId,
+                    type: data.recurrence.type,
+                    interval: data.recurrence.interval,
+                    daysOfWeek: data.recurrence.daysOfWeek,
+                    dayOfMonth: data.recurrence.dayOfMonth ?? null,
+                    monthOfYear: data.recurrence.monthOfYear ?? null,
+                    nthWeekday: data.recurrence.nthWeekday ?? null,
+                    specificDatesOfMonth: data.recurrence.specificDatesOfMonth ?? null,
+                    daysAfterCompletion: data.recurrence.daysAfterCompletion ?? null,
+                    endCondition: data.recurrence.endCondition,
+                  },
+                  userId: user.id,
+                })
+              ).unwrap();
+            } catch (patternErr) {
+              // Task was updated but pattern update failed
+              console.error('Failed to update recurrence pattern:', patternErr);
+              patternUpdateFailed = true;
+              patternError = patternErr instanceof Error ? patternErr.message : 'Unknown error';
+            }
+          }
+
+          // Handle partial success scenario
+          if (taskUpdateSucceeded && patternUpdateFailed) {
+            setError(`Task updated, but recurrence pattern update failed: ${patternError}. Please try editing the recurrence again.`);
+            // Still call onSuccess since task was saved, but don't close modal so user sees the error
+            onSuccess?.();
+            return;
           }
         }
         // Legacy recurring instance: use edit mode
