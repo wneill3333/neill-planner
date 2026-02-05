@@ -248,7 +248,6 @@ export function EditTaskModal({
   const [editMode, setEditMode] = useState<'thisOnly' | 'allFuture' | null>(null);
 
   // State for editing recurrence pattern (new system)
-  const [showRecurrenceEdit, setShowRecurrenceEdit] = useState(false);
   const [editedRecurrence, setEditedRecurrence] = useState<LegacyRecurrencePattern | null>(null);
   const [originalRecurrence, setOriginalRecurrence] = useState<LegacyRecurrencePattern | null>(null);
 
@@ -271,7 +270,6 @@ export function EditTaskModal({
       setShowRecurringDialog(true);
       setShowTaskForm(false);
       setEditMode(null);
-      setShowRecurrenceEdit(false);
       setEditedRecurrence(null);
       setOriginalRecurrence(null);
     } else if (isOpen) {
@@ -285,11 +283,9 @@ export function EditTaskModal({
         const legacyFormat = patternToLegacyFormat(recurringPattern);
         setOriginalRecurrence(legacyFormat);
         setEditedRecurrence(legacyFormat);
-        setShowRecurrenceEdit(false);
       } else {
         setOriginalRecurrence(null);
         setEditedRecurrence(null);
-        setShowRecurrenceEdit(false);
       }
     }
   }, [isOpen, isLegacyRecurringInstance, isPatternBasedInstance, recurringPattern]);
@@ -325,13 +321,6 @@ export function EditTaskModal({
    */
   const handleRecurrenceChange = useCallback((pattern: LegacyRecurrencePattern | null) => {
     setEditedRecurrence(pattern);
-  }, []);
-
-  /**
-   * Toggle recurrence edit section
-   */
-  const handleToggleRecurrenceEdit = useCallback(() => {
-    setShowRecurrenceEdit(prev => !prev);
   }, []);
 
   /**
@@ -586,64 +575,25 @@ export function EditTaskModal({
           </div>
         )}
 
-        {/* Pattern-based instance - Recurrence editing section */}
+        {/* Pattern-based instance - Recurrence settings shown directly */}
         {isPatternBasedInstance && recurringPattern && (
-          <div className="mb-4 border border-amber-200 rounded-lg overflow-hidden">
-            {/* Collapsible header */}
-            <button
-              type="button"
-              onClick={handleToggleRecurrenceEdit}
-              className="w-full p-3 bg-amber-50 flex items-center justify-between hover:bg-amber-100 transition-colors"
-              data-testid="recurrence-toggle-button"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-amber-600 text-lg leading-none">↻</span>
-                <div className="text-left">
-                  <p className="text-amber-800 font-medium text-sm">Recurring Task</p>
-                  <p className="text-amber-700 text-sm">
-                    {formatRecurrenceDescription(recurringPattern)}
-                    {hasRecurrenceChanged && (
-                      <span className="ml-2 text-amber-600 font-medium">(modified)</span>
-                    )}
-                  </p>
-                </div>
-              </div>
-              <svg
-                className={`w-5 h-5 text-amber-600 transition-transform ${showRecurrenceEdit ? 'rotate-180' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {/* Expanded recurrence form */}
-            {showRecurrenceEdit && (
-              <div className="p-4 bg-white border-t border-amber-200">
-                <p className="text-xs text-gray-500 mb-3">
-                  Edit the recurrence pattern below. Changes will apply to all future instances of this recurring task.
-                </p>
-                <RecurrenceFormSimple
-                  value={editedRecurrence}
-                  onChange={handleRecurrenceChange}
-                  disabled={isSubmitting}
-                  testId="edit-recurrence-form"
-                />
-                {hasRecurrenceChanged && (
-                  <p className="mt-3 text-xs text-amber-600 font-medium">
-                    Pattern changes will be saved when you click "Save Changes"
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Info text when collapsed */}
-            {!showRecurrenceEdit && (
-              <p className="px-3 pb-2 text-xs text-amber-600 bg-amber-50">
-                Click to edit recurrence pattern
-              </p>
-            )}
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-amber-600 text-lg">↻</span>
+              <span className="text-sm font-medium text-gray-700">Recurrence Pattern</span>
+              {hasRecurrenceChanged && (
+                <span className="text-xs text-amber-600 font-medium">(modified)</span>
+              )}
+            </div>
+            <RecurrenceFormSimple
+              value={editedRecurrence}
+              onChange={handleRecurrenceChange}
+              disabled={isSubmitting}
+              testId="edit-recurrence-form"
+            />
+            <p className="mt-2 text-xs text-gray-500">
+              Changes to the pattern will apply to all future instances.
+            </p>
           </div>
         )}
 
