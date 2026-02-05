@@ -97,7 +97,7 @@ function createDefaultState(): FormState {
     interval: 1,
     daysOfWeek: [],
     monthlyMode: 'dayOfMonth',
-    dayOfMonth: null,
+    dayOfMonth: 1, // Default to 1st of month
     nthWeekday: null,
     specificDatesOfMonth: [],
     daysAfterCompletion: 7,
@@ -120,12 +120,17 @@ function patternToFormState(pattern: RecurrencePattern | null): FormState {
     monthlyMode = 'specificDates';
   }
 
+  // Default dayOfMonth to 1 if monthly mode is 'dayOfMonth' but no value is set
+  const dayOfMonth =
+    pattern.dayOfMonth ??
+    (pattern.type === 'monthly' && monthlyMode === 'dayOfMonth' ? 1 : null);
+
   return {
     type: pattern.type,
     interval: pattern.interval || 1,
     daysOfWeek: pattern.daysOfWeek || [],
     monthlyMode,
-    dayOfMonth: pattern.dayOfMonth,
+    dayOfMonth,
     nthWeekday: pattern.nthWeekday || null,
     specificDatesOfMonth: pattern.specificDatesOfMonth || [],
     daysAfterCompletion: pattern.daysAfterCompletion || 7,
@@ -214,13 +219,14 @@ export function RecurrenceFormSimple({
   // Form state
   const [formState, setFormState] = useState<FormState>(() => patternToFormState(value));
 
-  // Track previous value to detect prop changes
-  const prevValueRef = useRef<RecurrencePattern | null>(value);
+  // Track previous value to detect prop changes (use JSON for deep comparison)
+  const prevValueJsonRef = useRef<string>(JSON.stringify(value));
 
   // Sync formState when value prop changes (controlled component pattern)
   useEffect(() => {
-    if (value !== prevValueRef.current) {
-      prevValueRef.current = value;
+    const currentJson = JSON.stringify(value);
+    if (currentJson !== prevValueJsonRef.current) {
+      prevValueJsonRef.current = currentJson;
       setFormState(patternToFormState(value));
     }
   }, [value]);
@@ -283,7 +289,30 @@ export function RecurrenceFormSimple({
   // Handle monthly mode change
   const handleMonthlyModeChange = useCallback(
     (mode: FormState['monthlyMode']) => {
-      updateState({ monthlyMode: mode });
+      setFormState((prev) => {
+        const newState = { ...prev, monthlyMode: mode };
+
+        // Initialize defaults when switching modes
+        if (mode === 'dayOfMonth' && prev.dayOfMonth === null) {
+          newState.dayOfMonth = 1;
+        } else if (mode === 'nthWeekday' && !prev.nthWeekday) {
+          newState.nthWeekday = { n: 1, weekday: 1 };
+        }
+
+        onChange(formStateToPattern(newState));
+        return newState;
+      });
+    },
+    [onChange]
+  );
+
+  // Handle day of month change
+  const handleDayOfMonthChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const val = parseInt(e.target.value, 10);
+      if (!isNaN(val) && val >= 1 && val <= 31) {
+        updateState({ dayOfMonth: val });
+      }
     },
     [updateState]
   );
@@ -476,10 +505,42 @@ export function RecurrenceFormSimple({
               checked={formState.monthlyMode === 'dayOfMonth'}
               onChange={() => handleMonthlyModeChange('dayOfMonth')}
               disabled={disabled}
-              className="w-4 h-4 text-amber-500 border-gray-300 focus:ring-amber-500"
+              className="w-4 h-4 text-amber-500 border-gray-300 focus:ring-amber-500 focus:ring-2"
+              data-testid={`${effectiveTestId}-monthly-dayOfMonth`}
             />
             <span className="text-sm text-gray-700">Same day each month</span>
           </label>
+
+          {formState.monthlyMode === 'dayOfMonth' && (
+            <div className="pl-6 space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-700">Day</span>
+                <select
+                  value={formState.dayOfMonth ?? 1}
+                  onChange={handleDayOfMonthChange}
+                  disabled={disabled}
+                  className="
+                    px-2 py-1 text-sm border border-gray-300 rounded
+                    focus:outline-none focus:ring-2 focus:ring-amber-500
+                    disabled:opacity-50
+                  "
+                  data-testid={`${effectiveTestId}-day-of-month-select`}
+                >
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                    <option key={day} value={day}>
+                      {day}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-sm text-gray-700">of each month</span>
+              </div>
+              {formState.dayOfMonth && formState.dayOfMonth > 28 && (
+                <span className="text-xs text-gray-500">
+                  (Skips months without this day)
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Nth Weekday option */}
           <label className="flex items-center gap-2 cursor-pointer">
@@ -490,7 +551,8 @@ export function RecurrenceFormSimple({
               checked={formState.monthlyMode === 'nthWeekday'}
               onChange={() => handleMonthlyModeChange('nthWeekday')}
               disabled={disabled}
-              className="w-4 h-4 text-amber-500 border-gray-300 focus:ring-amber-500"
+              className="w-4 h-4 text-amber-500 border-gray-300 focus:ring-amber-500 focus:ring-2"
+              data-testid={`${effectiveTestId}-monthly-nthWeekday`}
             />
             <span className="text-sm text-gray-700">Specific weekday</span>
           </label>
@@ -553,7 +615,8 @@ export function RecurrenceFormSimple({
               checked={formState.monthlyMode === 'specificDates'}
               onChange={() => handleMonthlyModeChange('specificDates')}
               disabled={disabled}
-              className="w-4 h-4 text-amber-500 border-gray-300 focus:ring-amber-500"
+              className="w-4 h-4 text-amber-500 border-gray-300 focus:ring-amber-500 focus:ring-2"
+              data-testid={`${effectiveTestId}-monthly-specificDates`}
             />
             <span className="text-sm text-gray-700">Specific dates of month</span>
           </label>

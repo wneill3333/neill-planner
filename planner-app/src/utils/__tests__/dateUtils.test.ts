@@ -486,6 +486,63 @@ describe('dateUtils', () => {
         expect(normalizeToDateString(utcMidnight)).toBe('2026-01-24');
         expect(normalizeToDateString(justDate)).toBe('2026-01-24');
       });
+
+      // CRITICAL: Tests for western timezone date shift bug fix
+      // Bug: Tasks appeared on yesterday's date for users in western timezones (EST, PST)
+      // Root cause: Using UTC components instead of local components
+
+      it('should preserve local date for dates at any time of day', () => {
+        // User creates a task for Feb 5, 2026 at various times
+        // In western timezones, local midnight is still "yesterday" in UTC
+        // But we want the local calendar date (Feb 5)
+        const midnight = new Date(2026, 1, 5, 0, 0, 0);
+        const noon = new Date(2026, 1, 5, 12, 0, 0);
+        const lateNight = new Date(2026, 1, 5, 23, 59, 59);
+
+        expect(normalizeToDateString(midnight)).toBe('2026-02-05');
+        expect(normalizeToDateString(noon)).toBe('2026-02-05');
+        expect(normalizeToDateString(lateNight)).toBe('2026-02-05');
+      });
+
+      it('should preserve year boundary dates in local timezone', () => {
+        // Jan 1 at local midnight is Dec 31 in UTC for western timezones
+        // But user means Jan 1, not Dec 31
+        const newYearMidnight = new Date(2026, 0, 1, 0, 0, 0);
+        const newYearEve = new Date(2025, 11, 31, 23, 59, 59);
+
+        expect(normalizeToDateString(newYearMidnight)).toBe('2026-01-01');
+        expect(normalizeToDateString(newYearEve)).toBe('2025-12-31');
+      });
+
+      it('should preserve month boundary dates in local timezone', () => {
+        // Mar 1 at local midnight could be Feb 28/29 in UTC
+        const marchFirst = new Date(2026, 2, 1, 0, 0, 0);
+        const febLast = new Date(2026, 1, 28, 23, 59, 59);
+
+        expect(normalizeToDateString(marchFirst)).toBe('2026-03-01');
+        expect(normalizeToDateString(febLast)).toBe('2026-02-28');
+      });
+
+      it('should handle Firestore Timestamp-like objects with toDate() method', () => {
+        // Mock Firestore Timestamp object
+        const mockTimestamp = {
+          toDate: () => new Date(2026, 1, 5, 0, 0, 0), // Feb 5 at local midnight
+        };
+
+        expect(normalizeToDateString(mockTimestamp)).toBe('2026-02-05');
+      });
+
+      it('should produce idempotent results for round-trip normalization', () => {
+        // Create date, normalize, parse, normalize again - should be same
+        const original = new Date(2026, 1, 5, 14, 30); // Feb 5 at 2:30 PM local
+        const firstNorm = normalizeToDateString(original);
+        expect(firstNorm).toBe('2026-02-05');
+
+        // Parse back and normalize again
+        const parsed = new Date(firstNorm + 'T00:00:00'); // Local midnight
+        const secondNorm = normalizeToDateString(parsed);
+        expect(secondNorm).toBe('2026-02-05');
+      });
     });
   });
 

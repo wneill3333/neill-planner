@@ -64,14 +64,34 @@ export function normalizeToDateString(date: Date | string | null | undefined): s
     // Try parsing as a Date and extracting components
     const parsed = new Date(date);
     if (!isNaN(parsed.getTime())) {
-      // Use UTC components to avoid timezone shifts
-      return `${parsed.getUTCFullYear()}-${String(parsed.getUTCMonth() + 1).padStart(2, '0')}-${String(parsed.getUTCDate()).padStart(2, '0')}`;
+      // Use LOCAL date components to preserve the intended calendar date
+      return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
     }
     return '';
   }
 
-  // Date object - use local date components (user's intention)
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  // Handle Firestore Timestamp objects (have toDate() method but aren't Date instances)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (typeof date === 'object' && date !== null && typeof (date as any).toDate === 'function') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dateObj = (date as any).toDate();
+    if (dateObj instanceof Date && !isNaN(dateObj.getTime())) {
+      // Use LOCAL date components - the date was stored as local midnight
+      return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+    }
+    return '';
+  }
+
+  // Date object - use LOCAL date components to preserve the intended calendar date
+  // Using UTC components would shift the date for users west of UTC (e.g., EST, PST)
+  // Example: Feb 5, 2026 00:00 EST = Feb 4, 2026 19:00 UTC - getUTCDate() would return 4!
+  if (date instanceof Date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
+
+  // Unknown type - log warning and return empty
+  console.warn('[normalizeToDateString] Unknown date type:', typeof date, date);
+  return '';
 }
 
 /**

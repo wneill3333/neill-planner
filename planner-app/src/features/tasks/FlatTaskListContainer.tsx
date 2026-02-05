@@ -9,9 +9,10 @@
 import { useCallback, useState } from 'react';
 import { useAuth } from '../auth';
 import { useSelectedDateTasks } from './hooks';
-import { useAppDispatch } from '../../store/hooks';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { useAnnouncement } from '../../hooks';
-import { updateTaskAsync, forwardTaskAsync, deleteTask, batchUpdateTasksAsync, deleteRecurringInstanceOnly, deleteRecurringFuture, editRecurringInstanceOnly } from './taskThunks';
+import { updateTaskAsync, forwardTaskAsync, deleteTask, batchUpdateTasksAsync, deleteRecurringInstanceOnly, deleteRecurringFuture, editRecurringInstanceOnly, completeAfterCompletionTask } from './taskThunks';
+import { selectRecurringPatterns } from './taskSlice';
 import { FlatTaskList, DraggableFlatTaskList, ForwardDateModal, RecurringDeleteDialog } from '../../components/tasks';
 import type { Task, TaskStatus, PriorityLetter, UpdateTaskInput } from '../../types';
 import { getStatusLabel } from '../../utils/statusUtils';
@@ -149,6 +150,9 @@ export function FlatTaskListContainer({
     selectedDate,
   } = useSelectedDateTasks(userId);
 
+  // Get recurring patterns to check for afterCompletion type
+  const recurringPatterns = useAppSelector(selectRecurringPatterns);
+
   // Sort tasks by priority for flat display
   const sortedTasks = sortTasksByPriority(tasks);
 
@@ -162,8 +166,27 @@ export function FlatTaskListContainer({
       announce(`Updating task status to ${statusLabel}`);
 
       try {
-        await dispatch(updateTaskAsync({ id: task.id, status: newStatus, userId })).unwrap();
-        announce(`Task status updated to ${statusLabel}`);
+        // Check if this is an afterCompletion recurring task being completed
+        const pattern = task.recurringPatternId
+          ? recurringPatterns[task.recurringPatternId]
+          : null;
+        const isAfterCompletionTask = pattern?.type === 'afterCompletion';
+
+        if (isAfterCompletionTask && newStatus === 'complete') {
+          // Use special thunk that creates the next instance
+          await dispatch(
+            completeAfterCompletionTask({
+              taskId: task.id,
+              patternId: task.recurringPatternId!,
+              userId,
+            })
+          ).unwrap();
+          announce('Task completed, next occurrence scheduled');
+        } else {
+          // Regular status update
+          await dispatch(updateTaskAsync({ id: task.id, status: newStatus, userId })).unwrap();
+          announce(`Task status updated to ${statusLabel}`);
+        }
       } catch (err) {
         console.error('Failed to update task status:', err);
         announce('Failed to update task status');
@@ -171,7 +194,7 @@ export function FlatTaskListContainer({
         setUpdatingTaskId(null);
       }
     },
-    [dispatch, announce, userId]
+    [dispatch, announce, userId, recurringPatterns]
   );
 
   // Handle forward select - open date modal

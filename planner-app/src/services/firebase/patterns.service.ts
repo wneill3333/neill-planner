@@ -137,7 +137,9 @@ export async function createRecurringPattern(
   validateUserId(userId);
 
   const now = new Date();
-  const startDate = input.startDate || now;
+  // Normalize startDate to local midnight to avoid timezone issues
+  const rawStartDate = input.startDate || now;
+  const startDate = new Date(rawStartDate.getFullYear(), rawStartDate.getMonth(), rawStartDate.getDate());
   const generatedUntil = addDays(startDate, DEFAULT_GENERATION_DAYS);
 
   // Build priority with default number if not provided
@@ -173,6 +175,22 @@ export async function createRecurringPattern(
   };
 
   try {
+    // DEBUG: Log pattern data being saved
+    console.log(
+      '%c[PATTERN] Creating pattern with data:',
+      'color: purple; font-weight: bold',
+      {
+        title: patternData.title,
+        type: patternData.type,
+        dayOfMonth: patternData.dayOfMonth,
+        daysOfWeek: patternData.daysOfWeek,
+        nthWeekday: patternData.nthWeekday,
+        interval: patternData.interval,
+        startDate: patternData.startDate.toISOString(),
+        generatedUntil: patternData.generatedUntil.toISOString(),
+      }
+    );
+
     // Create the pattern document
     const docRef = await addDoc(
       collection(db, PATTERNS_COLLECTION),
@@ -240,7 +258,24 @@ export async function generateInstancesForPattern(
   // Generate occurrence dates for standard recurrence types
   const dates = generateOccurrenceDates(pattern, fromDate, toDate);
 
+  // DEBUG: Log generated dates
+  console.log(
+    `%c[PATTERN] generateInstancesForPattern: Generated ${dates.length} dates from ${fromDate.toISOString()} to ${toDate.toISOString()}`,
+    'color: purple; font-weight: bold'
+  );
+  console.log('[PATTERN] Pattern config:', {
+    type: pattern.type,
+    interval: pattern.interval,
+    dayOfMonth: pattern.dayOfMonth,
+    daysOfWeek: pattern.daysOfWeek,
+    startDate: pattern.startDate,
+  });
+  if (dates.length > 0) {
+    console.log('[PATTERN] First 5 dates:', dates.slice(0, 5).map(d => d.toISOString()));
+  }
+
   if (dates.length === 0) {
+    console.warn('[PATTERN] No dates generated - returning empty array');
     return [];
   }
 
@@ -248,13 +283,16 @@ export async function generateInstancesForPattern(
   const instances: Task[] = [];
 
   for (const date of dates) {
+    // Normalize date to local midnight to ensure consistent date handling
+    const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
     const taskInput: CreateTaskInput = {
       title: pattern.title,
       description: pattern.description,
       categoryId: pattern.categoryId,
       priority: pattern.priority,
       status: 'in_progress',
-      scheduledDate: date,
+      scheduledDate: localDate,
       startTime: pattern.startTime,
       duration: pattern.duration,
       showOnCalendar: !!pattern.startTime,
@@ -263,9 +301,10 @@ export async function generateInstancesForPattern(
 
     try {
       const task = await createTask(taskInput, userId);
+      console.log(`[PATTERN] Created task instance: ${task.id} for date ${localDate.toISOString()} (local: ${localDate.toLocaleDateString()})`);
       instances.push(task);
     } catch (error) {
-      console.error(`Error creating instance for date ${date}:`, error);
+      console.error(`[PATTERN] Error creating instance for date ${localDate}:`, error);
       // Continue with other instances
     }
   }

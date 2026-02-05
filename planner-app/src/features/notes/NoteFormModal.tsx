@@ -14,6 +14,7 @@ import { createNoteAsync, updateNoteAsync, deleteNoteAsync } from './noteThunks'
 import { useAuth } from '../auth';
 import { Modal } from '../../components/common';
 import { NoteForm } from '../../components/notes/NoteForm';
+import { parseISODateString } from '../../utils/firestoreUtils';
 import type { Note, CreateNoteInput } from '../../types';
 
 // =============================================================================
@@ -77,7 +78,8 @@ export function NoteFormModal({
   const isEditMode = !!note;
 
   // Convert ISO date string to Date object (memoized to prevent re-creation)
-  const defaultDate = useMemo(() => new Date(selectedDate), [selectedDate]);
+  // Use parseISODateString to create local midnight (new Date("2026-02-05") would be UTC midnight!)
+  const defaultDate = useMemo(() => parseISODateString(selectedDate), [selectedDate]);
 
   /**
    * Handle form submission - create or update note

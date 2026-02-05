@@ -128,7 +128,7 @@ export function CategoryListContainer({
   const userId = user?.id ?? null;
 
   // Track which category is being deleted for confirmation
-  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
+  const [_deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
 
   // Redux selectors
   const categories = useAppSelector(selectAllCategories);

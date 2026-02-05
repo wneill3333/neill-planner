@@ -1,6 +1,13 @@
 ---
 name: code-reviewer
-description: "Use this agent when you need a thorough code review of Next.js, React, or TypeScript code focusing on optimization, refactoring opportunities, and documentation quality. This includes reviewing recently written components, API routes, hooks, utilities, or any TypeScript code in a full-stack Next.js application. Examples:\\n\\n<example>\\nContext: The user just finished writing a new React component.\\nuser: \"I just created a new ProductCard component, can you review it?\"\\nassistant: \"I'll use the fullstack-code-reviewer agent to thoroughly review your ProductCard component for optimization opportunities, refactoring suggestions, and documentation improvements.\"\\n<Task tool call to fullstack-code-reviewer agent>\\n</example>\\n\\n<example>\\nContext: The user completed an API route implementation.\\nuser: \"Please review the API route I just wrote for user authentication\"\\nassistant: \"Let me launch the fullstack-code-reviewer agent to analyze your authentication API route for best practices, performance optimizations, and proper commenting.\"\\n<Task tool call to fullstack-code-reviewer agent>\\n</example>\\n\\n<example>\\nContext: The user has written a custom hook and wants feedback.\\nuser: \"Can you check my useDebounce hook?\"\\nassistant: \"I'll have the fullstack-code-reviewer agent examine your useDebounce hook for optimization, proper TypeScript typing, and documentation.\"\\n<Task tool call to fullstack-code-reviewer agent>\\n</example>\\n\\n<example>\\nContext: After a coding session, proactively offering review.\\nuser: \"I think I'm done with the checkout flow components\"\\nassistant: \"Great work on completing the checkout flow! Let me use the fullstack-code-reviewer agent to review these components and ensure they're optimized, well-refactored, and properly documented before we move on.\"\\n<Task tool call to fullstack-code-reviewer agent>\\n</example>"
+description: "Use this agent whenever you need a clear, thorough review of Next.js, React, or TypeScript code. It specializes in finding optimization opportunities, refactoring improvements, typing issues, and documentation gaps. It also understands how your code interacts with the Firebase ecosystem, including Firestore, Auth, Functions, and client/server boundaries.
+This agent is ideal for reviewing:
+- React components
+- Next.js API routes
+- Custom hooks
+- Utilities and shared modules
+- TypeScript-heavy logic
+This agent is also an expert in full-stack React + Firebase integration, including Firestore, Auth, Functions, and server/client boundaries."
 tools: Glob, Grep, Read, WebFetch, WebSearch
 model: opus
 color: yellow

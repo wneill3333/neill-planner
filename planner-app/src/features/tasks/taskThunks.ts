@@ -62,6 +62,15 @@ export const fetchTasksByDate = createAsyncThunk<
   try {
     const tasks = await tasksService.getTasksByDate(userId, date);
     const dateString = date.toISOString().split('T')[0];
+    // DEBUG: Log fetched tasks
+    console.log(
+      `%c[FETCH] fetchTasksByDate: Fetched ${tasks.length} tasks for ${dateString}`,
+      'color: green; font-weight: bold'
+    );
+    if (tasks.length > 0) {
+      console.log('[FETCH] Task IDs:', tasks.map(t => t.id));
+      console.log('[FETCH] Tasks with recurringPatternId:', tasks.filter(t => t.recurringPatternId).length);
+    }
     return { tasks, date: dateString };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to fetch tasks';

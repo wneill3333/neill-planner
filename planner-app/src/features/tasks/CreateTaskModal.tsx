@@ -17,6 +17,7 @@ import { selectAllCategories } from '../categories';
 import { selectSelectedDate, selectTasksForSelectedDate } from './taskSlice';
 import { useAuth } from '../auth';
 import { sortTasksByPriority } from '../../utils/taskUtils';
+import { parseISODateString } from '../../utils/firestoreUtils';
 import type { CreateTaskInput, CreateRecurringPatternInput, RecurrencePattern } from '../../types';
 
 // =============================================================================
@@ -73,7 +74,9 @@ export function CreateTaskModal({
   const tasksForDate = useAppSelector(selectTasksForSelectedDate);
 
   // Convert ISO date string to Date object for TaskForm
-  const selectedDate = selectedDateString ? new Date(selectedDateString) : null;
+  // IMPORTANT: Use parseISODateString to create a Date at LOCAL midnight
+  // Using new Date("2026-02-05") would create UTC midnight, which is the previous day in western timezones!
+  const selectedDate = selectedDateString ? parseISODateString(selectedDateString) : null;
 
   // Get the last task's priority to use as default for new tasks
   const defaultPriority = useMemo(() => {

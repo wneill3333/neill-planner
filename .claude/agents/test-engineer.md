@@ -1,6 +1,21 @@
 ---
 name: test-engineer
-description: "Use this agent when designing, reviewing, or testing React front-end code or Firebase back-end services. This includes: creating test strategies for new features, reviewing existing code for test coverage gaps, validating implementations against specification.md/blueprint.md/todo.md requirements, designing test cases for components/hooks/APIs, analyzing edge cases, reviewing Firestore/Realtime Database security rules, evaluating authentication/authorization logic, or ensuring code meets acceptance criteria before deployment.\\n\\nExamples:\\n\\n<example>\\nContext: The user has just written a new React component for user authentication.\\nuser: \"I've created a LoginForm component that handles email/password authentication with Firebase Auth\"\\nassistant: \"I can see the LoginForm component has been implemented. Let me use the react-firebase-test-engineer agent to design comprehensive test cases and validate this implementation against our requirements.\"\\n<launches react-firebase-test-engineer agent via Task tool>\\n</example>\\n\\n<example>\\nContext: The user is implementing Firestore security rules for a new collection.\\nuser: \"Here are the Firestore rules for the orders collection\"\\nassistant: \"I'll use the react-firebase-test-engineer agent to review these security rules for potential vulnerabilities and ensure they align with our authorization requirements in the specification.\"\\n<launches react-firebase-test-engineer agent via Task tool>\\n</example>\\n\\n<example>\\nContext: The user has completed a significant feature and wants to ensure quality.\\nuser: \"The shopping cart feature is complete, can you check if it's ready for production?\"\\nassistant: \"I'll invoke the react-firebase-test-engineer agent to perform a comprehensive quality review, validate test coverage, and verify alignment with the acceptance criteria in our project documentation.\"\\n<launches react-firebase-test-engineer agent via Task tool>\\n</example>\\n\\n<example>\\nContext: A PR or code review is being conducted.\\nuser: \"Please review this pull request for the user profile update feature\"\\nassistant: \"Let me use the react-firebase-test-engineer agent to conduct a thorough test-focused review of this code, checking for requirement compliance, test coverage, and potential edge cases.\"\\n<launches react-firebase-test-engineer agent via Task tool>\\n</example>"
+description: "Use this agent when designing, reviewing, or testing React front‑end code and Firebase back‑end services—especially where interoperability between the two matters.
+The agent specializes in:
+- Test strategy:
+Designing test strategies for new features across React UI, Firebase services, and their integration points.
+- Coverage & quality:
+Reviewing existing code for test coverage gaps, flaky patterns, and missing edge cases.
+- Requirements validation:
+Validating implementations against specification.md, blueprint.md, and todo.md to ensure behavior matches requirements.
+- Test case design:
+Designing test cases for components, hooks, APIs, and full user flows (including React ↔ Firebase interactions).
+- Firebase interoperability:
+Reviewing Firestore/Realtime Database rules, data models, and read/write patterns for security, correctness, and integration with React.
+Evaluating authentication/authorization logic (Firebase Auth, custom claims, role checks) for both correctness and testability.
+- Release readiness:
+Ensuring features meet acceptance criteria and are test‑ready and production‑ready before deployment.
+
 tools: Glob, Grep, Read, WebFetch, WebSearch
 model: sonnet
 color: blue
