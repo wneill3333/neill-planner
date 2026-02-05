@@ -7,10 +7,10 @@
 
 import { createSlice, createSelector, type PayloadAction } from '@reduxjs/toolkit';
 import { startOfDay } from 'date-fns';
-import type { Task, SyncStatus, PriorityLetter } from '../../types';
+import type { Task, SyncStatus, PriorityLetter, RecurringPattern } from '../../types';
 import { NONE_CATEGORY_ID } from '../../types';
 import type { RootState } from '../../store';
-import { generateRecurringInstances } from '../../utils/recurrenceUtils';
+import { generateRecurringInstances, addExceptionWithDedup } from '../../utils/recurrenceUtils';
 import { sortTasksByPriority } from '../../utils/taskUtils';
 import { getNextPriorityNumber } from '../../utils/priorityUtils';
 import { normalizeToDateString } from '../../utils/dateUtils';
@@ -32,6 +32,13 @@ import {
   deleteRecurringFuture,
   forwardTaskAsync,
   updateRecurringInstanceStatus,
+  // NEW: Recurring pattern thunks
+  fetchRecurringPatterns,
+  createRecurringPatternThunk,
+  updateRecurringPatternThunk,
+  deleteRecurringPatternThunk,
+  ensureInstancesForDateThunk,
+  completeAfterCompletionTask,
 } from './taskThunks';
 
 // =============================================================================
@@ -46,10 +53,19 @@ export interface TasksState {
   tasks: Record<string, Task>;
   /** Task IDs indexed by date (ISO date string) for quick lookup */
   taskIdsByDate: Record<string, string[]>;
-  /** Recurring parent tasks (tasks with recurrence patterns) indexed by ID */
+
+  // NEW: Recurring patterns (materialized instance system)
+  /** Recurring patterns indexed by ID */
+  recurringPatterns: Record<string, RecurringPattern>;
+  /** Whether recurring patterns have been loaded */
+  recurringPatternsLoaded: boolean;
+
+  // LEGACY: Old recurring task state (kept for backward compatibility during migration)
+  /** @deprecated Use recurringPatterns instead. Recurring parent tasks indexed by ID */
   recurringParentTasks: Record<string, Task>;
-  /** Whether recurring parent tasks have been loaded */
+  /** @deprecated Use recurringPatternsLoaded instead */
   recurringTasksLoaded: boolean;
+
   /** Currently selected date (ISO date string) */
   selectedDate: string;
   /** Loading state */
@@ -84,11 +100,12 @@ export interface UpdateTaskDatePayload {
 // =============================================================================
 
 /**
- * Get ISO date string from a Date object or return null
+ * Get ISO date string from a Date object or ISO string, or return null
+ * Handles Redux serialization where Date objects become ISO strings
  */
-function getDateString(date: Date | null | undefined): string | null {
+function getDateString(date: Date | string | null | undefined): string | null {
   if (!date) return null;
-  return date.toISOString().split('T')[0];
+  return normalizeToDateString(date) || null;
 }
 
 /**
@@ -141,6 +158,10 @@ function removeTaskFromDateIndex(
 export const initialState: TasksState = {
   tasks: {},
   taskIdsByDate: {},
+  // NEW: Recurring patterns
+  recurringPatterns: {},
+  recurringPatternsLoaded: false,
+  // LEGACY: Old recurring task state
   recurringParentTasks: {},
   recurringTasksLoaded: false,
   selectedDate: getTodayString(),
@@ -273,9 +294,38 @@ export const taskSlice = createSlice({
     clearTasks: (state) => {
       state.tasks = {};
       state.taskIdsByDate = {};
+      // NEW: Clear recurring patterns
+      state.recurringPatterns = {};
+      state.recurringPatternsLoaded = false;
+      // LEGACY: Clear old recurring state
       state.recurringParentTasks = {};
       state.recurringTasksLoaded = false;
       state.error = null;
+    },
+
+    /**
+     * NEW: Set a recurring pattern
+     */
+    setRecurringPattern: (state, action: PayloadAction<RecurringPattern>) => {
+      state.recurringPatterns[action.payload.id] = action.payload;
+    },
+
+    /**
+     * NEW: Remove a recurring pattern
+     */
+    removeRecurringPattern: (state, action: PayloadAction<string>) => {
+      delete state.recurringPatterns[action.payload];
+    },
+
+    /**
+     * NEW: Set all recurring patterns (for initial load)
+     */
+    setRecurringPatterns: (state, action: PayloadAction<RecurringPattern[]>) => {
+      state.recurringPatterns = {};
+      for (const pattern of action.payload) {
+        state.recurringPatterns[pattern.id] = pattern;
+      }
+      state.recurringPatternsLoaded = true;
     },
 
     /**
@@ -489,6 +539,11 @@ export const taskSlice = createSlice({
           delete state.tasks[taskId];
         }
 
+        // Also remove from recurringParentTasks if it exists there
+        if (state.recurringParentTasks[taskId]) {
+          delete state.recurringParentTasks[taskId];
+        }
+
         state.syncStatus = 'synced';
       })
       .addCase(hardDeleteTask.rejected, (state, action) => {
@@ -675,7 +730,7 @@ export const taskSlice = createSlice({
               ...parentInRecurring,
               recurrence: {
                 ...parentInRecurring.recurrence,
-                exceptions: [...parentInRecurring.recurrence.exceptions, instanceDate],
+                exceptions: addExceptionWithDedup(parentInRecurring.recurrence.exceptions, instanceDate),
               },
               updatedAt: new Date(),
             };
@@ -687,7 +742,7 @@ export const taskSlice = createSlice({
               ...parentInTasks,
               recurrence: {
                 ...parentInTasks.recurrence,
-                exceptions: [...parentInTasks.recurrence.exceptions, instanceDate],
+                exceptions: addExceptionWithDedup(parentInTasks.recurrence.exceptions, instanceDate),
               },
               updatedAt: new Date(),
             };
@@ -891,6 +946,157 @@ export const taskSlice = createSlice({
         state.error = action.payload?.message || 'Failed to forward task';
         state.syncStatus = 'error';
       });
+
+    // ==========================================================================
+    // NEW: fetchRecurringPatterns
+    // ==========================================================================
+    builder
+      .addCase(fetchRecurringPatterns.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchRecurringPatterns.fulfilled, (state, action) => {
+        state.loading = false;
+        state.recurringPatternsLoaded = true;
+        state.recurringPatterns = {};
+        for (const pattern of action.payload) {
+          state.recurringPatterns[pattern.id] = pattern;
+        }
+      })
+      .addCase(fetchRecurringPatterns.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || 'Failed to fetch recurring patterns';
+      });
+
+    // ==========================================================================
+    // NEW: createRecurringPatternThunk
+    // ==========================================================================
+    builder
+      .addCase(createRecurringPatternThunk.pending, (state) => {
+        state.syncStatus = 'syncing';
+      })
+      .addCase(createRecurringPatternThunk.fulfilled, (state, action) => {
+        const { pattern, instances } = action.payload;
+
+        // Add the pattern
+        state.recurringPatterns[pattern.id] = pattern;
+
+        // Add all instances to state
+        for (const task of instances) {
+          state.tasks[task.id] = task;
+          const dateString = getDateString(task.scheduledDate);
+          addTaskToDateIndex(state.taskIdsByDate, dateString, task.id);
+        }
+
+        state.syncStatus = 'synced';
+      })
+      .addCase(createRecurringPatternThunk.rejected, (state, action) => {
+        state.error = action.payload?.message || 'Failed to create recurring pattern';
+        state.syncStatus = 'error';
+      });
+
+    // ==========================================================================
+    // NEW: updateRecurringPatternThunk
+    // ==========================================================================
+    builder
+      .addCase(updateRecurringPatternThunk.pending, (state) => {
+        state.syncStatus = 'syncing';
+      })
+      .addCase(updateRecurringPatternThunk.fulfilled, (state, action) => {
+        state.recurringPatterns[action.payload.id] = action.payload;
+        state.syncStatus = 'synced';
+      })
+      .addCase(updateRecurringPatternThunk.rejected, (state, action) => {
+        state.error = action.payload?.message || 'Failed to update recurring pattern';
+        state.syncStatus = 'error';
+      });
+
+    // ==========================================================================
+    // NEW: deleteRecurringPatternThunk
+    // ==========================================================================
+    builder
+      .addCase(deleteRecurringPatternThunk.pending, (state) => {
+        state.syncStatus = 'syncing';
+      })
+      .addCase(deleteRecurringPatternThunk.fulfilled, (state, action) => {
+        const { patternId, deleteInstances, deletedTaskIds } = action.payload;
+
+        // Remove the pattern
+        delete state.recurringPatterns[patternId];
+
+        // Remove instances if requested
+        if (deleteInstances && deletedTaskIds) {
+          for (const taskId of deletedTaskIds) {
+            const task = state.tasks[taskId];
+            if (task) {
+              const dateString = getDateString(task.scheduledDate);
+              removeTaskFromDateIndex(state.taskIdsByDate, dateString, taskId);
+              delete state.tasks[taskId];
+            }
+          }
+        }
+
+        state.syncStatus = 'synced';
+      })
+      .addCase(deleteRecurringPatternThunk.rejected, (state, action) => {
+        state.error = action.payload?.message || 'Failed to delete recurring pattern';
+        state.syncStatus = 'error';
+      });
+
+    // ==========================================================================
+    // NEW: ensureInstancesForDateThunk
+    // ==========================================================================
+    builder
+      .addCase(ensureInstancesForDateThunk.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(ensureInstancesForDateThunk.fulfilled, (state, action) => {
+        state.loading = false;
+
+        // Add newly generated instances
+        for (const task of action.payload) {
+          state.tasks[task.id] = task;
+          const dateString = getDateString(task.scheduledDate);
+          addTaskToDateIndex(state.taskIdsByDate, dateString, task.id);
+        }
+      })
+      .addCase(ensureInstancesForDateThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || 'Failed to ensure instances for date';
+      });
+
+    // ==========================================================================
+    // NEW: completeAfterCompletionTask
+    // ==========================================================================
+    builder
+      .addCase(completeAfterCompletionTask.pending, (state) => {
+        state.syncStatus = 'syncing';
+      })
+      .addCase(completeAfterCompletionTask.fulfilled, (state, action) => {
+        const { completedTask, nextInstance } = action.payload;
+
+        // Update the completed task
+        state.tasks[completedTask.id] = completedTask;
+
+        // Add the next instance if created
+        if (nextInstance) {
+          state.tasks[nextInstance.id] = nextInstance;
+          const dateString = getDateString(nextInstance.scheduledDate);
+          addTaskToDateIndex(state.taskIdsByDate, dateString, nextInstance.id);
+
+          // Update pattern's activeInstanceId
+          const patternId = completedTask.recurringPatternId;
+          if (patternId && state.recurringPatterns[patternId]) {
+            state.recurringPatterns[patternId].activeInstanceId = nextInstance.id;
+          }
+        }
+
+        state.syncStatus = 'synced';
+      })
+      .addCase(completeAfterCompletionTask.rejected, (state, action) => {
+        state.error = action.payload?.message || 'Failed to complete task';
+        state.syncStatus = 'error';
+      });
   },
 });
 
@@ -910,6 +1116,10 @@ export const {
   clearTasks,
   reorderTasksLocal,
   batchUpdateTasks,
+  // NEW: Recurring pattern actions
+  setRecurringPattern,
+  removeRecurringPattern,
+  setRecurringPatterns,
 } = taskSlice.actions;
 
 // =============================================================================
@@ -1113,11 +1323,40 @@ export const selectTasksWithRecurringInstances = createSelector(
 
     // Deduplicate by task ID (prefer first occurrence - regular tasks over generated instances)
     const seenIds = new Set<string>();
-    const uniqueTasks = visibleTasks.filter((task) => {
+    const uniqueByIdTasks = visibleTasks.filter((task) => {
       if (seenIds.has(task.id)) {
         return false;
       }
       seenIds.add(task.id);
+      return true;
+    });
+
+    // Additional deduplication: for recurring instances, deduplicate by parent+title combo
+    // This handles multiple cases:
+    // 1. Duplicate recurring instances from the SAME parent (e.g., materialized + virtual)
+    // 2. Multiple materialized instances created for the same parent (bug scenario)
+    // 3. A regular task and a recurring instance with same title from same parent
+    // Strategy: Track seen (recurringParentId, title) combos. Tasks with the same parent
+    // and same title are deduplicated. Different parents with same title are kept.
+    const seenParentTitleCombos = new Set<string>();
+    const uniqueTasks = uniqueByIdTasks.filter((task) => {
+      const titleKey = task.title.toLowerCase().trim();
+
+      // For recurring instances, check parent+title combo
+      if (task.isRecurringInstance && task.recurringParentId) {
+        const comboKey = `${task.recurringParentId}::${titleKey}`;
+        if (seenParentTitleCombos.has(comboKey)) {
+          return false;
+        }
+        seenParentTitleCombos.add(comboKey);
+        return true;
+      }
+
+      // For non-recurring tasks that might conflict with recurring instances,
+      // also track by title to prevent a regular task and its recurring version
+      // from both appearing (if they share the same parent lineage)
+      // Regular tasks pass through but register their title for potential dedup
+      seenParentTitleCombos.add(`no-parent::${titleKey}`);
       return true;
     });
 
@@ -1230,15 +1469,60 @@ export const selectTasksLoadedForDate = (state: RootState, date: string): boolea
 
 /**
  * Select whether recurring parent tasks have been loaded
+ * @deprecated Use selectRecurringPatternsLoaded instead
  */
 export const selectRecurringTasksLoaded = (state: RootState): boolean =>
   state.tasks.recurringTasksLoaded ?? false;
 
 /**
  * Select all recurring parent tasks
+ * @deprecated Use selectRecurringPatterns instead
  */
 export const selectRecurringParentTasks = (state: RootState): Record<string, Task> =>
   state.tasks.recurringParentTasks;
+
+// =============================================================================
+// NEW: Recurring Pattern Selectors
+// =============================================================================
+
+/**
+ * Select whether recurring patterns have been loaded
+ */
+export const selectRecurringPatternsLoaded = (state: RootState): boolean =>
+  state.tasks.recurringPatternsLoaded ?? false;
+
+/**
+ * Select all recurring patterns
+ */
+export const selectRecurringPatterns = (state: RootState): Record<string, RecurringPattern> =>
+  state.tasks.recurringPatterns;
+
+/**
+ * Select all recurring patterns as an array
+ */
+export const selectRecurringPatternsArray = (state: RootState): RecurringPattern[] =>
+  Object.values(state.tasks.recurringPatterns);
+
+/**
+ * Select a recurring pattern by ID
+ */
+export const selectRecurringPatternById = (state: RootState, patternId: string): RecurringPattern | undefined =>
+  state.tasks.recurringPatterns[patternId];
+
+/**
+ * Select tasks for a specific recurring pattern
+ */
+export const selectTasksForPattern = createSelector(
+  [
+    (state: RootState) => state.tasks.tasks,
+    (_state: RootState, patternId: string) => patternId,
+  ],
+  (tasks, patternId): Task[] => {
+    return Object.values(tasks).filter(
+      (task) => task.recurringPatternId === patternId && !task.deletedAt
+    );
+  }
+);
 
 /**
  * Select filtered tasks for a specific date.

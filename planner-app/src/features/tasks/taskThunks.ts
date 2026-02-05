@@ -970,3 +970,193 @@ export const cleanupDuplicateExceptions = createAsyncThunk<
     return rejectWithValue({ message });
   }
 });
+
+// =============================================================================
+// NEW: Recurring Pattern Thunks (Materialized Instance System)
+// =============================================================================
+
+import * as patternsService from '../../services/firebase/patterns.service';
+import type { MigrationResult } from '../../services/firebase/patterns.service';
+import type {
+  RecurringPattern,
+  CreateRecurringPatternInput,
+  UpdateRecurringPatternInput,
+} from '../../types';
+
+/**
+ * Fetch all recurring patterns for a user
+ */
+export const fetchRecurringPatterns = createAsyncThunk<
+  RecurringPattern[],
+  { userId: string },
+  { state: RootState; rejectValue: ThunkError }
+>('tasks/fetchRecurringPatterns', async ({ userId }, { rejectWithValue }) => {
+  try {
+    const patterns = await patternsService.getRecurringPatterns(userId);
+    console.log(`[LOAD] Loaded ${patterns.length} recurring patterns`);
+    return patterns;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch recurring patterns';
+    return rejectWithValue({ message });
+  }
+});
+
+/**
+ * Create a new recurring pattern and generate initial instances
+ */
+export const createRecurringPatternThunk = createAsyncThunk<
+  { pattern: RecurringPattern; instances: Task[] },
+  { input: CreateRecurringPatternInput; userId: string },
+  { state: RootState; rejectValue: ThunkError }
+>('tasks/createRecurringPattern', async ({ input, userId }, { rejectWithValue }) => {
+  try {
+    const result = await patternsService.createRecurringPattern(input, userId);
+    console.log(`[CREATE] Created recurring pattern "${result.pattern.title}" with ${result.instances.length} instances`);
+    return result;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to create recurring pattern';
+    return rejectWithValue({ message });
+  }
+});
+
+/**
+ * Update a recurring pattern
+ */
+export const updateRecurringPatternThunk = createAsyncThunk<
+  RecurringPattern,
+  { input: UpdateRecurringPatternInput; userId: string },
+  { state: RootState; rejectValue: ThunkError }
+>('tasks/updateRecurringPattern', async ({ input, userId }, { rejectWithValue }) => {
+  try {
+    const pattern = await patternsService.updateRecurringPattern(input, userId);
+    console.log(`[UPDATE] Updated recurring pattern "${pattern.title}"`);
+    return pattern;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to update recurring pattern';
+    return rejectWithValue({ message });
+  }
+});
+
+/**
+ * Delete a recurring pattern (optionally with instances)
+ */
+export const deleteRecurringPatternThunk = createAsyncThunk<
+  { patternId: string; deleteInstances: boolean; deletedTaskIds?: string[] },
+  { patternId: string; userId: string; deleteInstances?: boolean },
+  { state: RootState; rejectValue: ThunkError }
+>('tasks/deleteRecurringPattern', async ({ patternId, userId, deleteInstances = false }, { getState, rejectWithValue }) => {
+  try {
+    // Get task IDs before deletion if we're deleting instances
+    let deletedTaskIds: string[] | undefined;
+    if (deleteInstances) {
+      const state = getState();
+      deletedTaskIds = Object.values(state.tasks.tasks)
+        .filter((task) => task.recurringPatternId === patternId)
+        .map((task) => task.id);
+    }
+
+    await patternsService.deleteRecurringPattern(patternId, userId, deleteInstances);
+    console.log(`[DELETE] Deleted recurring pattern ${patternId} (deleteInstances: ${deleteInstances})`);
+
+    return { patternId, deleteInstances, deletedTaskIds };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to delete recurring pattern';
+    return rejectWithValue({ message });
+  }
+});
+
+/**
+ * Ensure task instances exist for a given date
+ *
+ * This is called when navigating to a future date to generate
+ * on-demand instances if they don't exist yet.
+ */
+export const ensureInstancesForDateThunk = createAsyncThunk<
+  Task[],
+  { patternId: string; userId: string; targetDate: Date },
+  { state: RootState; rejectValue: ThunkError }
+>('tasks/ensureInstancesForDate', async ({ patternId, userId, targetDate }, { rejectWithValue }) => {
+  try {
+    const instances = await patternsService.ensureInstancesForDate(patternId, userId, targetDate);
+    if (instances.length > 0) {
+      console.log(`[GENERATE] Generated ${instances.length} on-demand instances for pattern ${patternId}`);
+    }
+    return instances;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to ensure instances for date';
+    return rejectWithValue({ message });
+  }
+});
+
+/**
+ * Handle completion of an 'afterCompletion' recurring task
+ *
+ * When a task with 'afterCompletion' pattern is completed,
+ * this creates the next instance.
+ */
+export const completeAfterCompletionTask = createAsyncThunk<
+  { completedTask: Task; nextInstance: Task | null },
+  { taskId: string; patternId: string; userId: string },
+  { state: RootState; rejectValue: ThunkError }
+>('tasks/completeAfterCompletionTask', async ({ taskId, patternId, userId }, { getState, rejectWithValue }) => {
+  try {
+    const state = getState();
+    const task = state.tasks.tasks[taskId];
+
+    if (!task) {
+      throw new Error('Task not found');
+    }
+
+    // Mark the task as complete with completedAt timestamp
+    const completedAt = new Date();
+    const completedTask = await tasksService.updateTask(
+      {
+        id: taskId,
+        status: 'complete',
+        completedAt,
+      },
+      userId
+    );
+
+    // Create the next instance
+    const nextInstance = await patternsService.handleAfterCompletionComplete(
+      taskId,
+      patternId,
+      userId,
+      completedAt
+    );
+
+    console.log(`[COMPLETE] Completed afterCompletion task, next instance on ${nextInstance?.scheduledDate}`);
+
+    return { completedTask, nextInstance };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to complete task';
+    return rejectWithValue({ message });
+  }
+});
+
+// =============================================================================
+// Migration Thunk
+// =============================================================================
+
+/**
+ * Migrate all legacy recurring tasks to the new pattern system
+ *
+ * This converts tasks with embedded `recurrence` field to
+ * separate RecurringPattern documents with materialized instances.
+ */
+export const migrateRecurringTasksThunk = createAsyncThunk<
+  MigrationResult,
+  { userId: string },
+  { state: RootState; rejectValue: ThunkError }
+>('tasks/migrateRecurringTasks', async ({ userId }, { rejectWithValue }) => {
+  try {
+    console.log('[MIGRATE] Starting migration of legacy recurring tasks...');
+    const result = await patternsService.migrateAllLegacyRecurringTasks(userId);
+    console.log('[MIGRATE] Migration complete:', result);
+    return result;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to migrate recurring tasks';
+    return rejectWithValue({ message });
+  }
+});

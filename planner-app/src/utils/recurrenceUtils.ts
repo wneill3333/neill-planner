@@ -22,8 +22,17 @@ import {
   getDay,
   setDate,
   isLeapYear,
+  getDate,
+  startOfMonth,
 } from 'date-fns';
-import type { Task, RecurrencePattern, RecurrenceEndCondition, InstanceModification } from '../types/task.types';
+import type {
+  Task,
+  RecurrencePattern,
+  RecurrenceEndCondition,
+  InstanceModification,
+  RecurringPattern,
+  NthWeekday,
+} from '../types/task.types';
 import { normalizeToDateString, toDateObject } from './dateUtils';
 
 /**
@@ -556,4 +565,345 @@ export function generateRecurringInstances(
   }
 
   return instances;
+}
+
+// =============================================================================
+// NEW: Functions for materialized recurring task system
+// =============================================================================
+
+/**
+ * Get the Nth weekday of a month
+ *
+ * @param year - The year
+ * @param month - The month (1-12)
+ * @param n - Which occurrence (1-5 for first through fifth, -1 for last)
+ * @param weekday - Day of week (0=Sun, 1=Mon, ..., 6=Sat)
+ * @returns The date, or null if it doesn't exist (e.g., 5th Monday doesn't exist)
+ *
+ * @example
+ * ```ts
+ * // 2nd Tuesday of March 2026
+ * getNthWeekdayOfMonth(2026, 3, 2, 2); // March 10, 2026
+ *
+ * // Last Friday of March 2026
+ * getNthWeekdayOfMonth(2026, 3, -1, 5); // March 27, 2026
+ * ```
+ */
+export function getNthWeekdayOfMonth(
+  year: number,
+  month: number, // 1-12
+  n: number,
+  weekday: number // 0-6
+): Date | null {
+  if (n === 0 || weekday < 0 || weekday > 6 || month < 1 || month > 12) {
+    return null;
+  }
+
+  // Get the first day of the month
+  const firstOfMonth = new Date(year, month - 1, 1);
+  const daysInMonth = getDaysInMonth(firstOfMonth);
+
+  if (n > 0) {
+    // Find the Nth occurrence (1st, 2nd, 3rd, 4th, 5th)
+    // Find the first occurrence of this weekday in the month
+    let firstOccurrence = 1;
+    const firstDayOfWeek = getDay(firstOfMonth);
+
+    // Calculate days until first occurrence of weekday
+    if (firstDayOfWeek <= weekday) {
+      firstOccurrence = 1 + (weekday - firstDayOfWeek);
+    } else {
+      firstOccurrence = 1 + (7 - firstDayOfWeek) + weekday;
+    }
+
+    // Calculate the Nth occurrence
+    const targetDay = firstOccurrence + (n - 1) * 7;
+
+    // Check if this day exists in the month
+    if (targetDay > daysInMonth) {
+      return null;
+    }
+
+    return new Date(year, month - 1, targetDay);
+  } else {
+    // n === -1: Find the last occurrence
+    // Start from the last day of the month and work backwards
+    let lastOccurrence = daysInMonth;
+    const lastDay = new Date(year, month - 1, daysInMonth);
+    const lastDayOfWeek = getDay(lastDay);
+
+    // Calculate days back to the weekday
+    if (lastDayOfWeek >= weekday) {
+      lastOccurrence = daysInMonth - (lastDayOfWeek - weekday);
+    } else {
+      lastOccurrence = daysInMonth - (7 - weekday + lastDayOfWeek);
+    }
+
+    return new Date(year, month - 1, lastOccurrence);
+  }
+}
+
+/**
+ * Get the next occurrence date for a RecurringPattern (new system)
+ *
+ * Supports all pattern types including nthWeekday, specificDatesOfMonth, and afterCompletion.
+ *
+ * @param pattern - The recurring pattern
+ * @param currentDate - Find next occurrence after this date
+ * @returns The next occurrence date, or null if none
+ */
+export function getNextOccurrenceForPattern(
+  pattern: RecurringPattern,
+  currentDate: Date
+): Date | null {
+  const normalized = startOfDay(currentDate);
+
+  switch (pattern.type) {
+    case 'daily':
+      return addDays(normalized, pattern.interval);
+
+    case 'weekly': {
+      if (!pattern.daysOfWeek || pattern.daysOfWeek.length === 0) {
+        return null;
+      }
+
+      let candidate = addDays(normalized, 1);
+
+      // Look for the next occurrence within 7 * interval days
+      for (let i = 0; i < 7 * pattern.interval; i++) {
+        const dayOfWeek = getDay(candidate);
+
+        if (pattern.daysOfWeek.includes(dayOfWeek)) {
+          return candidate;
+        }
+
+        candidate = addDays(candidate, 1);
+      }
+
+      // Fallback: jump to next interval
+      return addWeeks(normalized, pattern.interval);
+    }
+
+    case 'monthly': {
+      // Handle nthWeekday (e.g., 2nd Tuesday)
+      if (pattern.nthWeekday) {
+        const { n, weekday } = pattern.nthWeekday;
+        let targetMonth = normalized;
+
+        // Try this month first if currentDate is before the nth weekday
+        const thisMonthOccurrence = getNthWeekdayOfMonth(
+          targetMonth.getFullYear(),
+          targetMonth.getMonth() + 1,
+          n,
+          weekday
+        );
+
+        if (thisMonthOccurrence && isAfter(thisMonthOccurrence, normalized)) {
+          return thisMonthOccurrence;
+        }
+
+        // Otherwise, find the nth weekday in the next interval month
+        for (let i = 0; i < 12; i++) {
+          targetMonth = addMonths(startOfMonth(normalized), i * pattern.interval + pattern.interval);
+          const occurrence = getNthWeekdayOfMonth(
+            targetMonth.getFullYear(),
+            targetMonth.getMonth() + 1,
+            n,
+            weekday
+          );
+
+          if (occurrence) {
+            return occurrence;
+          }
+        }
+
+        return null;
+      }
+
+      // Handle specificDatesOfMonth (e.g., [1, 15])
+      if (pattern.specificDatesOfMonth && pattern.specificDatesOfMonth.length > 0) {
+        const sortedDates = [...pattern.specificDatesOfMonth].sort((a, b) => a - b);
+        const currentDay = getDate(normalized);
+
+        // Find next specific date in current month
+        for (const day of sortedDates) {
+          if (day > currentDay) {
+            const daysInCurrentMonth = getDaysInMonth(normalized);
+            if (day <= daysInCurrentMonth) {
+              return setDate(normalized, day);
+            }
+          }
+        }
+
+        // Move to next interval month and get first specific date
+        const nextMonth = addMonths(startOfMonth(normalized), pattern.interval);
+        const daysInNextMonth = getDaysInMonth(nextMonth);
+        for (const day of sortedDates) {
+          if (day <= daysInNextMonth) {
+            return setDate(nextMonth, day);
+          }
+        }
+
+        return null;
+      }
+
+      // Standard dayOfMonth
+      if (!pattern.dayOfMonth) {
+        return null;
+      }
+
+      const nextMonth = addMonths(normalized, pattern.interval);
+      const daysInNextMonth = getDaysInMonth(nextMonth);
+      const targetDay = Math.min(pattern.dayOfMonth, daysInNextMonth);
+      return setDate(nextMonth, targetDay);
+    }
+
+    case 'yearly': {
+      if (!pattern.monthOfYear || !pattern.dayOfMonth) {
+        return null;
+      }
+
+      let nextYear = addYears(normalized, pattern.interval);
+      nextYear = new Date(nextYear.getFullYear(), pattern.monthOfYear - 1, 1);
+
+      // Handle Feb 29 on non-leap years
+      if (pattern.monthOfYear === 2 && pattern.dayOfMonth === 29) {
+        if (!isLeapYear(nextYear)) {
+          return setDate(nextYear, 28);
+        }
+      }
+
+      const daysInMonth = getDaysInMonth(nextYear);
+      const targetDay = Math.min(pattern.dayOfMonth, daysInMonth);
+      return setDate(nextYear, targetDay);
+    }
+
+    case 'afterCompletion':
+      // For afterCompletion, the next date is calculated when the task is completed
+      // This function is not used for this type
+      return null;
+
+    default:
+      return null;
+  }
+}
+
+/**
+ * Generate occurrence dates for a RecurringPattern (new system)
+ *
+ * Returns an array of dates when instances should be created.
+ * This is used by the patterns.service to create materialized task instances.
+ *
+ * @param pattern - The recurring pattern
+ * @param fromDate - Start of date range (inclusive)
+ * @param toDate - End of date range (inclusive)
+ * @returns Array of dates for instances
+ *
+ * @example
+ * ```ts
+ * const pattern: RecurringPattern = {
+ *   type: 'daily',
+ *   interval: 1,
+ *   startDate: new Date('2026-02-01'),
+ *   endCondition: { type: 'never', endDate: null, maxOccurrences: null },
+ *   ...
+ * };
+ *
+ * const dates = generateOccurrenceDates(pattern, new Date('2026-02-01'), new Date('2026-02-07'));
+ * // Returns 7 dates: Feb 1-7, 2026
+ * ```
+ */
+export function generateOccurrenceDates(
+  pattern: RecurringPattern,
+  fromDate: Date,
+  toDate: Date
+): Date[] {
+  // afterCompletion type doesn't pre-generate dates
+  if (pattern.type === 'afterCompletion') {
+    // Return just the startDate if it's in range
+    if (
+      !isBefore(pattern.startDate, fromDate) &&
+      !isAfter(pattern.startDate, toDate)
+    ) {
+      return [startOfDay(pattern.startDate)];
+    }
+    return [];
+  }
+
+  const dates: Date[] = [];
+  const normalizedFrom = startOfDay(fromDate);
+  const normalizedTo = startOfDay(toDate);
+  const patternStart = startOfDay(pattern.startDate);
+
+  // Check end condition by date
+  if (pattern.endCondition.type === 'date' && pattern.endCondition.endDate) {
+    const endDate = startOfDay(pattern.endCondition.endDate);
+    if (isBefore(endDate, normalizedFrom)) {
+      return [];
+    }
+  }
+
+  // Count occurrences for 'occurrences' end condition
+  let occurrenceCount = 0;
+
+  // Start from pattern start date or fromDate, whichever is later
+  let currentDate = isBefore(patternStart, normalizedFrom)
+    ? normalizedFrom
+    : patternStart;
+
+  // For patterns starting before fromDate, we need to find the first occurrence on or after fromDate
+  if (isBefore(patternStart, normalizedFrom)) {
+    // Count occurrences before fromDate (for occurrence-based end condition)
+    let tempDate = patternStart;
+    while (isBefore(tempDate, normalizedFrom)) {
+      if (
+        pattern.endCondition.type === 'occurrences' &&
+        pattern.endCondition.maxOccurrences &&
+        occurrenceCount >= pattern.endCondition.maxOccurrences
+      ) {
+        return [];
+      }
+      occurrenceCount++;
+      const next = getNextOccurrenceForPattern(pattern, tempDate);
+      if (!next) break;
+      tempDate = next;
+    }
+    currentDate = tempDate;
+  }
+
+  // For weekly patterns starting from fromDate, find the first valid day
+  if (pattern.type === 'weekly' && pattern.daysOfWeek && pattern.daysOfWeek.length > 0) {
+    const dayOfWeek = getDay(currentDate);
+    if (!pattern.daysOfWeek.includes(dayOfWeek)) {
+      // Find next valid day
+      for (let i = 1; i < 8; i++) {
+        const candidate = addDays(currentDate, i);
+        if (pattern.daysOfWeek.includes(getDay(candidate))) {
+          currentDate = candidate;
+          break;
+        }
+      }
+    }
+  }
+
+  // Generate dates
+  while (
+    !isAfter(currentDate, normalizedTo) &&
+    dates.length < MAX_RECURRING_INSTANCES
+  ) {
+    // Check end conditions
+    if (hasReachedEndCondition(pattern.endCondition, occurrenceCount, currentDate)) {
+      break;
+    }
+
+    dates.push(new Date(currentDate));
+    occurrenceCount++;
+
+    // Get next occurrence
+    const next = getNextOccurrenceForPattern(pattern, currentDate);
+    if (!next) break;
+    currentDate = next;
+  }
+
+  return dates;
 }
