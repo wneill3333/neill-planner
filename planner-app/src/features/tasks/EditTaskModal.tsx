@@ -351,11 +351,17 @@ export function EditTaskModal({
         // NOTE: These are two separate operations. If the pattern update fails after
         // the task update succeeds, we show a partial success message.
         if (isPatternBasedInstance) {
-          let taskUpdateSucceeded = false;
-          let patternUpdateFailed = false;
-          let patternError = '';
+          // Check if user is trying to disable recurrence on a pattern-based instance
+          const recurrenceWasRemoved = originalRecurrence !== null && !data.recurrence;
+          if (recurrenceWasRemoved && task.recurringPatternId) {
+            // Prevent removing recurrence from a pattern-based instance
+            // User should delete the pattern via Recurring Tasks Manager instead
+            setError('Cannot remove recurrence from a recurring task instance. To stop the recurrence, use the Recurring Tasks Manager to delete the pattern.');
+            setIsSubmitting(false);
+            return;
+          }
 
-          // First, update the task instance
+          // Update the task instance
           await dispatch(
             updateTaskAsync({
               id: task.id,
@@ -367,7 +373,6 @@ export function EditTaskModal({
               scheduledDate: data.scheduledDate,
             })
           ).unwrap();
-          taskUpdateSucceeded = true;
 
           // If recurrence pattern was modified via the form, update the pattern
           const formRecurrenceChanged = !areRecurrencePatternsEqual(originalRecurrence, data.recurrence ?? null);
@@ -392,19 +397,14 @@ export function EditTaskModal({
                 })
               ).unwrap();
             } catch (patternErr) {
-              // Task was updated but pattern update failed
+              // Task was updated but pattern update failed - show partial success
               console.error('Failed to update recurrence pattern:', patternErr);
-              patternUpdateFailed = true;
-              patternError = patternErr instanceof Error ? patternErr.message : 'Unknown error';
+              const errorMsg = patternErr instanceof Error ? patternErr.message : 'Unknown error';
+              setError(`Task updated, but recurrence pattern update failed: ${errorMsg}. Please try editing the recurrence again.`);
+              // Still call onSuccess since task was saved, but don't close modal so user sees the error
+              onSuccess?.();
+              return;
             }
-          }
-
-          // Handle partial success scenario
-          if (taskUpdateSucceeded && patternUpdateFailed) {
-            setError(`Task updated, but recurrence pattern update failed: ${patternError}. Please try editing the recurrence again.`);
-            // Still call onSuccess since task was saved, but don't close modal so user sees the error
-            onSuccess?.();
-            return;
           }
         }
         // Legacy recurring instance: use edit mode
