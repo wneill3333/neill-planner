@@ -1,0 +1,33 @@
+{
+  "uid": "test-user-123",
+  "email": "test@example.com",
+  "displayName": "Test User",
+  "photoURL": null,
+  "emailVerified": true,
+  "testTasks": [
+    {
+      "id": "task-1",
+      "title": "Complete project documentation",
+      "priority": "A1",
+      "category": "Work",
+      "status": "in_progress",
+      "date": "2026-02-04"
+    },
+    {
+      "id": "task-2",
+      "title": "Review pull requests",
+      "priority": "B1",
+      "category": "Work",
+      "status": "incomplete",
+      "date": "2026-02-04"
+    },
+    {
+      "id": "task-3",
+      "title": "Call dentist",
+      "priority": "C1",
+      "category": "Personal",
+      "status": "incomplete",
+      "date": "2026-02-04"
+    }
+  ]
+}

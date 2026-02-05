@@ -1,0 +1,19 @@
+Before we move to the next phase and complete it in one shot.  You will coordinate a team of software engineers that have specialties in different area.  Where possible spawn parallel tasks to accomplish the work in the todo.md file.  But before starting work make sure each team member is familiar with the specification.md, blueprint.md and todo.md.  Then use either the backend or frontend agents to write the code.  Then have the code reviewer agent look for errors. Then have the appropriate agents fix their mistakes.  Once that is done the test engineer will ensure the code meet the requirements and is functional.  Then the archive agent will record all relevant data and push to git hub.  Make sure to follow this work flow precisely.  DO NOT DEVIATE. As you complete the steps in the work flow check off what has been accomplished.
+[ ] Review specifications, blueprint and todo.
+[ ] Delegate frontend or backend agents to write code to the requirements.  When possible do operations in parallel if it will not cause a problem.
+[ ] Have code review examine the code for errors.
+[ ] Have appropriate engineers fix errors.
+[ ]The test engineer will ensure everything is working.
+[ ] Appropriate agents will fix the critical/high errors found.
+[ ] Archive Agent records session information, updates the todo.me, save changes to local directory and pushes to github.
+You do not need to ask permissions to create/edit/delete files.
+
+
+npx vite build && firebase deploy --only hosting
+
+805078437907
+https://805078437907805078437907.web.app
+
+
+Under monthly recurring, remove specific dates of the month.
+Under yearly recurring user needs to add a specific date ie Feb 10th each year

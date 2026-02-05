@@ -1,0 +1,18 @@
+# Build outputs
+dist
+build
+
+# Dependencies
+node_modules
+
+# Coverage
+coverage
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Auto-generated
+*.min.js
+*.min.css

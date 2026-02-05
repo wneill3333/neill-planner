@@ -1,0 +1,14 @@
+# Local backup/tooling
+BACKUP/
+memory.bat
+memory.json
+claude_old.js
+nul
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

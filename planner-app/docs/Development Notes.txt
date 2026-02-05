@@ -1,0 +1,25 @@
+
+https://claude.ai/chat/fdf1c2c5-f3c6-4857-b0e3-c04b8d4f2d41
+
+MCP LIST
+claude mcp add --transport http context7 https://mcp.context7.com/mcp
+
+Work on completing the next phase in one go. Before you do, familiarize yourself with the specification, blueprint and todo.  Also familiarize yourself with the project history. You have the authority to --dangerously-skip-permissions and create and edit any files in the ai directory/subdirectories without permission.  Do not ask for permission to do anything.  Just do it!. Now implement the entire phase using the appropriate agent, then run code-reviewer, fix issues, run test-engineer, and archive. Check off the workflow as you complete it. 
+  - [ ] Read specification.md, blueprint.md and todo.md
+  - [ ] Review Project History.md
+  - [ ] Operate in --dangerously-skip-permissions mode
+  - [ ] Implement feature using the frontend or backend agents as appropriate.
+  - [ ] Run code-reviewer agent
+  - [ ] Fix Critical/High issues with the appropriate frontend or backend agents.
+  - [ ] Run test-engineer agent to design and run tests.
+  - [ ] If test engineer finds Critical/High issues fix with the appropriate frontend or backend agents.
+  - [ ] Run archive-agent
+
+
+ Recurrence still not working right.  For example 1 set the recurrence at weekly on wednesday for 10 occurrances.
+  Then when i goto the next wednesday and edit the recurring task, it show recurrance a daily for 10 occurrances.
+  It should
+    reflect the current recurrance schedule.
+
+
+firebase config: See .env.local (not committed to git)
