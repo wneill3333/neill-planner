@@ -3,11 +3,62 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 4, 2026 (Bug Fixes and Production Deployment)
+**Last Updated:** February 4, 2026 (Recurring Tasks Bug Fix & Management UI)
 
 ---
 
 ## SESSION LOG
+
+### SESSION: Recurring Tasks Bug Fix & Management UI
+**Date:** February 4, 2026
+**Duration:** Bug fix and feature implementation session
+**Status:** ✅ COMPLETED - Recurring Task Duplicates Fixed, Management UI Implemented
+
+#### Summary
+Fixed critical recurring task duplication bug where deleted instances were reappearing after page refresh, and implemented new management UI. Root cause was duplicate exception entries in Firebase and multiple recurring parent tasks with identical names. Enhanced date handling in dateUtils.ts and tasks.service.ts to robustly convert Firestore Timestamps, added exception deduplication functions, implemented RecurringTasksManager component for viewing and deleting duplicate parent tasks, and fixed Redux state to properly update modal when tasks are deleted. Users can now access Manage Recurring Tasks from the user menu to identify and remove duplicate recurring parent tasks that were causing multiple instances to appear.
+
+#### Key Achievements
+
+**Bug Fixes**
+- Fixed date handling: Enhanced normalizeToDateString() to handle Firestore Timestamp objects
+- Improved exception conversion: Made firestoreToTask() robust for various formats (Timestamps, objects, Dates, strings)
+- Added duplicate cleanup: Created cleanupDuplicateExceptions() and cleanupAllDuplicateExceptions() functions
+- Fixed Redux state: Updated hardDeleteTask.fulfilled to remove deleted tasks from recurringParentTasks state
+
+**New Features**
+- RecurringTasksManager component: Modal showing all recurring parent tasks with duplicate detection
+- Duplicate highlighting: Tasks with same title shown in orange for easy identification
+- Task details display: Shows priority, start date, recurrence pattern, exception count per task
+- Delete functionality: Confirmation dialog for removing unwanted duplicate recurring tasks
+- Menu integration: Added "Manage Recurring Tasks" to UserMenu with modal state in Header
+
+**Developer Tools**
+- Debug utilities exposed via window.__DEBUG__ for troubleshooting
+- Enhanced console logging with colored output for delete operations
+- Improved duplicate detection logging in recurrenceUtils.ts
+
+#### Files Modified (10)
+1. F:\AI\Planner\planner-app\src\utils\dateUtils.ts - Enhanced Timestamp handling
+2. F:\AI\Planner\planner-app\src\utils\recurrenceUtils.ts - Debug logging improvements
+3. F:\AI\Planner\planner-app\src\services\firebase\tasks.service.ts - Exception deduplication and robust conversion
+4. F:\AI\Planner\planner-app\src\features\tasks\taskThunks.ts - Debug logging and cleanup thunk
+5. F:\AI\Planner\planner-app\src\features\tasks\taskSlice.ts - Fixed hardDeleteTask to update recurringParentTasks
+6. F:\AI\Planner\planner-app\src\components\tasks\RecurringTasksManager.tsx - NEW: Management UI component
+7. F:\AI\Planner\planner-app\src\components\layout\Header.tsx - Modal integration
+8. F:\AI\Planner\planner-app\src\components\layout\UserMenu.tsx - Menu item and modal trigger
+9. F:\AI\Planner\planner-app\src\components\tasks\index.ts - Export new component
+10. F:\AI\Planner\planner-app\src\main.tsx - Debug utilities
+
+#### Code Quality
+- Robust Firestore data handling with multiple format support
+- Type-safe exception deduplication with proper null checks
+- Modal component with proper state management
+- Confirmation dialogs for destructive actions
+- Clean separation of concerns (service, thunk, component)
+- Enhanced developer tooling for debugging recurring task issues
+
+---
+
 
 ### SESSION: Bug Fixes and Production Deployment
 **Date:** February 4, 2026
@@ -2944,6 +2995,11 @@ Implemented complete task editing workflow with delete confirmation, field updat
 | Check both Date objects and ISO strings in exceptions | Redux serializes Date to strings during persist; need to support both formats for robustness | 2026-02-03 | Recurring Tasks |
 | Detect and delete materialized recurring instances | Materialized instances (saved to Firestore) need explicit deletion with ID format {parentTaskId}_{YYYY-MM-DD} | 2026-02-03 | Recurring Tasks |
 | Filter parent tasks in selector by scheduledDate match | Recurring parent tasks indexed under wrong dates cause duplicate visibility; selector filters based on date match | 2026-02-03 | Recurring Tasks |
+| Modal UI for managing duplicate recurring parent tasks | Users need visibility into duplicate recurring tasks causing extra instances; dedicated management UI accessible from menu | 2026-02-04 | Recurring Tasks |
+| Robust Firestore timestamp conversion in exception handling | Firestore may return Timestamps, objects, Dates, or strings; robust conversion prevents crashes and data loss | 2026-02-04 | Data Persistence |
+| Exception deduplication service functions | Multiple identical exception dates stored in Firestore cause duplicates; cleanup functions remove redundant entries | 2026-02-04 | Data Consistency |
+| Redux state update on hard delete of recurring parent | Modal UI auto-updates when parent task deleted; hardDeleteTask.fulfilled now removes from recurringParentTasks state | 2026-02-04 | State Management |
+| Debug utilities via window.__DEBUG__ | Developers can access cleanup and troubleshooting functions in console; aids production debugging without code changes | 2026-02-04 | Developer Experience |
 
 ---
 
