@@ -3,11 +3,62 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 5, 2026 (Category Drag-and-Drop & TypeScript Fixes)
+**Last Updated:** February 5, 2026 (Recurring Tasks Bug Fix - Exception Handling & Deduplication)
 
 ---
 
 ## SESSION LOG
+
+### SESSION: Recurring Tasks Bug Fix - Exception Handling & Deduplication
+**Date:** February 5, 2026
+**Duration:** Bug fix and feature implementation session
+**Status:** ✅ COMPLETED - Duplicate Recurring Tasks Fixed, Exception Management Implemented
+
+#### Summary
+Fixed critical recurring task duplication and missing task issues by improving deduplication logic in Redux selector and implementing user-accessible exception clearing UI. Root causes identified: title deduplication only tracked recurring instance titles (allowing duplicates from same parent), and recurring tasks with today's date in exceptions list prevented instance generation. Enhanced `selectTasksWithRecurringInstances` selector to track `(recurringParentId, title)` combinations instead of just titles, preventing duplicate instances from same parent while allowing different parents with same title. Implemented clear-exceptions UI in RecurringTasksManager component showing actual skipped dates and providing "Clear All" button to restore normal schedule. All 73 core tests passing. Build succeeds and dev server runs correctly.
+
+#### Key Achievements
+
+**Core Bug Fixes**
+- **Improved deduplication logic** in taskSlice.ts (lines 1130-1157): Changed from tracking only recurring instance titles to tracking (recurringParentId, title) combinations
+- Prevents duplicate instances from same parent task while allowing different parents with same title
+- Regular tasks pass through deduplication but register their title for potential conflicts
+
+**Exception Management UI**
+- Added `handleClearExceptions()` function to RecurringTasksManager for removing all exceptions from a task
+- Shows actual skipped dates instead of just count - provides visibility into why tasks are missing
+- Added "Clear All" button with loading state and confirmation dialog
+- Updated UI to display exceptions list with proper formatting
+- Added state tracking with `clearingExceptionsTaskId` for async operations
+
+**Code Improvements**
+- Imported `updateTaskAsync` thunk and `normalizeToDateString` utility for proper date handling
+- Enhanced component robustness with loading states and error handling
+- Better user visibility into task exceptions and recovery options
+
+#### Files Modified (2)
+1. F:\AI\Planner\planner-app\src\features\tasks\taskSlice.ts - Improved deduplication logic (lines 1130-1157)
+2. F:\AI\Planner\planner-app\src\components\tasks\RecurringTasksManager.tsx - Clear exceptions UI and handler
+
+#### Testing & Quality
+- All 73 core tests pass: 55 taskSlice + 18 recurringInstances
+- Build succeeds without errors
+- Dev server runs correctly
+- No console warnings or errors
+- Type-safe implementation with proper null checks
+
+#### User Instructions for Recovery
+To restore missing recurring tasks:
+1. Open "Manage Recurring Tasks" modal (from user menu)
+2. Look for tasks with skipped dates listed
+3. Click "Clear All" to remove exceptions
+4. Refresh the page - tasks will appear with normal schedule
+
+#### Commits
+- Pending: Session summary for 2026-02-05 (will be committed by Archive Agent)
+
+---
+
 
 ### SESSION: Category Drag-and-Drop Feature + TypeScript Fixes
 **Date:** February 5, 2026
