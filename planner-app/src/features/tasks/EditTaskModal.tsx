@@ -27,8 +27,98 @@ import {
 import { selectAllCategories } from '../categories';
 import { selectRecurringParentTasks, selectTaskById, selectRecurringPatternById } from './taskSlice';
 import { useAuth } from '../auth';
-import type { Task, CreateTaskInput } from '../../types';
+import type { Task, CreateTaskInput, RecurringPattern, NthWeekday } from '../../types';
 import type { RootState } from '../../store';
+
+// =============================================================================
+// Helper Functions
+// =============================================================================
+
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const FULL_DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th'];
+
+/**
+ * Format a recurring pattern as a human-readable string
+ */
+function formatRecurrenceDescription(pattern: RecurringPattern): string {
+  const { type, interval, daysOfWeek, dayOfMonth, monthOfYear, nthWeekday, specificDatesOfMonth, daysAfterCompletion } = pattern;
+
+  switch (type) {
+    case 'daily':
+      if (interval === 1) return 'Daily';
+      return `Every ${interval} days`;
+
+    case 'weekly': {
+      const dayList = daysOfWeek.length > 0
+        ? daysOfWeek.sort((a, b) => a - b).map(d => DAY_NAMES[d]).join(', ')
+        : 'every day';
+      if (interval === 1) return `Weekly on ${dayList}`;
+      return `Every ${interval} weeks on ${dayList}`;
+    }
+
+    case 'monthly': {
+      // Handle nth weekday (e.g., "2nd Tuesday")
+      if (nthWeekday) {
+        const nth = formatNthWeekday(nthWeekday);
+        if (interval === 1) return `Monthly on the ${nth}`;
+        return `Every ${interval} months on the ${nth}`;
+      }
+      // Handle specific dates of month
+      if (specificDatesOfMonth && specificDatesOfMonth.length > 0) {
+        const dates = specificDatesOfMonth.sort((a, b) => a - b).map(d => formatOrdinal(d)).join(', ');
+        if (interval === 1) return `Monthly on the ${dates}`;
+        return `Every ${interval} months on the ${dates}`;
+      }
+      // Regular day of month
+      const day = dayOfMonth || 1;
+      if (interval === 1) return `Monthly on the ${formatOrdinal(day)}`;
+      return `Every ${interval} months on the ${formatOrdinal(day)}`;
+    }
+
+    case 'yearly': {
+      const month = monthOfYear ? getMonthName(monthOfYear) : 'January';
+      const day = dayOfMonth || 1;
+      if (interval === 1) return `Yearly on ${month} ${day}`;
+      return `Every ${interval} years on ${month} ${day}`;
+    }
+
+    case 'afterCompletion': {
+      const days = daysAfterCompletion || 1;
+      if (days === 1) return 'Repeats 1 day after completion';
+      if (days === 7) return 'Repeats 1 week after completion';
+      if (days % 7 === 0) return `Repeats ${days / 7} weeks after completion`;
+      return `Repeats ${days} days after completion`;
+    }
+
+    default:
+      return 'Custom recurrence';
+  }
+}
+
+function formatNthWeekday(nthWeekday: NthWeekday): string {
+  const { n, weekday } = nthWeekday;
+  const dayName = FULL_DAY_NAMES[weekday] || 'day';
+  if (n === -1) return `last ${dayName}`;
+  const ordinal = ORDINALS[n] || `${n}th`;
+  return `${ordinal} ${dayName}`;
+}
+
+function formatOrdinal(n: number): string {
+  if (n >= 11 && n <= 13) return `${n}th`;
+  switch (n % 10) {
+    case 1: return `${n}st`;
+    case 2: return `${n}nd`;
+    case 3: return `${n}rd`;
+    default: return `${n}th`;
+  }
+}
+
+function getMonthName(month: number): string {
+  const months = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+  return months[month - 1] || 'January';
+}
 
 // =============================================================================
 // Types
@@ -395,10 +485,18 @@ export function EditTaskModal({
         {/* Pattern-based instance info */}
         {isPatternBasedInstance && recurringPattern && (
           <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
-            <p className="text-amber-800">
-              <span className="font-medium">Recurring task instance</span> - This is an instance of the pattern "{recurringPattern.title}".
-              Changes apply only to this instance.
-            </p>
+            <div className="flex items-start gap-2">
+              <span className="text-amber-600 text-lg leading-none">↻</span>
+              <div>
+                <p className="text-amber-800 font-medium">Recurring Task Instance</p>
+                <p className="text-amber-700 mt-1">
+                  <span className="font-medium">Pattern:</span> {formatRecurrenceDescription(recurringPattern)}
+                </p>
+                <p className="text-amber-600 mt-1 text-xs">
+                  Changes apply only to this instance. To modify the recurrence pattern, use the Recurring Tasks Manager.
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -446,7 +544,13 @@ export function EditTaskModal({
         onClose={handleDeleteCancel}
         onConfirm={handleDeleteConfirm}
         title="Delete Task"
-        message={`Are you sure you want to delete "${task.title}"? This action cannot be undone.`}
+        message={
+          isPatternBasedInstance
+            ? `Are you sure you want to delete this instance of "${task.title}"? This will only delete this specific occurrence. Other instances from this recurring pattern will not be affected.`
+            : isLegacyRecurringInstance
+              ? `Are you sure you want to delete this occurrence of "${task.title}"? This will only affect this instance.`
+              : `Are you sure you want to delete "${task.title}"? This action cannot be undone.`
+        }
         confirmText="Delete"
         cancelText="Cancel"
         variant="danger"
