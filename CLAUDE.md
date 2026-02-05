@@ -15,7 +15,7 @@ This folder contains multiple independent projects:
 All commands run from `AI-Neill/neill-planner/`:
 
 ```bash
-npm run dev          # Start development server (Vite)
+npm run dev          # Start development server (Vite) - runs on http://localhost:5173
 npm run build        # TypeScript compile + Vite build
 npm run lint         # ESLint check
 npm run lint:fix     # ESLint auto-fix
@@ -80,6 +80,14 @@ A-B-C-D priorities (A=Vital, B=Important, C=Optional, D=Delegate) with auto-numb
 Status order: in_progress → complete → forward → delegate → delete → (loops)
 - `StatusSymbol` component handles click-to-cycle and arrow key navigation
 - `getNextStatus()` / `getPreviousStatus()` in statusUtils.ts
+
+## Development Server
+
+**Always start the dev server on port 5173:**
+```bash
+cd "F:/AI/AI-Neill/neill-planner" && npm run dev
+```
+The app will be available at **http://localhost:5173**
 
 ## Firebase Setup
 
