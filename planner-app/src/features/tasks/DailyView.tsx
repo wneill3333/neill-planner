@@ -21,6 +21,7 @@ import { CheckIcon, CalendarIcon, NoteIcon } from '../../components/icons';
 import { hasGapsInPriorityNumbering } from '../../utils/priorityUtils';
 import { parseISODateString } from '../../utils/firestoreUtils';
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { selectHideCompletedTasks, toggleHideCompletedTasks } from '../filters/filterSlice';
 import { useAuth } from '../auth';
 import { useEventsByDate, useEventsByRange, createEventAsync, updateEventAsync, deleteEventAsync } from '../events';
 import { selectCategoriesMap, selectAllCategories } from '../categories/categorySlice';
@@ -94,6 +95,7 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
   const selectedDate = useAppSelector(selectSelectedDate);
   const tasks = useAppSelector(selectTasksForSelectedDate);
   const syncStatus = useAppSelector(selectTasksSyncStatus);
+  const hideCompleted = useAppSelector(selectHideCompletedTasks);
 
   // Event and category selectors
   // Use parseISODateString to create local midnight (new Date("2026-02-05") would be UTC midnight!)
@@ -390,6 +392,35 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
             <div className="flex items-center justify-between gap-2 p-4 pb-2 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-800">Daily Tasks</h2>
               <div className="flex items-center gap-2">
+                {/* Hide Completed Toggle */}
+                <button
+                  type="button"
+                  onClick={() => dispatch(toggleHideCompletedTasks())}
+                  className={`
+                    flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full
+                    transition-colors duration-150
+                    ${hideCompleted
+                      ? 'bg-amber-100 text-amber-700 border border-amber-300'
+                      : 'bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200'
+                    }
+                  `}
+                  aria-pressed={hideCompleted}
+                  aria-label={hideCompleted ? 'Show all tasks' : 'Hide completed tasks'}
+                  data-testid="hide-completed-toggle"
+                >
+                  {hideCompleted ? (
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                    </svg>
+                  ) : (
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                  {hideCompleted ? 'Showing Active' : 'Hide Done'}
+                </button>
+
                 {/* Reorder All Button - only shows when there are gaps in numbering */}
                 {needsReorder && tasks.length > 0 && (
                   <button
