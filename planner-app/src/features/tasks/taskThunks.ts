@@ -554,7 +554,7 @@ export const editRecurringInstanceOnly = createAsyncThunk<
         letter: updates.priority?.letter ?? parentTask.priority.letter,
         number: priorityNumber,
       },
-      status: parentTask.status,
+      status: updates.status ?? parentTask.status,
       scheduledDate: instanceDate,
       recurrence: null, // Materialized instances don't have recurrence patterns
       isRecurringInstance: true,

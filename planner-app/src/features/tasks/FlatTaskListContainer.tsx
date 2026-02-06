@@ -176,6 +176,9 @@ export function FlatTaskListContainer({
       announce(`Updating task status to ${statusLabel}`);
 
       try {
+        // Check if this is a virtual recurring instance (legacy system)
+        const isVirtualInstance = task.isRecurringInstance && task.recurringParentId && task.id.includes('_');
+
         // Check if this is an afterCompletion recurring task being completed
         const pattern = task.recurringPatternId
           ? recurringPatterns[task.recurringPatternId]
@@ -192,6 +195,17 @@ export function FlatTaskListContainer({
             })
           ).unwrap();
           announce('Task completed, next occurrence scheduled');
+        } else if (isVirtualInstance && task.recurringParentId && task.instanceDate) {
+          // Virtual instance: materialize it with the new status
+          await dispatch(
+            editRecurringInstanceOnly({
+              userId,
+              parentTaskId: task.recurringParentId,
+              instanceDate: task.instanceDate,
+              updates: { status: newStatus },
+            })
+          ).unwrap();
+          announce(`Task status updated to ${statusLabel}`);
         } else {
           // Regular status update
           await dispatch(updateTaskAsync({ id: task.id, status: newStatus, userId })).unwrap();
