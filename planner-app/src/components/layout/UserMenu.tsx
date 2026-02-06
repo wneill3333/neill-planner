@@ -19,6 +19,8 @@ export interface UserMenuProps {
   testId?: string;
   /** Callback when settings is clicked */
   onSettingsClick?: () => void;
+  /** Callback when admin panel is clicked (only passed for admin users) */
+  onAdminClick?: () => void;
   /** Callback when manage recurring tasks is clicked */
   onManageRecurringClick?: () => void;
 }
@@ -66,7 +68,7 @@ function getUserInitials(displayName: string | null, email: string | null): stri
  * <UserMenu />
  * ```
  */
-export function UserMenu({ className, testId, onSettingsClick, onManageRecurringClick }: UserMenuProps = {}) {
+export function UserMenu({ className, testId, onSettingsClick, onAdminClick, onManageRecurringClick }: UserMenuProps = {}) {
   const { user, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -110,6 +112,11 @@ export function UserMenu({ className, testId, onSettingsClick, onManageRecurring
     onSettingsClick?.();
     setIsOpen(false);
   }, [onSettingsClick]);
+
+  const handleAdminClick = useCallback(() => {
+    onAdminClick?.();
+    setIsOpen(false);
+  }, [onAdminClick]);
 
   const handleManageRecurringClick = useCallback(() => {
     onManageRecurringClick?.();
@@ -262,6 +269,40 @@ export function UserMenu({ className, testId, onSettingsClick, onManageRecurring
                 Manage Recurring Tasks
               </div>
             </button>
+
+            {/* User Management (admin only) */}
+            {onAdminClick && (
+              <button
+                type="button"
+                onClick={handleAdminClick}
+                className="
+                  w-full px-4 py-2 text-left text-sm text-gray-700
+                  hover:bg-gray-100
+                  focus:outline-none focus:bg-gray-100
+                  transition-colors duration-150
+                "
+                role="menuitem"
+                data-testid="admin-button"
+              >
+                <div className="flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
+                    />
+                  </svg>
+                  User Management
+                </div>
+              </button>
+            )}
 
             {/* Separator */}
             <div className="my-1 border-t border-gray-200" role="separator" />

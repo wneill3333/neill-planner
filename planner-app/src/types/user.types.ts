@@ -137,6 +137,45 @@ export interface UpdateUserSettingsInput {
 }
 
 // =============================================================================
+// Allowed Users (Email Whitelist)
+// =============================================================================
+
+/**
+ * Initial admin email - bootstrapped on first login
+ */
+export const INITIAL_ADMIN_EMAIL = 'williamjneill@gmail.com';
+
+/**
+ * An entry in the email whitelist
+ */
+export interface AllowedUser {
+  /** Email address (lowercased, used as document ID) */
+  email: string;
+  /** Role assigned to this user */
+  role: UserRole;
+  /** Display name (optional) */
+  displayName?: string;
+  /** User ID of the admin who added this entry */
+  addedBy: string;
+  /** When this entry was added */
+  addedAt: Date;
+  /** Last time this user logged in */
+  lastLoginAt: Date | null;
+}
+
+/**
+ * Input for adding a new allowed user
+ */
+export interface AddAllowedUserInput {
+  /** Email to allow (will be lowercased) */
+  email: string;
+  /** Role to assign */
+  role: UserRole;
+  /** Optional display name */
+  displayName?: string;
+}
+
+// =============================================================================
 // Utility Types & Constants
 // =============================================================================
 

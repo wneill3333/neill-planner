@@ -80,11 +80,42 @@ service cloud.firestore {
     }
 
     // =============================================================================
+    // Allowed Users Collection (Email Whitelist)
+    // =============================================================================
+
+    match /allowedUsers/{email} {
+      // Users can read their own entry (by email match)
+      // Admins can read all entries
+      allow read: if isAuthenticated() &&
+                     (request.auth.token.email == email || isAdmin());
+
+      // Admins can create entries; bootstrap: initial admin can create their own entry
+      allow create: if isAuthenticated() &&
+                       request.resource.data.role in ['standard', 'admin'] &&
+                       (isAdmin() ||
+                        (request.auth.token.email == 'williamjneill@gmail.com' &&
+                         email == 'williamjneill@gmail.com'));
+
+      // Admins can update any entry; users can update their own lastLoginAt only
+      allow update: if isAuthenticated() &&
+                       request.resource.data.role in ['standard', 'admin'] &&
+                       (isAdmin() ||
+                        (request.auth.token.email == email &&
+                         request.resource.data.role == resource.data.role &&
+                         request.resource.data.email == resource.data.email &&
+                         request.resource.data.addedBy == resource.data.addedBy));
+
+      // Admins can delete, but not their own entry (self-protection)
+      allow delete: if isAdmin() &&
+                       request.auth.token.email != email;
+    }
+
+    // =============================================================================
     // Users Collection
     // =============================================================================
 
     match /users/{userId} {
-      // Users can read and update their own profile
+      // Users can read their own profile
       allow read: if isOwner(userId);
 
       // User creation handled by backend (Firebase Auth trigger)
@@ -94,8 +125,9 @@ service cloud.firestore {
                        request.resource.data.role in ['standard', 'admin'];
 
       // Users can update their own profile (but not role)
-      allow update: if isOwner(userId) &&
-                       request.resource.data.role == resource.data.role;
+      // Admins can update any user's role
+      allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role) ||
+                       isAdmin();
 
       // Only admins can delete users
       allow delete: if isAdmin();

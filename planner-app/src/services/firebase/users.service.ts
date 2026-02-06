@@ -14,7 +14,7 @@ import {
   type DocumentData,
 } from 'firebase/firestore';
 import { db } from './config';
-import type { User, UserSettings, UpdateUserSettingsInput } from '../../types';
+import type { User, UserRole, UserSettings, UpdateUserSettingsInput } from '../../types';
 import { DEFAULT_USER_SETTINGS } from '../../types';
 import { validateUserId, ValidationError } from '../../utils/validation';
 
@@ -269,6 +269,24 @@ export async function updateUserSettings(
   } catch (error) {
     console.error('Error updating user settings:', error);
     throw new Error(`Failed to update user settings: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Update a user's role
+ * @param userId - The user's ID
+ * @param role - The new role to assign
+ * @throws {ValidationError} If userId is invalid
+ */
+export async function updateUserRole(userId: string, role: UserRole): Promise<void> {
+  validateUserId(userId);
+
+  try {
+    const docRef = doc(db, USERS_COLLECTION, userId);
+    await updateDoc(docRef, { role });
+  } catch (error) {
+    console.error('Error updating user role:', error);
+    throw new Error(`Failed to update user role: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 

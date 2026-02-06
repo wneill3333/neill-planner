@@ -10,6 +10,7 @@ import { useAuth, LoginPage } from './features/auth';
 import { TasksPage } from './features/tasks';
 import { CategoryManagementPage } from './features/categories/CategoryManagementPage';
 import { SettingsPage } from './features/settings/SettingsPage';
+import { AdminPage } from './features/admin';
 import { Spinner } from './components/common';
 import type { AppView } from './components/layout/Header';
 import type { SnoozeOption } from './types';
@@ -89,6 +90,19 @@ function App() {
         />
       );
       break;
+    case 'admin':
+      // Guard: only render for admin users, fall through to tasks otherwise
+      if (user.role === 'admin') {
+        mainContent = (
+          <AdminPage
+            currentView={currentView}
+            onNavigate={handleNavigate}
+          />
+        );
+        break;
+      }
+      // Falls through to default (tasks) if not admin
+    // eslint-disable-next-line no-fallthrough
     case 'tasks':
     default:
       mainContent = (

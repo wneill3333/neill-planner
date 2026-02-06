@@ -22,7 +22,12 @@ import {
   type User as FirebaseAuthUser,
 } from 'firebase/auth';
 import { auth, authPersistenceReady } from '../../services/firebase/config';
-import { getOrCreateUser } from '../../services/firebase/users.service';
+import { getOrCreateUser, updateUserRole } from '../../services/firebase/users.service';
+import {
+  seedInitialAdmin,
+  checkEmailAllowed,
+  updateAllowedUserLastLogin,
+} from '../../services/firebase/allowedUsers.service';
 import type { User } from '../../types';
 
 // =============================================================================
@@ -39,6 +44,8 @@ export interface AuthContextType {
   loading: boolean;
   /** Error message if authentication failed */
   error: string | null;
+  /** True when user's email is not in the whitelist */
+  isAccessDenied: boolean;
   /** Sign in with Google */
   signInWithGoogle: () => Promise<void>;
   /** Sign out the current user */
@@ -83,6 +90,7 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAccessDenied, setIsAccessDenied] = useState(false);
 
   /**
    * Handle Firebase Auth state changes
@@ -98,16 +106,61 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
         async (firebaseUser: FirebaseAuthUser | null) => {
           try {
             if (firebaseUser) {
-              // User is signed in - get or create user document
+              // Seed initial admin (idempotent, non-fatal)
+              try {
+                await seedInitialAdmin();
+              } catch {
+                // Non-fatal: seeding may fail if already done or permissions issue
+              }
+
+              // Check email whitelist
+              const email = firebaseUser.email;
+              if (!email) {
+                setError('No email associated with this account');
+                await firebaseSignOut(auth);
+                setUser(null);
+                return;
+              }
+
+              const allowedEntry = await checkEmailAllowed(email);
+              if (!allowedEntry) {
+                setIsAccessDenied(true);
+                setError(
+                  'Your email is not authorized to access this application. Contact an administrator for access.'
+                );
+                await firebaseSignOut(auth);
+                setUser(null);
+                return;
+              }
+
+              // Clear any previous access denied state
+              setIsAccessDenied(false);
+
+              // Proceed with user creation/retrieval
               const appUser = await getOrCreateUser({
                 uid: firebaseUser.uid,
                 email: firebaseUser.email,
                 displayName: firebaseUser.displayName,
               });
+
+              // Sync role if whitelist role differs from user doc role
+              if (allowedEntry.role !== appUser.role) {
+                try {
+                  await updateUserRole(appUser.id, allowedEntry.role);
+                  appUser.role = allowedEntry.role;
+                } catch (err) {
+                  console.error('Failed to sync user role:', err);
+                }
+              }
+
+              // Update last login in whitelist
+              updateAllowedUserLastLogin(email).catch(() => {});
+
               setUser(appUser);
             } else {
               // User is signed out
               setUser(null);
+              setIsAccessDenied(false);
             }
           } catch (err) {
             console.error('Error handling auth state change:', err);
@@ -186,6 +239,7 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
    */
   const clearError = useCallback((): void => {
     setError(null);
+    setIsAccessDenied(false);
   }, []);
 
   // Memoize context value to prevent unnecessary re-renders
@@ -194,11 +248,12 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
       user,
       loading,
       error,
+      isAccessDenied,
       signInWithGoogle,
       signOut,
       clearError,
     }),
-    [user, loading, error, signInWithGoogle, signOut, clearError]
+    [user, loading, error, isAccessDenied, signInWithGoogle, signOut, clearError]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

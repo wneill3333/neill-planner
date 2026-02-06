@@ -14,7 +14,8 @@ import type {
 } from '../../types';
 import { Input } from '../common/Input';
 import { TextArea } from '../common/TextArea';
-import { TimePicker } from '../common/TimePicker';
+import { TimePickerDropdown } from '../common/TimePickerDropdown';
+import { DatePicker } from '../common/DatePicker';
 import { Toggle } from '../common/Toggle';
 import { CategorySelect } from '../categories/CategorySelect';
 import { RecurrenceForm } from '../tasks/RecurrenceForm';
@@ -43,8 +44,9 @@ export interface EventFormProps {
 interface FormData {
   title: string;
   description: string;
-  startTime: Date | null;
-  endTime: Date | null;
+  eventDate: Date | null;
+  startTimeStr: string;
+  endTimeStr: string;
   location: string;
   categoryId: string;
   isConfidential: boolean;
@@ -55,6 +57,7 @@ interface FormData {
 interface FormErrors {
   title?: string;
   description?: string;
+  eventDate?: string;
   startTime?: string;
   endTime?: string;
   location?: string;
@@ -92,7 +95,7 @@ const DEFAULT_RECURRENCE_PATTERN: RecurrencePattern = {
 // =============================================================================
 
 /**
- * Convert Date to HH:MM format
+ * Convert Date to HH:MM format (24-hour)
  */
 function dateToTimeString(date: Date | null): string {
   if (!date) return '';
@@ -102,16 +105,16 @@ function dateToTimeString(date: Date | null): string {
 }
 
 /**
- * Create Date from time string (HH:MM) and optional base date
+ * Combine a date (for year/month/day) with a time string (HH:MM) into a Date
  */
-function timeStringToDate(timeStr: string, baseDate?: Date): Date | null {
+function combineDateAndTime(date: Date, timeStr: string): Date | null {
   if (!timeStr) return null;
   const [hours, minutes] = timeStr.split(':').map(Number);
   if (isNaN(hours) || isNaN(minutes)) return null;
 
-  const date = baseDate ? new Date(baseDate) : new Date();
-  date.setHours(hours, minutes, 0, 0);
-  return date;
+  const combined = new Date(date);
+  combined.setHours(hours, minutes, 0, 0);
+  return combined;
 }
 
 /**
@@ -132,18 +135,23 @@ function validateForm(data: FormData): FormErrors {
     errors.description = `Description must be ${DESCRIPTION_MAX_LENGTH} characters or less`;
   }
 
+  // Date is required
+  if (!data.eventDate) {
+    errors.eventDate = 'Date is required';
+  }
+
   // Start time is required
-  if (!data.startTime) {
+  if (!data.startTimeStr) {
     errors.startTime = 'Start time is required';
   }
 
   // End time is required
-  if (!data.endTime) {
+  if (!data.endTimeStr) {
     errors.endTime = 'End time is required';
   }
 
   // End time must be after start time
-  if (data.startTime && data.endTime && data.endTime <= data.startTime) {
+  if (data.startTimeStr && data.endTimeStr && data.startTimeStr >= data.endTimeStr) {
     errors.endTime = 'End time must be after start time';
   }
 
@@ -177,12 +185,15 @@ function formatCreatedDate(date: Date): string {
  * Convert form data to CreateEventInput
  */
 function formDataToEventInput(data: FormData): CreateEventInput {
+  const startTime = combineDateAndTime(data.eventDate!, data.startTimeStr)!;
+  const endTime = combineDateAndTime(data.eventDate!, data.endTimeStr)!;
+
   const input: CreateEventInput = {
     title: data.title.trim(),
     description: data.description.trim(),
     categoryId: data.categoryId || null,
-    startTime: data.startTime!,
-    endTime: data.endTime!,
+    startTime,
+    endTime,
     location: data.location.trim(),
     isConfidential: data.isConfidential,
     alternateTitle: data.isConfidential && data.alternateTitle.trim() ? data.alternateTitle.trim() : null,
@@ -202,11 +213,15 @@ function createFormDataFromEvent(e: Event | null, defaultStart?: Date | null): F
   const now = new Date();
   const defaultEnd = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour later
 
+  const startDate = e?.startTime || defaultStart || now;
+  const endDate = e?.endTime || (defaultStart ? new Date(defaultStart.getTime() + 60 * 60 * 1000) : defaultEnd);
+
   return {
     title: e?.title || '',
     description: e?.description || '',
-    startTime: e?.startTime || defaultStart || now,
-    endTime: e?.endTime || defaultEnd,
+    eventDate: startDate,
+    startTimeStr: dateToTimeString(startDate),
+    endTimeStr: dateToTimeString(endDate),
     location: e?.location || '',
     categoryId: e?.categoryId || '',
     isConfidential: e?.isConfidential || false,
@@ -291,21 +306,27 @@ export function EventForm({
     }));
   }, []);
 
+  // Handle date change
+  const handleDateChange = useCallback(
+    (date: Date | null) => {
+      handleChange('eventDate', date);
+    },
+    [handleChange]
+  );
+
   // Handle time changes
   const handleStartTimeChange = useCallback(
     (timeStr: string) => {
-      const newStartTime = timeStringToDate(timeStr, formData.startTime || new Date());
-      handleChange('startTime', newStartTime);
+      handleChange('startTimeStr', timeStr);
     },
-    [formData.startTime, handleChange]
+    [handleChange]
   );
 
   const handleEndTimeChange = useCallback(
     (timeStr: string) => {
-      const newEndTime = timeStringToDate(timeStr, formData.endTime || new Date());
-      handleChange('endTime', newEndTime);
+      handleChange('endTimeStr', timeStr);
     },
-    [formData.endTime, handleChange]
+    [handleChange]
   );
 
   // Handle recurrence toggle - enables/disables recurrence with default pattern
@@ -341,6 +362,7 @@ export function EventForm({
       setTouched({
         title: true,
         description: true,
+        eventDate: true,
         startTime: true,
         endTime: true,
         location: true,
@@ -415,11 +437,23 @@ export function EventForm({
         testId="event-description"
       />
 
+      {/* Date Field */}
+      <DatePicker
+        label="Date"
+        value={formData.eventDate}
+        onChange={handleDateChange}
+        error={getFieldError('eventDate')}
+        required
+        fullWidth
+        disabled={isSubmitting}
+        testId="event-date"
+      />
+
       {/* Time Row - Start and End */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <TimePicker
+        <TimePickerDropdown
           label="Start Time"
-          value={dateToTimeString(formData.startTime)}
+          value={formData.startTimeStr}
           onChange={handleStartTimeChange}
           onBlur={() => handleBlur('startTime')}
           error={getFieldError('startTime')}
@@ -429,9 +463,9 @@ export function EventForm({
           testId="event-start-time"
         />
 
-        <TimePicker
+        <TimePickerDropdown
           label="End Time"
-          value={dateToTimeString(formData.endTime)}
+          value={formData.endTimeStr}
           onChange={handleEndTimeChange}
           onBlur={() => handleBlur('endTime')}
           error={getFieldError('endTime')}

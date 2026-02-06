@@ -73,6 +73,8 @@ export { DEFAULT_NOTE_VALUES } from './note.types';
 export type {
   UserRole,
   User,
+  AllowedUser,
+  AddAllowedUserInput,
   ThemeOption,
   FontSizeOption,
   WeekStartDay,
@@ -85,6 +87,7 @@ export type {
 
 export {
   USER_ROLE_LABELS,
+  INITIAL_ADMIN_EMAIL,
   DEFAULT_USER_SETTINGS,
   DEFAULT_NOTIFICATION_SETTINGS,
   THEME_OPTIONS,

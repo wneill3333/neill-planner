@@ -11,7 +11,8 @@ import {
   DndContext,
   closestCenter,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragOverlay,
@@ -112,11 +113,19 @@ export function DraggableFlatTaskList({
   // Track the task being dragged for DragOverlay
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
-  // Configure sensors for pointer and keyboard interaction
+  // Configure sensors for mouse, touch, and keyboard interaction
+  // MouseSensor for desktop (mouse-only), TouchSensor for mobile (touch-only)
+  // Using separate sensors prevents PointerSensor from stealing touch events
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
       activationConstraint: {
         distance: 8, // Minimum drag distance before activating
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200, // Press and hold 200ms to start dragging
+        tolerance: 5, // Allow 5px movement during hold
       },
     }),
     useSensor(KeyboardSensor, {

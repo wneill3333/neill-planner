@@ -49,6 +49,7 @@ export function DragHandle({
           text-gray-400 hover:text-gray-600 hover:bg-gray-100
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1
           transition-colors duration-150
+          touch-action-none select-none
           ${isDragging ? 'cursor-grabbing text-gray-600' : 'cursor-grab'}
         `}
         aria-label="Drag to reorder"

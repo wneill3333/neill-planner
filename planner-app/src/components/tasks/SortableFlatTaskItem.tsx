@@ -58,7 +58,7 @@ export const SortableFlatTaskItem = React.memo(function SortableFlatTaskItem({
       ref={setNodeRef}
       style={style}
       className={`
-        relative transition-all duration-200
+        relative transition-all duration-200 touch-action-none select-none
         ${isDragging ? 'opacity-40 scale-95' : 'opacity-100 scale-100'}
       `}
       data-testid={`sortable-flat-task-${id}`}

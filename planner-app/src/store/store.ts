@@ -16,6 +16,7 @@ import syncReducer from '../features/sync/syncSlice';
 import filterReducer from '../features/filters/filterSlice';
 import settingsReducer from '../features/settings/settingsSlice';
 import searchReducer from '../features/search/searchSlice';
+import adminReducer from '../features/admin/adminSlice';
 
 // =============================================================================
 // Root Reducer
@@ -35,6 +36,7 @@ const rootReducer = combineReducers({
   filters: filterReducer,
   settings: settingsReducer,
   search: searchReducer,
+  admin: adminReducer,
 });
 
 // =============================================================================
@@ -78,6 +80,10 @@ export const store = configureStore({
           'reminders/dismissReminder/fulfilled',
           'reminders/fetchPendingReminders/fulfilled',
           'search/searchAll/fulfilled',
+          'admin/fetchAllowedUsers/fulfilled',
+          'admin/addAllowedUser/fulfilled',
+          'admin/removeAllowedUser/fulfilled',
+          'admin/updateAllowedUserRole/fulfilled',
         ],
         // Ignore these paths in the state (Date objects in tasks, categories, and events)
         ignoredPaths: [
@@ -88,6 +94,7 @@ export const store = configureStore({
           'notes.notes',
           'reminders.reminders',
           'reminders.activeNotifications',
+          'admin.allowedUsers',
         ],
         // Ignore Date values in action payloads
         ignoredActionPaths: [

@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { EventForm } from '../EventForm';
 import type { Event, Category, CreateEventInput, RecurrencePattern } from '../../../types';
@@ -55,8 +55,8 @@ const mockEvent: Event = {
   title: 'Team Meeting',
   description: 'Weekly team sync',
   categoryId: 'cat1',
-  startTime: new Date('2024-01-15T10:00:00'),
-  endTime: new Date('2024-01-15T11:00:00'),
+  startTime: new Date(2024, 0, 15, 10, 0, 0), // Jan 15, 2024 10:00
+  endTime: new Date(2024, 0, 15, 11, 0, 0),   // Jan 15, 2024 11:00
   location: 'Conference Room A',
   isConfidential: false,
   alternateTitle: null,
@@ -71,6 +71,30 @@ const mockEvent: Event = {
   updatedAt: new Date('2024-01-10'),
   deletedAt: null,
 };
+
+// =============================================================================
+// Helpers
+// =============================================================================
+
+/**
+ * Set a TimePickerDropdown to a specific time by selecting hour, minute, and AM/PM
+ */
+async function setTime(
+  user: ReturnType<typeof userEvent.setup>,
+  testIdPrefix: string,
+  hour12: number,
+  minute: number,
+  period: 'AM' | 'PM'
+) {
+  const hourSelect = screen.getByTestId(`${testIdPrefix}-hour`);
+  const minuteSelect = screen.getByTestId(`${testIdPrefix}-minute`);
+
+  await user.selectOptions(hourSelect, String(hour12));
+  await user.selectOptions(minuteSelect, String(minute));
+
+  const periodButton = screen.getByTestId(`${testIdPrefix}-${period.toLowerCase()}`);
+  await user.click(periodButton);
+}
 
 // =============================================================================
 // Tests
@@ -105,8 +129,9 @@ describe('EventForm', () => {
 
       // Required fields
       expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/start time/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/end time/i)).toBeInTheDocument();
+      expect(screen.getByTestId('event-date')).toBeInTheDocument();
+      expect(screen.getByTestId('event-start-time')).toBeInTheDocument();
+      expect(screen.getByTestId('event-end-time')).toBeInTheDocument();
 
       // Optional fields
       expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
@@ -155,8 +180,19 @@ describe('EventForm', () => {
       expect(screen.getByDisplayValue('Team Meeting')).toBeInTheDocument();
       expect(screen.getByDisplayValue('Weekly team sync')).toBeInTheDocument();
       expect(screen.getByDisplayValue('Conference Room A')).toBeInTheDocument();
-      expect(screen.getByDisplayValue('10:00')).toBeInTheDocument();
-      expect(screen.getByDisplayValue('11:00')).toBeInTheDocument();
+
+      // Check time dropdowns show correct values (10:00 AM start, 11:00 AM end)
+      const startTimeContainer = screen.getByTestId('event-start-time');
+      const startHour = within(startTimeContainer).getByLabelText('Hour');
+      const startMinute = within(startTimeContainer).getByLabelText('Minute');
+      expect(startHour).toHaveValue('10');
+      expect(startMinute).toHaveValue('0');
+
+      const endTimeContainer = screen.getByTestId('event-end-time');
+      const endHour = within(endTimeContainer).getByLabelText('Hour');
+      const endMinute = within(endTimeContainer).getByLabelText('Minute');
+      expect(endHour).toHaveValue('11');
+      expect(endMinute).toHaveValue('0');
     });
 
     it('shows alternate title field when confidential is checked', async () => {
@@ -312,7 +348,7 @@ describe('EventForm', () => {
       const onSubmit = vi.fn();
       const onCancel = vi.fn();
 
-      const defaultStartTime = new Date('2024-02-15T14:30:00');
+      const defaultStartTime = new Date(2024, 1, 15, 14, 30, 0); // Feb 15, 2024 14:30
 
       render(
         <EventForm
@@ -323,9 +359,16 @@ describe('EventForm', () => {
         />
       );
 
-      // Verify start time input has the correct value from defaultStartTime
-      const startTimeInput = screen.getByTestId('event-start-time');
-      expect(startTimeInput).toHaveValue('14:30');
+      // Verify start time dropdowns have the correct values (2:30 PM)
+      const startTimeContainer = screen.getByTestId('event-start-time');
+      const startHour = within(startTimeContainer).getByLabelText('Hour');
+      const startMinute = within(startTimeContainer).getByLabelText('Minute');
+      expect(startHour).toHaveValue('2');
+      expect(startMinute).toHaveValue('30');
+
+      // Verify PM is selected
+      const pmButton = screen.getByTestId('event-start-time-pm');
+      expect(pmButton).toHaveAttribute('aria-pressed', 'true');
     });
   });
 
@@ -356,58 +399,6 @@ describe('EventForm', () => {
       expect(onSubmit).not.toHaveBeenCalled();
     });
 
-    it('validates start time is required', async () => {
-      const onSubmit = vi.fn();
-      const onCancel = vi.fn();
-
-      render(
-        <EventForm
-          categories={mockCategories}
-          onSubmit={onSubmit}
-          onCancel={onCancel}
-        />
-      );
-
-      // Clear start time
-      const startTimeInput = screen.getByTestId('event-start-time');
-      await user.clear(startTimeInput);
-
-      // Submit form
-      const submitButton = screen.getByRole('button', { name: /create event/i });
-      await user.click(submitButton);
-
-      await waitFor(() => {
-        expect(screen.getByText(/start time is required/i)).toBeInTheDocument();
-      });
-      expect(onSubmit).not.toHaveBeenCalled();
-    });
-
-    it('validates end time is required', async () => {
-      const onSubmit = vi.fn();
-      const onCancel = vi.fn();
-
-      render(
-        <EventForm
-          categories={mockCategories}
-          onSubmit={onSubmit}
-          onCancel={onCancel}
-        />
-      );
-
-      // Clear end time
-      const endTimeInput = screen.getByTestId('event-end-time');
-      await user.clear(endTimeInput);
-
-      // Submit form
-      const submitButton = screen.getByRole('button', { name: /create event/i });
-      await user.click(submitButton);
-
-      await waitFor(() => {
-        expect(screen.getByText(/end time is required/i)).toBeInTheDocument();
-      });
-      expect(onSubmit).not.toHaveBeenCalled();
-    });
-
     it('validates end time is after start time', async () => {
       const onSubmit = vi.fn();
       const onCancel = vi.fn();
@@ -420,19 +411,15 @@ describe('EventForm', () => {
         />
       );
 
-      // Set start time to 10:00
-      const startTimeInput = screen.getByTestId('event-start-time');
-      await user.clear(startTimeInput);
-      await user.type(startTimeInput, '10:00');
-
-      // Set end time to 09:00 (before start time)
-      const endTimeInput = screen.getByTestId('event-end-time');
-      await user.clear(endTimeInput);
-      await user.type(endTimeInput, '09:00');
-
       // Enter title
       const titleInput = screen.getByTestId('event-title');
       await user.type(titleInput, 'Test Event');
+
+      // Set start time to 10:00 AM
+      await setTime(user, 'event-start-time', 10, 0, 'AM');
+
+      // Set end time to 9:00 AM (before start time)
+      await setTime(user, 'event-end-time', 9, 0, 'AM');
 
       // Submit form
       const submitButton = screen.getByRole('button', { name: /create event/i });
@@ -601,15 +588,6 @@ describe('EventForm', () => {
       await user.click(titleInput);
       await user.paste('    ');
 
-      // Enter valid times
-      const startTimeInput = screen.getByTestId('event-start-time');
-      await user.clear(startTimeInput);
-      await user.type(startTimeInput, '10:00');
-
-      const endTimeInput = screen.getByTestId('event-end-time');
-      await user.clear(endTimeInput);
-      await user.type(endTimeInput, '11:00');
-
       // Submit form
       const submitButton = screen.getByRole('button', { name: /create event/i });
       await user.click(submitButton);
@@ -637,14 +615,9 @@ describe('EventForm', () => {
       const titleInput = screen.getByTestId('event-title');
       await user.type(titleInput, 'Test Event');
 
-      // Set start time and end time to the same value
-      const startTimeInput = screen.getByTestId('event-start-time');
-      await user.clear(startTimeInput);
-      await user.type(startTimeInput, '10:00');
-
-      const endTimeInput = screen.getByTestId('event-end-time');
-      await user.clear(endTimeInput);
-      await user.type(endTimeInput, '10:00');
+      // Set start time and end time to the same value (10:00 AM)
+      await setTime(user, 'event-start-time', 10, 0, 'AM');
+      await setTime(user, 'event-end-time', 10, 0, 'AM');
 
       // Submit form
       const submitButton = screen.getByRole('button', { name: /create event/i });
@@ -683,13 +656,9 @@ describe('EventForm', () => {
       await user.clear(descriptionInput);
       await user.type(descriptionInput, 'Event description');
 
-      const startTimeInput = screen.getByTestId('event-start-time');
-      await user.clear(startTimeInput);
-      await user.type(startTimeInput, '10:00');
-
-      const endTimeInput = screen.getByTestId('event-end-time');
-      await user.clear(endTimeInput);
-      await user.type(endTimeInput, '11:00');
+      // Set times using dropdowns
+      await setTime(user, 'event-start-time', 10, 0, 'AM');
+      await setTime(user, 'event-end-time', 11, 0, 'AM');
 
       const locationInput = screen.getByTestId('event-location');
       await user.clear(locationInput);
@@ -729,13 +698,9 @@ describe('EventForm', () => {
       await user.clear(titleInput);
       await user.type(titleInput, 'Secret Meeting');
 
-      const startTimeInput = screen.getByTestId('event-start-time');
-      await user.clear(startTimeInput);
-      await user.type(startTimeInput, '14:00');
-
-      const endTimeInput = screen.getByTestId('event-end-time');
-      await user.clear(endTimeInput);
-      await user.type(endTimeInput, '15:00');
+      // Set times
+      await setTime(user, 'event-start-time', 2, 0, 'PM');
+      await setTime(user, 'event-end-time', 3, 0, 'PM');
 
       // Toggle confidential
       await user.click(screen.getByTestId('event-confidential-toggle'));
@@ -774,13 +739,9 @@ describe('EventForm', () => {
       // Fill in form
       await user.type(screen.getByTestId('event-title'), 'Recurring Event');
 
-      const startTimeInput = screen.getByTestId('event-start-time');
-      await user.clear(startTimeInput);
-      await user.type(startTimeInput, '09:00');
-
-      const endTimeInput = screen.getByTestId('event-end-time');
-      await user.clear(endTimeInput);
-      await user.type(endTimeInput, '10:00');
+      // Set times
+      await setTime(user, 'event-start-time', 9, 0, 'AM');
+      await setTime(user, 'event-end-time', 10, 0, 'AM');
 
       // Toggle repeat
       await user.click(screen.getByTestId('event-repeat-toggle'));
@@ -813,13 +774,9 @@ describe('EventForm', () => {
       // Fill in form
       await user.type(screen.getByTestId('event-title'), 'Categorized Event');
 
-      const startTimeInput = screen.getByTestId('event-start-time');
-      await user.clear(startTimeInput);
-      await user.type(startTimeInput, '13:00');
-
-      const endTimeInput = screen.getByTestId('event-end-time');
-      await user.clear(endTimeInput);
-      await user.type(endTimeInput, '14:00');
+      // Set times
+      await setTime(user, 'event-start-time', 1, 0, 'PM');
+      await setTime(user, 'event-end-time', 2, 0, 'PM');
 
       // Select category
       const categoryTrigger = screen.getByTestId('event-category-trigger');
@@ -874,11 +831,19 @@ describe('EventForm', () => {
 
       expect(screen.getByTestId('event-title')).toBeDisabled();
       expect(screen.getByTestId('event-description')).toBeDisabled();
-      expect(screen.getByTestId('event-start-time')).toBeDisabled();
-      expect(screen.getByTestId('event-end-time')).toBeDisabled();
       expect(screen.getByTestId('event-location')).toBeDisabled();
       expect(screen.getByRole('button', { name: /creating/i })).toBeDisabled();
       expect(screen.getByRole('button', { name: /cancel/i })).toBeDisabled();
+
+      // Time dropdowns should be disabled
+      const startHour = screen.getByTestId('event-start-time-hour');
+      const startMinute = screen.getByTestId('event-start-time-minute');
+      const endHour = screen.getByTestId('event-end-time-hour');
+      const endMinute = screen.getByTestId('event-end-time-minute');
+      expect(startHour).toBeDisabled();
+      expect(startMinute).toBeDisabled();
+      expect(endHour).toBeDisabled();
+      expect(endMinute).toBeDisabled();
     });
 
     // TC-EF-010: Disabled State for Toggles
@@ -935,6 +900,65 @@ describe('EventForm', () => {
 
       // Verify selection
       expect(screen.getByText('Work')).toBeInTheDocument();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Date Field Tests
+  // ---------------------------------------------------------------------------
+
+  describe('Date Field', () => {
+    it('shows a date picker in the form', () => {
+      const onSubmit = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <EventForm
+          categories={mockCategories}
+          onSubmit={onSubmit}
+          onCancel={onCancel}
+        />
+      );
+
+      expect(screen.getByTestId('event-date')).toBeInTheDocument();
+    });
+
+    it('pre-fills date from defaultStartTime', () => {
+      const onSubmit = vi.fn();
+      const onCancel = vi.fn();
+
+      const defaultStartTime = new Date(2024, 2, 20, 9, 0, 0); // March 20, 2024
+
+      render(
+        <EventForm
+          categories={mockCategories}
+          defaultStartTime={defaultStartTime}
+          onSubmit={onSubmit}
+          onCancel={onCancel}
+        />
+      );
+
+      // The date input should show 2024-03-20
+      const dateInput = screen.getByTestId('event-date');
+      expect(dateInput).toHaveValue('2024-03-20');
+    });
+
+    it('pre-fills date from existing event in edit mode', () => {
+      const onSubmit = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <EventForm
+          event={mockEvent}
+          categories={mockCategories}
+          onSubmit={onSubmit}
+          onCancel={onCancel}
+        />
+      );
+
+      // mockEvent.startTime is Jan 15, 2024
+      const dateInput = screen.getByTestId('event-date');
+      expect(dateInput).toHaveValue('2024-01-15');
     });
   });
 });

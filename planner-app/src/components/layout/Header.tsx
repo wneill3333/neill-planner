@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../../features/auth';
 import { UserMenu } from './UserMenu';
 import { SyncStatusIndicator } from '../common/SyncStatusIndicator';
 import { SearchBar } from '../common/SearchBar';
@@ -26,7 +27,7 @@ import type { Task, Event, Note } from '../../types';
 // Types
 // =============================================================================
 
-export type AppView = 'tasks' | 'categories' | 'settings';
+export type AppView = 'tasks' | 'categories' | 'settings' | 'admin';
 
 export interface HeaderProps {
   /** Current active view */
@@ -76,8 +77,14 @@ export function Header({ currentView = 'tasks', onNavigate, className, testId }:
     setIsMobileMenuOpen(false);
   };
 
+  const { user: authUser } = useAuth();
+
   const handleSettingsClick = () => {
     handleNavigate('settings');
+  };
+
+  const handleAdminClick = () => {
+    handleNavigate('admin');
   };
 
   const handleManageRecurringClick = () => {
@@ -250,6 +257,7 @@ export function Header({ currentView = 'tasks', onNavigate, className, testId }:
             <SyncStatusIndicator />
             <UserMenu
               onSettingsClick={handleSettingsClick}
+              onAdminClick={authUser?.role === 'admin' ? handleAdminClick : undefined}
               onManageRecurringClick={handleManageRecurringClick}
             />
           </div>
@@ -317,6 +325,22 @@ export function Header({ currentView = 'tasks', onNavigate, className, testId }:
                     Categories
                   </button>
                 </li>
+                {authUser?.role === 'admin' && (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => handleNavigate('admin')}
+                      className={`
+                        w-full text-left px-3 py-2 rounded-md text-white
+                        transition-colors duration-150
+                        ${currentView === 'admin' ? 'bg-red-600 font-medium' : 'hover:bg-red-600'}
+                      `}
+                      aria-current={currentView === 'admin' ? 'page' : undefined}
+                    >
+                      User Management
+                    </button>
+                  </li>
+                )}
               </ul>
             </nav>
           </div>
