@@ -122,7 +122,26 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
                 return;
               }
 
-              const allowedEntry = await checkEmailAllowed(email);
+              let allowedEntry;
+              try {
+                allowedEntry = await checkEmailAllowed(email);
+              } catch (err) {
+                // Transient Firestore error — fall back to a minimal user
+                // so the session isn't lost on network hiccups
+                console.warn('Whitelist check failed, using cached session:', err);
+                setUser((prev) =>
+                  prev ?? {
+                    id: firebaseUser.uid,
+                    email: firebaseUser.email ?? '',
+                    displayName: firebaseUser.displayName ?? '',
+                    role: 'standard' as const,
+                    createdAt: new Date(),
+                    lastLoginAt: new Date(),
+                  }
+                );
+                return;
+              }
+
               if (!allowedEntry) {
                 setIsAccessDenied(true);
                 setError(
@@ -136,12 +155,28 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
               // Clear any previous access denied state
               setIsAccessDenied(false);
 
-              // Proceed with user creation/retrieval
-              const appUser = await getOrCreateUser({
-                uid: firebaseUser.uid,
-                email: firebaseUser.email,
-                displayName: firebaseUser.displayName,
-              });
+              let appUser;
+              try {
+                appUser = await getOrCreateUser({
+                  uid: firebaseUser.uid,
+                  email: firebaseUser.email,
+                  displayName: firebaseUser.displayName,
+                });
+              } catch (err) {
+                // Transient Firestore error — fall back to minimal user
+                console.warn('User fetch failed, using cached session:', err);
+                setUser((prev) =>
+                  prev ?? {
+                    id: firebaseUser.uid,
+                    email: firebaseUser.email ?? '',
+                    displayName: firebaseUser.displayName ?? '',
+                    role: allowedEntry.role,
+                    createdAt: new Date(),
+                    lastLoginAt: new Date(),
+                  }
+                );
+                return;
+              }
 
               // Sync role if whitelist role differs from user doc role
               if (allowedEntry.role !== appUser.role) {
@@ -165,7 +200,6 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
           } catch (err) {
             console.error('Error handling auth state change:', err);
             setError(err instanceof Error ? err.message : 'Authentication error');
-            setUser(null);
           } finally {
             setLoading(false);
           }
