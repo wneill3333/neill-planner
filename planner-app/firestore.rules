@@ -40,6 +40,16 @@ service cloud.firestore {
     }
 
     /**
+     * Check if user's role matches their allowedUsers whitelist entry
+     * Used to permit role sync on login (whitelist is source of truth)
+     */
+    function roleMatchesWhitelist(newRole) {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/allowedUsers/$(request.auth.token.email)) &&
+             get(/databases/$(database)/documents/allowedUsers/$(request.auth.token.email)).data.role == newRole;
+    }
+
+    /**
      * Validate string length
      */
     function validLength(str, min, max) {
@@ -124,9 +134,10 @@ service cloud.firestore {
                        request.resource.data.displayName is string &&
                        request.resource.data.role in ['standard', 'admin'];
 
-      // Users can update their own profile (but not role)
+      // Users can update their own profile (but not role unless it matches whitelist)
       // Admins can update any user's role
       allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role) ||
+                       (isOwner(userId) && roleMatchesWhitelist(request.resource.data.role)) ||
                        isAdmin();
 
       // Only admins can delete users

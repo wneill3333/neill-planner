@@ -65,13 +65,18 @@ export function GoogleDriveBackupSettings() {
     name: string;
     createdAt: string;
   } | null>(null);
+  const [hasFetchedBackups, setHasFetchedBackups] = useState(false);
 
-  // Fetch backups when connected
+  // Fetch backups when connected (once)
   useEffect(() => {
-    if (isConnected && backups.length === 0 && !isLoadingBackups) {
+    if (isConnected && !hasFetchedBackups && !isLoadingBackups) {
+      setHasFetchedBackups(true);
       fetchBackups();
     }
-  }, [isConnected, backups.length, isLoadingBackups, fetchBackups]);
+    if (!isConnected) {
+      setHasFetchedBackups(false);
+    }
+  }, [isConnected, hasFetchedBackups, isLoadingBackups, fetchBackups]);
 
   // Update settings after successful backup
   useEffect(() => {
