@@ -124,14 +124,14 @@ function eventsOverlap(event1: Event, event2: Event): boolean {
 /**
  * Calculate column positions for overlapping events
  */
-function calculateEventPositions(events: Event[], categories: Record<string, Category>): PositionedEvent[] {
+function calculateEventPositions(events: Event[], categories: Record<string, Category>, selectedDate: Date): PositionedEvent[] {
   if (events.length === 0) return [];
 
   // Sort events by start time
   const sortedEvents = [...events].sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
 
   const positioned: PositionedEvent[] = [];
-  const dayStart = setHours(setMinutes(startOfDay(sortedEvents[0].startTime), 0), START_HOUR);
+  const dayStart = setHours(setMinutes(startOfDay(selectedDate), 0), START_HOUR);
 
   for (const event of sortedEvents) {
     // Calculate basic position
@@ -314,8 +314,8 @@ function TimeBlockCalendarComponent({
 
   // Calculate positioned events
   const positionedEvents = useMemo(
-    () => calculateEventPositions(events, categories),
-    [events, categories]
+    () => calculateEventPositions(events, categories, selectedDate),
+    [events, categories, selectedDate]
   );
 
   // Calculate current time position
@@ -389,75 +389,75 @@ function TimeBlockCalendarComponent({
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
-      <div className="flex h-full overflow-hidden">
-        {/* Time labels column */}
-        <div className="flex-shrink-0 w-20 border-r border-gray-200 bg-gray-50">
-          {timeSlots.map(({ hour, label }) => (
-            <div
-              key={hour}
-              className="relative text-sm font-medium text-gray-700 text-right pr-3"
-              style={{ height: `${HOUR_HEIGHT}px` }}
-            >
-              <span className="absolute top-0 right-3 -translate-y-1/2 bg-gray-50 px-1">{label}</span>
-            </div>
-          ))}
-        </div>
+      {/* Single scroll container so time labels and calendar grid scroll together */}
+      <div className="h-full overflow-y-auto">
+        <div className="flex" style={{ height: `${CALENDAR_HEIGHT}px` }}>
+          {/* Time labels column */}
+          <div className="flex-shrink-0 w-20 border-r border-gray-200 bg-gray-50">
+            {timeSlots.map(({ hour, label }) => (
+              <div
+                key={hour}
+                className="relative text-sm font-medium text-gray-700 text-right pr-3"
+                style={{ height: `${HOUR_HEIGHT}px` }}
+              >
+                <span className="absolute top-0 right-3 -translate-y-1/2 bg-gray-50 px-1">{label}</span>
+              </div>
+            ))}
+          </div>
 
-        {/* Calendar grid */}
-        <div className="flex-1 relative overflow-y-auto">
-        <div
-          className="relative cursor-pointer"
-          style={{ height: `${CALENDAR_HEIGHT}px` }}
-          onClick={handleCalendarClick}
-          role="button"
-          tabIndex={0}
-          aria-label={`Calendar for ${format(selectedDate, 'MMMM d, yyyy')}. Click to create event.`}
-        >
-          {/* Hour grid lines */}
-          {timeSlots.map(({ hour }) => (
-            <div
-              key={hour}
-              className="absolute w-full border-t border-gray-200"
-              style={{ top: `${(hour - START_HOUR) * HOUR_HEIGHT}px` }}
-            />
-          ))}
-
-          {/* Current time indicator */}
-          {isToday && currentTimePosition !== null && (
-            <div
-              className="absolute w-full border-t-2 border-red-500 z-20"
-              style={{ top: `${currentTimePosition}px` }}
-              aria-label="Current time"
-            >
-              <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-red-500 rounded-full" />
-            </div>
-          )}
-
-          {/* Event blocks */}
-          {positionedEvents.map(({ event, top, height, column, totalColumns, category }) => {
-            const categoryColor = category?.color || '#9CA3AF';
-            const textColor = getContrastingTextColor(categoryColor);
-            const width = `${100 / totalColumns}%`;
-            const left = `${(column * 100) / totalColumns}%`;
-
-            return (
-              <DraggableEventBlock
-                key={event.id}
-                event={event}
-                top={top}
-                height={height}
-                left={left}
-                width={width}
-                categoryColor={categoryColor}
-                textColor={textColor}
-                category={category}
-                onEventClick={onEventClick}
-                isDraggingEnabled={!!onEventTimeChange}
+          {/* Calendar grid */}
+          <div
+            className="flex-1 relative cursor-pointer"
+            onClick={handleCalendarClick}
+            role="button"
+            tabIndex={0}
+            aria-label={`Calendar for ${format(selectedDate, 'MMMM d, yyyy')}. Click to create event.`}
+          >
+            {/* Hour grid lines */}
+            {timeSlots.map(({ hour }) => (
+              <div
+                key={hour}
+                className="absolute w-full border-t border-gray-200"
+                style={{ top: `${(hour - START_HOUR) * HOUR_HEIGHT}px` }}
               />
-            );
-          })}
+            ))}
+
+            {/* Current time indicator */}
+            {isToday && currentTimePosition !== null && (
+              <div
+                className="absolute w-full border-t-2 border-red-500 z-20"
+                style={{ top: `${currentTimePosition}px` }}
+                aria-label="Current time"
+              >
+                <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-red-500 rounded-full" />
+              </div>
+            )}
+
+            {/* Event blocks */}
+            {positionedEvents.map(({ event, top, height, column, totalColumns, category }) => {
+              const categoryColor = category?.color || '#9CA3AF';
+              const textColor = getContrastingTextColor(categoryColor);
+              const width = `${100 / totalColumns}%`;
+              const left = `${(column * 100) / totalColumns}%`;
+
+              return (
+                <DraggableEventBlock
+                  key={event.id}
+                  event={event}
+                  top={top}
+                  height={height}
+                  left={left}
+                  width={width}
+                  categoryColor={categoryColor}
+                  textColor={textColor}
+                  category={category}
+                  onEventClick={onEventClick}
+                  isDraggingEnabled={!!onEventTimeChange}
+                />
+              );
+            })}
+          </div>
         </div>
-      </div>
       </div>
     </DndContext>
   );

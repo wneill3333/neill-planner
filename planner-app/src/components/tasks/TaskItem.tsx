@@ -94,6 +94,8 @@ function TaskItemComponent({
   testId,
 }: TaskItemProps) {
   const isComplete = isTaskComplete(task);
+  const isForwarded = task.status === 'forward';
+  const isDimmed = isComplete || isForwarded;
   const isRecurring = isTaskRecurring(task);
   const priorityLabel = formatPriorityLabel(task);
 
@@ -119,7 +121,7 @@ function TaskItemComponent({
         flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer
         transition-colors duration-150
         hover:bg-gray-50
-        ${isComplete ? 'opacity-60' : ''}
+        ${isDimmed ? 'opacity-60' : ''}
       `}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
@@ -156,7 +158,7 @@ function TaskItemComponent({
       <span
         className={`
           flex-1 text-gray-800 truncate
-          ${isComplete ? 'line-through text-gray-500' : ''}
+          ${isDimmed ? 'line-through text-gray-500' : ''}
         `}
         data-testid="task-title"
       >

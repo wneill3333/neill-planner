@@ -67,14 +67,26 @@ function StatusDropdownComponent({
   const currentLabel = getStatusLabel(status);
   const allStatuses = getAllStatuses();
 
-  // Calculate menu position when opening
+  // Calculate menu position when opening - flip upward if near bottom of viewport
   useEffect(() => {
     if (isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      setMenuPosition({
-        top: rect.bottom + window.scrollY + 4,
-        left: rect.left + window.scrollX,
-      });
+      const menuHeight = 220; // approximate height of the dropdown menu (5 items)
+      const spaceBelow = window.innerHeight - rect.bottom;
+
+      if (spaceBelow < menuHeight) {
+        // Not enough space below - open upward
+        setMenuPosition({
+          top: rect.top - menuHeight - 4,
+          left: rect.left,
+        });
+      } else {
+        // Open downward (default)
+        setMenuPosition({
+          top: rect.bottom + 4,
+          left: rect.left,
+        });
+      }
     }
   }, [isOpen]);
 

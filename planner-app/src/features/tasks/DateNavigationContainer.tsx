@@ -6,7 +6,7 @@
  */
 
 import { useCallback } from 'react';
-import { DateNavigation } from '../../components/common/DateNavigation';
+import { DateNavigation, type NavigationStep } from '../../components/common/DateNavigation';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { selectSelectedDate, setSelectedDate } from './taskSlice';
 
@@ -15,6 +15,8 @@ import { selectSelectedDate, setSelectedDate } from './taskSlice';
 // =============================================================================
 
 export interface DateNavigationContainerProps {
+  /** Navigation step size: day (default), week, or month */
+  navigationStep?: NavigationStep;
   /** Optional className for styling */
   className?: string;
   /** Test ID for testing */
@@ -32,6 +34,7 @@ export interface DateNavigationContainerProps {
  * @returns JSX element representing connected date navigation
  */
 export function DateNavigationContainer({
+  navigationStep,
   className,
   testId,
 }: DateNavigationContainerProps = {}) {
@@ -50,6 +53,7 @@ export function DateNavigationContainer({
     <DateNavigation
       selectedDate={selectedDate}
       onDateChange={handleDateChange}
+      navigationStep={navigationStep}
       className={className}
       testId={testId}
     />

@@ -34,7 +34,7 @@ export type { TimePickerDropdownProps } from './TimePickerDropdown';
 export type { ModalProps, ModalSize } from './Modal';
 export type { FloatingActionButtonProps, FABIcon } from './FloatingActionButton';
 export type { DragHandleProps } from './DragHandle';
-export type { DateNavigationProps } from './DateNavigation';
+export type { DateNavigationProps, NavigationStep } from './DateNavigation';
 export type { TabsProps, Tab } from './Tabs';
 export type { TabPanelProps } from './TabPanel';
 export type { ToggleProps } from './Toggle';

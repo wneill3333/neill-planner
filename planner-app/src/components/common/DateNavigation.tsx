@@ -13,8 +13,11 @@
  */
 
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { addMonths, parseISO } from 'date-fns';
 import { formatDisplayDate, addDays, isToday, getTodayString, toISODateString, parseISODate } from '../../utils/dateUtils';
 import { DatePicker } from './DatePicker';
+
+export type NavigationStep = 'day' | 'week' | 'month';
 
 // =============================================================================
 // Types
@@ -25,6 +28,8 @@ export interface DateNavigationProps {
   selectedDate: string;
   /** Callback when date changes */
   onDateChange: (date: string) => void;
+  /** Navigation step size: day (default), week, or month */
+  navigationStep?: NavigationStep;
   /** Optional className for styling */
   className?: string;
   /** Test ID for testing */
@@ -44,6 +49,7 @@ export interface DateNavigationProps {
 function DateNavigationComponent({
   selectedDate,
   onDateChange,
+  navigationStep = 'day',
   className = '',
   testId = 'date-navigation',
 }: DateNavigationProps) {
@@ -52,17 +58,29 @@ function DateNavigationComponent({
   const formattedDate = formatDisplayDate(selectedDate);
   const isTodaySelected = isToday(selectedDate);
 
-  // Navigate to previous day
-  const handlePreviousDay = useCallback(() => {
-    const previousDate = addDays(selectedDate, -1);
-    onDateChange(previousDate);
-  }, [selectedDate, onDateChange]);
+  const stepLabel = navigationStep === 'month' ? 'month' : navigationStep === 'week' ? 'week' : 'day';
 
-  // Navigate to next day
+  // Navigate backward by the current step
+  const handlePreviousDay = useCallback(() => {
+    if (navigationStep === 'month') {
+      const newDate = addMonths(parseISO(selectedDate), -1);
+      onDateChange(toISODateString(newDate));
+    } else {
+      const days = navigationStep === 'week' ? -7 : -1;
+      onDateChange(addDays(selectedDate, days));
+    }
+  }, [selectedDate, onDateChange, navigationStep]);
+
+  // Navigate forward by the current step
   const handleNextDay = useCallback(() => {
-    const nextDate = addDays(selectedDate, 1);
-    onDateChange(nextDate);
-  }, [selectedDate, onDateChange]);
+    if (navigationStep === 'month') {
+      const newDate = addMonths(parseISO(selectedDate), 1);
+      onDateChange(toISODateString(newDate));
+    } else {
+      const days = navigationStep === 'week' ? 7 : 1;
+      onDateChange(addDays(selectedDate, days));
+    }
+  }, [selectedDate, onDateChange, navigationStep]);
 
   // Navigate to today
   const handleToday = useCallback(() => {
@@ -138,7 +156,7 @@ function DateNavigationComponent({
           focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
           active:scale-95
         "
-        aria-label="Previous day"
+        aria-label={`Previous ${stepLabel}`}
         data-testid="previous-day-button"
       >
         <svg
@@ -275,7 +293,7 @@ function DateNavigationComponent({
           focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
           active:scale-95
         "
-        aria-label="Next day"
+        aria-label={`Next ${stepLabel}`}
         data-testid="next-day-button"
       >
         <svg
@@ -298,6 +316,7 @@ function DateNavigationComponent({
 function arePropsEqual(prevProps: DateNavigationProps, nextProps: DateNavigationProps): boolean {
   return (
     prevProps.selectedDate === nextProps.selectedDate &&
+    prevProps.navigationStep === nextProps.navigationStep &&
     prevProps.className === nextProps.className &&
     prevProps.testId === nextProps.testId
   );

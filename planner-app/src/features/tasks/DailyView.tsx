@@ -365,7 +365,9 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
         className="mb-6"
         aria-label="Date navigation"
       >
-        <DateNavigationContainer />
+        <DateNavigationContainer
+          navigationStep={activeTab === 'calendar' ? calendarViewType : 'day'}
+        />
       </section>
 
       {/* Tab Bar */}
