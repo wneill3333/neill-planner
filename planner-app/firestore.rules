@@ -285,22 +285,10 @@ service cloud.firestore {
     // =============================================================================
 
     match /googleCalendarCredentials/{credentialId} {
-      // Users can read their own credentials
-      allow read: if isAuthenticated() &&
-                     resource.data.userId == request.auth.uid;
-
-      // Users can create credentials for themselves
-      allow create: if isAuthenticated() &&
-                       request.resource.data.userId == request.auth.uid;
-
-      // Users can update their own credentials
-      allow update: if isAuthenticated() &&
-                       resource.data.userId == request.auth.uid &&
-                       request.resource.data.userId == request.auth.uid;
-
-      // Users can delete their own credentials
-      allow delete: if isAuthenticated() &&
-                       resource.data.userId == request.auth.uid;
+      // Document ID is the userId, so use credentialId for ownership checks
+      allow read: if isOwner(credentialId);
+      allow create, update: if isOwner(credentialId);
+      allow delete: if isOwner(credentialId);
     }
 
     // =============================================================================
