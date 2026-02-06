@@ -15,7 +15,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './config';
 import type { User, UserRole, UserSettings, UpdateUserSettingsInput } from '../../types';
-import { DEFAULT_USER_SETTINGS } from '../../types';
+import { DEFAULT_USER_SETTINGS, DEFAULT_BACKUP_CONFIG } from '../../types';
 import { validateUserId, ValidationError } from '../../utils/validation';
 
 /** Firestore collection name for users */
@@ -77,6 +77,7 @@ function settingsToFirestore(settings: UserSettings): DocumentData {
     notifications: settings.notifications,
     googleCalendarSyncEnabled: settings.googleCalendarSyncEnabled,
     platform: settings.platform,
+    backupConfig: settings.backupConfig,
   };
 }
 
@@ -95,6 +96,7 @@ function firestoreToSettings(data: DocumentData): UserSettings {
     notifications: data.notifications ?? DEFAULT_USER_SETTINGS.notifications,
     googleCalendarSyncEnabled: data.googleCalendarSyncEnabled ?? DEFAULT_USER_SETTINGS.googleCalendarSyncEnabled,
     platform: data.platform ?? DEFAULT_USER_SETTINGS.platform,
+    backupConfig: data.backupConfig ? { ...DEFAULT_BACKUP_CONFIG, ...data.backupConfig } : DEFAULT_BACKUP_CONFIG,
   };
 }
 

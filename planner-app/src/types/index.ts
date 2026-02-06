@@ -178,3 +178,26 @@ export type {
   SyncResult,
   ConflictInfo,
 } from './googleCalendar.types';
+
+// =============================================================================
+// Google Drive Types
+// =============================================================================
+export type {
+  GoogleDriveCredentials,
+  BackupFrequency,
+  BackupRetentionCount,
+  BackupConfig,
+  BackupData,
+  BackupFileInfo,
+  BackupResult,
+  RestoreResult,
+} from './googleDrive.types';
+
+export {
+  DEFAULT_BACKUP_CONFIG,
+  BACKUP_FREQUENCY_OPTIONS,
+  BACKUP_RETENTION_OPTIONS,
+  BACKUP_FORMAT_VERSION,
+  APP_VERSION,
+  BACKUP_FOLDER_NAME,
+} from './googleDrive.types';

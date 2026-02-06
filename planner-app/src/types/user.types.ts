@@ -5,6 +5,9 @@
  * Includes user settings and preferences.
  */
 
+import type { BackupConfig } from './googleDrive.types';
+import { DEFAULT_BACKUP_CONFIG } from './googleDrive.types';
+
 // =============================================================================
 // Role Types
 // =============================================================================
@@ -108,6 +111,8 @@ export interface UserSettings {
   googleCalendarSyncEnabled: boolean;
   /** Current platform */
   platform: PlatformType;
+  /** Google Drive backup configuration */
+  backupConfig: BackupConfig;
 }
 
 // =============================================================================
@@ -134,6 +139,7 @@ export interface UpdateUserSettingsInput {
   weekStartsOn?: WeekStartDay;
   notifications?: Partial<NotificationSettings>;
   googleCalendarSyncEnabled?: boolean;
+  backupConfig?: Partial<BackupConfig>;
 }
 
 // =============================================================================
@@ -196,6 +202,7 @@ export const DEFAULT_USER_SETTINGS: Omit<UserSettings, 'userId'> = {
   },
   googleCalendarSyncEnabled: false,
   platform: 'web',
+  backupConfig: DEFAULT_BACKUP_CONFIG,
 } as const;
 
 /**

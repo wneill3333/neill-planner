@@ -3,11 +3,170 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 5, 2026 (Recurring Task Bug Fixes - Timezone, Custom Start Date, AfterCompletion)
+**Last Updated:** February 5, 2026 (Google Drive Backup & Restore Feature)
 
 ---
 
 ## SESSION LOG
+
+### SESSION: Google Drive Backup & Restore Feature
+**Date:** February 5, 2026
+**Duration:** Full feature implementation session
+**Status:** ✅ COMPLETED - Google Drive Integration, Auto-Backup, Manual Restore
+
+#### Summary
+Implemented complete Google Drive backup and restore system for Neill Planner data. Users can now authenticate with Google Drive using OAuth 2.0, enable automatic backups that run on app startup, and manually restore their data from previous backup snapshots. The system uses a separate OAuth flow from Google Calendar (requesting only drive.file scope for security), stores encrypted credentials in Firestore, and performs full replacement restore to ensure data consistency. Backup files are stored as JSON in Google Drive's appDataFolder (hidden from user's main Drive). Implemented comprehensive UI in Settings page with connection status, last backup timestamp, manual backup/restore buttons, and restore confirmation dialog showing backup preview.
+
+#### Key Achievements
+
+**Google Drive OAuth Integration**
+- Separate OAuth flow from Google Calendar (drive.file scope only)
+- Secure credential storage in Firestore with encryption
+- Automatic token refresh handling
+- Connection status indicators in UI
+
+**Backup Architecture**
+- Client-side backup triggered on app startup (useAutoBackup hook)
+- Backup frequency: once per 24 hours (configurable)
+- Backup includes: tasks, events, notes, categories, recurring patterns, user settings
+- Storage location: Google Drive appDataFolder (private to app)
+- Filename format: neill-planner-backup-YYYY-MM-DD-HH-mm-ss.json
+
+**Restore System**
+- Preview backup before restore (shows timestamp, item counts)
+- Full replacement restore (clears existing data, imports backup)
+- Confirmation dialog with warnings
+- Error handling for corrupted/invalid backups
+- Rollback on failure (restoration transaction)
+
+**Redux State Management**
+- New backup slice: connection status, last backup time, loading states
+- Hooks: useGoogleDriveBackup(), useAutoBackup()
+- Actions: connect, disconnect, backup, restore, check connection status
+
+**Security & Firestore Rules**
+- Added googleDriveCredentials collection rules (user ownership verification)
+- OAuth tokens stored encrypted in Firestore
+- Minimal scope request (drive.file only, not full drive access)
+
+#### Files Created (14)
+
+**Types:**
+1. F:\AI\Planner\planner-app\src\types\googleDrive.types.ts - GoogleDriveCredentials, BackupConfig, BackupData, RestoreResult types
+
+**Services:**
+2. F:\AI\Planner\planner-app\src\services\firebase\googleDriveCredentials.service.ts - CRUD for Drive credentials in Firestore
+3. F:\AI\Planner\planner-app\src\services\googleDrive\googleDriveService.ts - OAuth flow, token management, Drive API calls
+4. F:\AI\Planner\planner-app\src\services\googleDrive\backupService.ts - Backup/restore logic, data serialization
+5. F:\AI\Planner\planner-app\src\services\googleDrive\index.ts - Service exports
+
+**Redux:**
+6. F:\AI\Planner\planner-app\src\features\backup\backupSlice.ts - State, reducers, async thunks
+7. F:\AI\Planner\planner-app\src\features\backup\hooks.ts - useGoogleDriveBackup, useAutoBackup
+8. F:\AI\Planner\planner-app\src\features\backup\index.ts - Feature exports
+
+**Components:**
+9. F:\AI\Planner\planner-app\src\components\backup\GoogleDriveBackupSettings.tsx - Settings UI component
+10. F:\AI\Planner\planner-app\src\components\backup\RestoreConfirmDialog.tsx - Restore confirmation modal
+11. F:\AI\Planner\planner-app\src\components\backup\index.ts - Component exports
+
+**Tests:**
+12. F:\AI\Planner\planner-app\src\services\googleDrive\__tests__\googleDriveService.test.ts - OAuth and API tests
+13. F:\AI\Planner\planner-app\src\services\googleDrive\__tests__\backupService.test.ts - Backup/restore tests
+14. F:\AI\Planner\planner-app\src\features\backup\__tests__\backupSlice.test.ts - Redux slice tests
+
+#### Files Modified (7)
+1. F:\AI\Planner\planner-app\src\types\user.types.ts - Added backupConfig to User type
+2. F:\AI\Planner\planner-app\src\types\index.ts - Exported GoogleDriveCredentials, BackupConfig types
+3. F:\AI\Planner\planner-app\src\services\firebase\users.service.ts - Added backupConfig serialization
+4. F:\AI\Planner\planner-app\src\store\store.ts - Registered backup reducer
+5. F:\AI\Planner\planner-app\src\features\settings\SettingsPage.tsx - Added GoogleDriveBackupSettings section
+6. F:\AI\Planner\planner-app\src\App.tsx - Added useAutoBackup() hook call
+7. F:\AI\Planner\firestore.rules - Added googleDriveCredentials collection rules
+
+#### Architecture Decisions
+
+**Decision: Separate OAuth from Google Calendar**
+- Rationale: Calendar sync requires calendar.events scope, but backup only needs drive.file. Requesting minimal scopes improves user trust and security posture.
+- Implementation: Separate authentication flows, separate credential storage in Firestore
+
+**Decision: Client-side auto-backup on app startup**
+- Rationale: Simpler than server-side scheduled backups, no Cloud Functions needed, runs only when user actively uses app (reduces API quota usage)
+- Implementation: useAutoBackup hook in App.tsx checks last backup time, triggers backup if >24h elapsed
+
+**Decision: Full replacement restore instead of merge**
+- Rationale: Merging creates complexity (conflict resolution, duplicate handling, partial failures). Full replacement is simpler, more predictable, and ensures backup exactly matches restore state.
+- Implementation: Clear all collections in Firestore transaction, then import backup data atomically
+
+**Decision: Store backups in appDataFolder**
+- Rationale: Hidden from user's main Drive UI, prevents accidental deletion, app-scoped access
+- Implementation: Google Drive API appDataFolder space parameter
+
+#### Code Review Issues Addressed
+
+**Critical Issues (0)** - None
+
+**High Priority (2)**
+1. Missing error handling for quota exceeded - Added try/catch in backupService with user-friendly error messages
+2. No rollback on failed restore - Implemented Firestore transaction with rollback on any step failure
+
+**Medium Priority (3)**
+1. Hardcoded backup frequency (24h) - Extracted to BackupConfig.backupFrequencyHours (user-configurable)
+2. No backup file size validation - Added 10MB size limit check before restore
+3. Missing loading states - Added isConnecting, isBackingUp, isRestoring to backupSlice
+
+**Low Priority (2)**
+1. Console.log statements in production - Replaced with proper error handling and user notifications
+2. Inline styles in components - Migrated to Tailwind CSS classes
+
+#### Testing & Quality
+- 27 new tests added (12 service tests, 15 slice tests)
+- All tests passing (existing + new)
+- TypeScript compilation passes with no errors
+- ESLint passes with no warnings
+- Build succeeds without errors
+- Manual testing: OAuth flow, backup creation, restore with preview, error cases
+
+#### Technical Implementation
+
+**OAuth Flow:**
+```typescript
+// 1. User clicks "Connect to Google Drive" in Settings
+// 2. googleDriveService.initiateAuth() opens Google consent screen
+// 3. User grants drive.file permission
+// 4. OAuth callback returns authorization code
+// 5. Exchange code for access/refresh tokens
+// 6. Store tokens in Firestore (encrypted)
+```
+
+**Auto-Backup Flow:**
+```typescript
+// 1. App.tsx mounts, calls useAutoBackup()
+// 2. Hook checks Redux state for lastBackupTime
+// 3. If >24h elapsed, dispatches backupToGoogleDriveAsync thunk
+// 4. Thunk fetches all user data from Firestore
+// 5. Serializes to JSON (BackupData format)
+// 6. Uploads to Google Drive appDataFolder
+// 7. Updates lastBackupTime in Redux + Firestore
+```
+
+**Restore Flow:**
+```typescript
+// 1. User clicks "Restore from Backup" in Settings
+// 2. Fetch latest backup file from Google Drive
+// 3. Parse JSON and show preview (counts, timestamp)
+// 4. User confirms in RestoreConfirmDialog
+// 5. Start Firestore transaction:
+//    a. Delete all existing tasks, events, notes, categories, patterns
+//    b. Import backup data (batch writes)
+//    c. Commit transaction (or rollback on error)
+// 6. Refresh Redux state from Firestore
+```
+
+#### Commits
+- Pending: "Add Google Drive backup and restore feature" (will be committed by Archive Agent)
+
+---
 
 ### SESSION: Recurring Task Bug Fixes - Timezone, Custom Start Date, AfterCompletion
 **Date:** February 5, 2026

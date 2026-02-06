@@ -20,6 +20,7 @@ import { dismissReminderAsync, snoozeReminderAsync } from './features/reminders/
 import { selectUndismissedNotifications } from './features/reminders/reminderSlice';
 import { fetchSettings } from './features/settings';
 import { useTheme, useFontSize } from './features/settings/hooks';
+import { useAutoBackup } from './features/backup/hooks';
 
 function App() {
   const { user, loading } = useAuth();
@@ -32,6 +33,9 @@ function App() {
   // Apply theme and font size settings
   useTheme();
   useFontSize();
+
+  // Check for due auto-backups
+  useAutoBackup();
 
   // Load user settings when authenticated
   useEffect(() => {

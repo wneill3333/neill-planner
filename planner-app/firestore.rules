@@ -297,6 +297,19 @@ service cloud.firestore {
     }
 
     // =============================================================================
+    // Google Drive Credentials Collection
+    // =============================================================================
+
+    match /googleDriveCredentials/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) &&
+                               request.resource.data.accessToken is string &&
+                               request.resource.data.scope is string &&
+                               request.resource.data.expiresAt is timestamp;
+      allow delete: if isOwner(userId);
+    }
+
+    // =============================================================================
     // Default Rule - Deny All
     // =============================================================================
 

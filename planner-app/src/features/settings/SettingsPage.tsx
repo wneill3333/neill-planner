@@ -28,6 +28,7 @@ import { Button } from '../../components/common/Button';
 import { AppLayout } from '../../components/layout/AppLayout';
 import type { AppView } from '../../components/layout/Header';
 import { GoogleCalendarSettings } from '../../components/googleCalendar/GoogleCalendarSettings';
+import { GoogleDriveBackupSettings } from '../../components/backup/GoogleDriveBackupSettings';
 
 // =============================================================================
 // Types
@@ -355,6 +356,11 @@ export function SettingsPage({ currentView = 'settings', onNavigate }: SettingsP
           <div className="space-y-6">
             {/* Google Calendar Full Settings */}
             <GoogleCalendarSettings />
+
+            {/* Google Drive Backup */}
+            <div className="border-t border-gray-200 pt-4">
+              <GoogleDriveBackupSettings />
+            </div>
 
             {/* Auto-sync toggle */}
             <div className="border-t border-gray-200 pt-4">
