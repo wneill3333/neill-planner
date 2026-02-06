@@ -3,11 +3,95 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 5, 2026 (Google Drive Backup & Restore Feature)
+**Last Updated:** February 6, 2026 (Auth Persistence Fix & Production Deploy)
 
 ---
 
 ## SESSION LOG
+
+### SESSION: Auth Persistence Fix & Production Deploy
+**Date:** February 6, 2026
+**Duration:** Quick fix session
+**Status:** COMPLETED
+
+#### Summary
+Fixed an issue where transient Firestore errors during login (whitelist check or user fetch) would null out the user session, causing periodic logouts even though Firebase Auth still had a valid token. Also redeployed to Firebase Hosting so production reflects the latest forwarded-task greyed-out styling that was already working on the dev server.
+
+#### Key Achievements
+
+**Auth Resilience Fix (commit 40f6e12)**
+- Issue: `checkEmailAllowed()` or `getOrCreateUser()` throwing on network hiccups would set user to null, logging the user out
+- Fix: Wrapped each Firestore call in its own try/catch; on failure, falls back to a minimal User object built from the Firebase Auth token
+- Also removed `setUser(null)` from the outer catch so unexpected errors don't destroy the session
+- File modified: `planner-app/src/features/auth/AuthContext.tsx`
+
+**Production Deployment**
+- Rebuilt and deployed to Firebase Hosting (`neill-planner.web.app`)
+- Forwarded tasks now correctly display as greyed out (opacity-60, line-through, text-gray-500) in production, matching the dev server
+
+#### Commits
+- `40f6e12` - Fix auth session loss on transient Firestore errors
+
+---
+
+### SESSION: Google Drive Backup Deployment & Bug Fixes
+**Date:** February 5, 2026
+**Duration:** Deployment and bug fixing session
+**Status:** ✅ COMPLETED - Feature deployed, critical bugs resolved
+
+#### Summary
+Deployed the Google Drive Backup & Restore feature to production and resolved critical deployment issues. Fixed an infinite fetch loop in the backup settings UI caused by improper useEffect dependency logic. Resolved a Git ignore conflict where the root-level BACKUP/ pattern was case-insensitively matching the src/components/backup/ directory on Windows. Deployed Firestore security rules for the googleDriveCredentials collection and enabled the Google Drive API in Google Cloud Console.
+
+#### Key Achievements
+
+**Deployment Steps**
+- Enabled Google Drive API in Google Cloud Console (project 805078437907)
+- Deployed Firestore rules to production to fix "Missing or insufficient permissions" error
+- Verified backup/restore functionality working in production environment
+
+**Bug Fix: Infinite Fetch Loop (commit c7215df)**
+- Issue: GoogleDriveBackupSettings component had useEffect that continuously fetched backups when none existed
+- Root cause: `backups.length === 0` condition always true after empty fetch, triggering infinite loop
+- Fix: Added `hasFetchedBackups` state flag to track whether initial fetch completed
+- Files modified: `src/components/backup/GoogleDriveBackupSettings.tsx`
+
+**Bug Fix: Git Ignore Conflict (commit c7215df)**
+- Issue: Root `.gitignore` pattern `BACKUP/` was case-insensitively matching `src/components/backup/` on Windows
+- Root cause: Git ignore patterns are case-insensitive on Windows filesystems
+- Fix: Changed pattern from `BACKUP/` to `/BACKUP/` to anchor pattern to repository root only
+- Files modified: `.gitignore`
+
+**Firestore Rules Enhancement**
+- Added `roleMatchesWhitelist` helper function to firestore.rules
+- Purpose: Enables user role synchronization from admin whitelist on login
+- Improves role-based access control architecture
+
+#### Files Modified (2)
+1. F:\AI\Planner\.gitignore - Fixed BACKUP/ pattern to /BACKUP/ (root-anchored)
+2. F:\AI\Planner\planner-app\src\components\backup\GoogleDriveBackupSettings.tsx - Added hasFetchedBackups flag to prevent infinite loop
+
+#### Commits
+- `764e81d` - Google Drive Backup & Restore feature (initial implementation)
+- `c7215df` - Fix infinite backup fetch loop and .gitignore conflict
+
+#### Lessons Learned
+
+**Windows Case-Insensitive Filesystems**
+- Git ignore patterns match case-insensitively on Windows
+- Always anchor directory patterns to root with leading slash when they conflict with source code paths
+- Example: `/BACKUP/` matches only root-level, `BACKUP/` matches anywhere in tree
+
+**useEffect Dependency Management**
+- Empty arrays after async operations can create infinite loops if used as effect dependencies
+- Use boolean flags to track fetch completion state instead of relying on result array length
+- Pattern: `hasFetched` flag set to true after first fetch, prevents re-triggering
+
+**Firebase Deployment Checklist**
+- Enable required APIs in Google Cloud Console before testing OAuth flows
+- Deploy Firestore rules before testing authenticated operations
+- Test permission errors in production environment, not just emulator
+
+---
 
 ### SESSION: Google Drive Backup & Restore Feature
 **Date:** February 5, 2026
