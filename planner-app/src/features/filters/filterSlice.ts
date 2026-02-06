@@ -23,6 +23,8 @@ export interface FiltersState {
   categoryFilter: string[] | null;
   /** Filter by priority letter (null = no filter, array = filter by these priorities) */
   priorityFilter: PriorityLetter[] | null;
+  /** Hide tasks with status 'complete', 'forward', or 'delegate' */
+  hideCompletedTasks: boolean;
 }
 
 // =============================================================================
@@ -33,6 +35,7 @@ const initialState: FiltersState = {
   statusFilter: null,
   categoryFilter: null,
   priorityFilter: null,
+  hideCompletedTasks: false,
 };
 
 // =============================================================================
@@ -68,12 +71,20 @@ const filterSlice = createSlice({
     },
 
     /**
+     * Toggle hide completed tasks
+     */
+    toggleHideCompletedTasks: (state) => {
+      state.hideCompletedTasks = !state.hideCompletedTasks;
+    },
+
+    /**
      * Clear all active filters
      */
     clearAllFilters: (state) => {
       state.statusFilter = null;
       state.categoryFilter = null;
       state.priorityFilter = null;
+      state.hideCompletedTasks = false;
     },
   },
 });
@@ -86,6 +97,7 @@ export const {
   setStatusFilter,
   setCategoryFilter,
   setPriorityFilter,
+  toggleHideCompletedTasks,
   clearAllFilters,
 } = filterSlice.actions;
 
@@ -112,15 +124,22 @@ export const selectPriorityFilter = (state: RootState): PriorityLetter[] | null 
   state.filters.priorityFilter;
 
 /**
+ * Select hide completed tasks toggle state
+ */
+export const selectHideCompletedTasks = (state: RootState): boolean =>
+  state.filters.hideCompletedTasks;
+
+/**
  * Select whether any filters are active
  */
 export const selectIsFiltersActive = createSelector(
-  [selectStatusFilter, selectCategoryFilter, selectPriorityFilter],
-  (statusFilter, categoryFilter, priorityFilter): boolean => {
+  [selectStatusFilter, selectCategoryFilter, selectPriorityFilter, selectHideCompletedTasks],
+  (statusFilter, categoryFilter, priorityFilter, hideCompleted): boolean => {
     return (
       (statusFilter !== null && statusFilter.length > 0) ||
       (categoryFilter !== null && categoryFilter.length > 0) ||
-      (priorityFilter !== null && priorityFilter.length > 0)
+      (priorityFilter !== null && priorityFilter.length > 0) ||
+      hideCompleted
     );
   }
 );
@@ -129,12 +148,13 @@ export const selectIsFiltersActive = createSelector(
  * Select count of active filters
  */
 export const selectActiveFilterCount = createSelector(
-  [selectStatusFilter, selectCategoryFilter, selectPriorityFilter],
-  (statusFilter, categoryFilter, priorityFilter): number => {
+  [selectStatusFilter, selectCategoryFilter, selectPriorityFilter, selectHideCompletedTasks],
+  (statusFilter, categoryFilter, priorityFilter, hideCompleted): number => {
     let count = 0;
     if (statusFilter !== null && statusFilter.length > 0) count++;
     if (categoryFilter !== null && categoryFilter.length > 0) count++;
     if (priorityFilter !== null && priorityFilter.length > 0) count++;
+    if (hideCompleted) count++;
     return count;
   }
 );

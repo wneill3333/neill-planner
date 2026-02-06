@@ -42,15 +42,19 @@ const app: FirebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) 
 const auth: Auth = getAuth(app);
 
 /**
- * Promise that resolves when auth persistence is configured
- * Components can await this before relying on auth state
+ * Promise that resolves when auth persistence is configured.
+ * If setPersistence fails, we retry once, then continue anyway
+ * (Firebase v9 defaults to indexedDB local persistence).
  */
 const authPersistenceReady: Promise<void> = setPersistence(auth, browserLocalPersistence)
   .then(() => {
     console.log('Auth persistence set to LOCAL');
   })
   .catch((error) => {
-    console.error('Failed to set auth persistence:', error);
+    console.warn('Failed to set auth persistence, retrying once:', error);
+    return setPersistence(auth, browserLocalPersistence).catch((retryError) => {
+      console.error('Auth persistence retry also failed (using default):', retryError);
+    });
   });
 
 /**

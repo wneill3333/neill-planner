@@ -93,6 +93,27 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
   const [isAccessDenied, setIsAccessDenied] = useState(false);
 
   /**
+   * Proactively refresh the Firebase ID token every 50 minutes
+   * to prevent session expiry (tokens expire after 60 minutes).
+   * Only runs when user is authenticated.
+   */
+  useEffect(() => {
+    if (!user) return;
+
+    const REFRESH_INTERVAL = 50 * 60 * 1000; // 50 minutes
+    const interval = setInterval(() => {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        currentUser.getIdToken(true).catch((err) => {
+          console.warn('Proactive token refresh failed:', err);
+        });
+      }
+    }, REFRESH_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [user]);
+
+  /**
    * Handle Firebase Auth state changes
    * Wait for persistence to be configured before listening
    */
