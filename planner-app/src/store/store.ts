@@ -74,6 +74,8 @@ export const store = configureStore({
           'notes/createNote/fulfilled',
           'notes/updateNoteAsync/fulfilled',
           'notes/restoreNote/fulfilled',
+          'notes/uploadAttachments/fulfilled',
+          'notes/deleteAttachment/fulfilled',
           'reminders/fetchUserReminders/fulfilled',
           'reminders/fetchRemindersForItem/fulfilled',
           'reminders/createReminder/fulfilled',

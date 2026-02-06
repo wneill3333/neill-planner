@@ -7,8 +7,9 @@
  */
 
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import type { Note, CreateNoteInput, UpdateNoteInput } from '../../types/note.types';
+import type { Note, NoteAttachment, CreateNoteInput, UpdateNoteInput } from '../../types/note.types';
 import * as notesService from '../../services/firebase/notes.service';
+import * as attachmentsService from '../../services/firebase/attachments.service';
 import type { RootState } from '../../store';
 
 // =============================================================================
@@ -178,6 +179,44 @@ export const hardDeleteNoteAsync = createAsyncThunk<
     return noteId;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to permanently delete note';
+    return rejectWithValue({ message });
+  }
+});
+
+/**
+ * Upload attachments to a note
+ *
+ * Uploads files to Firebase Storage and updates the note's attachment metadata.
+ */
+export const uploadAttachmentsAsync = createAsyncThunk<
+  { noteId: string; attachments: NoteAttachment[] },
+  { noteId: string; userId: string; files: File[] },
+  { state: RootState; rejectValue: ThunkError }
+>('notes/uploadAttachments', async ({ noteId, userId, files }, { rejectWithValue }) => {
+  try {
+    const attachments = await attachmentsService.uploadAttachments(noteId, userId, files);
+    return { noteId, attachments };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to upload attachments';
+    return rejectWithValue({ message });
+  }
+});
+
+/**
+ * Delete an attachment from a note
+ *
+ * Removes the file from Firebase Storage and updates the note's attachment metadata.
+ */
+export const deleteAttachmentAsync = createAsyncThunk<
+  { noteId: string; attachmentId: string },
+  { noteId: string; userId: string; attachmentId: string },
+  { state: RootState; rejectValue: ThunkError }
+>('notes/deleteAttachment', async ({ noteId, userId, attachmentId }, { rejectWithValue }) => {
+  try {
+    await attachmentsService.deleteAttachment(noteId, userId, attachmentId);
+    return { noteId, attachmentId };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to delete attachment';
     return rejectWithValue({ message });
   }
 });

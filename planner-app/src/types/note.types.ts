@@ -6,6 +6,53 @@
  */
 
 // =============================================================================
+// Attachment Types
+// =============================================================================
+
+/**
+ * Metadata for a file attached to a note
+ */
+export interface NoteAttachment {
+  /** Unique identifier for this attachment */
+  id: string;
+  /** Original file name */
+  fileName: string;
+  /** MIME type (e.g., 'image/jpeg', 'application/pdf') */
+  mimeType: string;
+  /** File size in bytes */
+  sizeBytes: number;
+  /** Firebase Storage path */
+  storagePath: string;
+  /** Public download URL */
+  downloadUrl: string;
+  /** Thumbnail URL (same as downloadUrl for images, null for PDFs) */
+  thumbnailUrl: string | null;
+  /** Upload timestamp */
+  uploadedAt: Date;
+}
+
+/**
+ * Attachment size and type limits
+ */
+export const ATTACHMENT_LIMITS = {
+  /** Maximum file size per attachment (10MB) */
+  maxFileSizeBytes: 10 * 1024 * 1024,
+  /** Maximum total size per note (50MB) */
+  maxTotalSizeBytes: 50 * 1024 * 1024,
+  /** Maximum number of attachments per note */
+  maxAttachments: 20,
+  /** Allowed MIME types */
+  allowedMimeTypes: [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'image/heic',
+    'application/pdf',
+  ] as const,
+} as const;
+
+// =============================================================================
 // Note Interface
 // =============================================================================
 
@@ -29,6 +76,8 @@ export interface Note {
   linkedTaskIds: string[];
   /** Array of linked event IDs */
   linkedEventIds: string[];
+  /** File attachments */
+  attachments: NoteAttachment[];
   /** Creation timestamp */
   createdAt: Date;
   /** Last update timestamp */
@@ -78,6 +127,7 @@ export const DEFAULT_NOTE_VALUES: Partial<Note> = {
   categoryId: null,
   linkedTaskIds: [],
   linkedEventIds: [],
+  attachments: [],
   deletedAt: null,
 } as const;
 

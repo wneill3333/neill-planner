@@ -3,11 +3,94 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 6, 2026 (Auth Persistence Fix & Production Deploy)
+**Last Updated:** February 6, 2026 (Note Attachments Feature)
 
 ---
 
 ## SESSION LOG
+
+### SESSION: Note Attachments Feature (Images & PDFs)
+**Date:** February 6, 2026
+**Duration:** Feature implementation session
+**Status:** COMPLETED
+
+#### Summary
+Implemented note attachment functionality allowing users to attach images and PDFs to notes. On mobile devices, the file picker includes camera support for taking photos directly. Full ownership verification, 10MB file size limits, and type validation via Firebase Storage security rules.
+
+#### Key Achievements
+
+**New Components (2)**
+- `AttachmentUploader.tsx` - File input with drag-and-drop support, validation feedback, attachment grid display
+- `AttachmentThumbnail.tsx` - Individual attachment display with image thumbnails or PDF icons, hover-remove buttons
+
+**New Services & Types (2)**
+- `storage.rules` - Firebase Storage security rules with ownership verification, 10MB limit, image/PDF type restrictions
+- `attachments.service.ts` - Upload, delete, deleteAll operations with authorization checks
+
+**Modified Files (11)**
+- `src/types/note.types.ts` - Added NoteAttachment interface, ATTACHMENT_LIMITS constant, attachments array field
+- `src/types/index.ts` - Exported new NoteAttachment type
+- `src/services/firebase/config.ts` - Firebase Storage initialization via getStorage()
+- `src/services/firebase/index.ts` - Export storage instance and attachment service functions
+- `src/services/firebase/notes.service.ts` - Handle attachment references in create/delete operations, integration with Firestore
+- `src/features/notes/noteThunks.ts` - Created uploadAttachmentsAsync and deleteAttachmentAsync thunks with error handling
+- `src/features/notes/noteSlice.ts` - Added extraReducers for attachment thunk lifecycle (pending/fulfilled/rejected)
+- `src/store/store.ts` - Added ignored actions for serializable check on attachment uploads
+- `src/components/notes/NoteForm.tsx` - Integrated AttachmentUploader component with pendingFiles state management
+- `src/features/notes/NoteFormModal.tsx` - Coordinated attachment upload/delete dispatch, error notifications
+- `src/components/notes/NoteItem.tsx` - Display attachment indicator thumbnails in note list
+- `src/components/notes/index.ts` - Exported new attachment components
+- `firebase.json` - Added storage rules file reference
+
+#### Technical Details
+
+**File Validation**
+- Accepted types: image/*, application/pdf
+- Max file size: 10MB (enforced client-side and server-side via storage.rules)
+- MIME type checking with fallback to file extension
+- User feedback for validation failures
+
+**Mobile Support**
+- File picker with `capture="environment"` enables camera on mobile
+- Photo taking works on iOS and Android
+- Seamless integration with AttachmentUploader
+
+**Firebase Storage Security**
+- Ownership verification: Users can only upload to their own paths
+- Type restrictions: Only images and PDFs allowed
+- Size limits: 10MB per file enforced in rules
+- Delete operations require ownership verification
+
+**Integration Points**
+- NoteForm accepts pending uploads during edit/create
+- Uploads tied to note creation - files uploaded before note exists stored in pending state
+- Attachment deletion via NoteFormModal triggers deleteAttachmentAsync thunk
+- NoteItem shows attachment count and thumbnails
+
+#### Files Changed
+**Absolute paths:**
+- F:\AI\Planner\planner-app\storage.rules (new)
+- F:\AI\Planner\planner-app\src\services\firebase\attachments.service.ts (new)
+- F:\AI\Planner\planner-app\src\components\notes\AttachmentThumbnail.tsx (new)
+- F:\AI\Planner\planner-app\src\components\notes\AttachmentUploader.tsx (new)
+- F:\AI\Planner\planner-app\src\types\note.types.ts (modified)
+- F:\AI\Planner\planner-app\src\types\index.ts (modified)
+- F:\AI\Planner\planner-app\src\services\firebase\config.ts (modified)
+- F:\AI\Planner\planner-app\src\services\firebase\index.ts (modified)
+- F:\AI\Planner\planner-app\src\services\firebase\notes.service.ts (modified)
+- F:\AI\Planner\planner-app\src\features\notes\noteThunks.ts (modified)
+- F:\AI\Planner\planner-app\src\features\notes\noteSlice.ts (modified)
+- F:\AI\Planner\planner-app\src\store\store.ts (modified)
+- F:\AI\Planner\planner-app\src\components\notes\NoteForm.tsx (modified)
+- F:\AI\Planner\planner-app\src\features\notes\NoteFormModal.tsx (modified)
+- F:\AI\Planner\planner-app\src\components\notes\NoteItem.tsx (modified)
+- F:\AI\Planner\planner-app\src\components\notes\index.ts (modified)
+- F:\AI\Planner\planner-app\firebase.json (modified)
+
+#### Commits
+- Will be created as part of archival process
+
+---
 
 ### SESSION: Auth Persistence Fix & Production Deploy
 **Date:** February 6, 2026
@@ -3465,6 +3548,10 @@ Implemented complete task editing workflow with delete confirmation, field updat
 | Exception deduplication service functions | Multiple identical exception dates stored in Firestore cause duplicates; cleanup functions remove redundant entries | 2026-02-04 | Data Consistency |
 | Redux state update on hard delete of recurring parent | Modal UI auto-updates when parent task deleted; hardDeleteTask.fulfilled now removes from recurringParentTasks state | 2026-02-04 | State Management |
 | Debug utilities via window.__DEBUG__ | Developers can access cleanup and troubleshooting functions in console; aids production debugging without code changes | 2026-02-04 | Developer Experience |
+| Firebase Storage for note attachments instead of Firestore | Storage optimized for large binary files; provides signed URLs for efficient delivery; Firestore for metadata only | 2026-02-06 | Note Attachments |
+| Ownership verification in storage.rules | Prevents unauthorized access to other users' files; matches Firestore security model; server-side validation | 2026-02-06 | Note Attachments |
+| 10MB file size limit for attachments | Balances user needs (typical photos) with storage costs and bandwidth; enforced both client and server | 2026-02-06 | Note Attachments |
+| Image/PDF type validation with MIME fallback | Prevents malicious file uploads; fallback to file extension for browser file picker reliability | 2026-02-06 | Note Attachments |
 
 ---
 

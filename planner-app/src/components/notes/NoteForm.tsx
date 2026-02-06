@@ -2,12 +2,14 @@
  * NoteForm Component - Form for creating/editing notes
  */
 
-import { useState, useEffect, memo, type FormEvent } from 'react';
+import { useState, useEffect, memo, useCallback, type FormEvent } from 'react';
 import type { Note, Category, CreateNoteInput, Task, Event } from '../../types';
+import type { NoteAttachment } from '../../types/note.types';
 import { Input, DatePicker, RichTextEditor } from '../common';
 import { CategorySelect } from '../categories/CategorySelect';
 import { LinkSelector } from './LinkSelector';
 import { LinkedItemsDisplay } from './LinkedItemsDisplay';
+import { AttachmentUploader } from './AttachmentUploader';
 
 export interface NoteFormProps {
   note?: Note | null;
@@ -15,9 +17,13 @@ export interface NoteFormProps {
   tasks?: Task[];
   events?: Event[];
   defaultDate?: Date | null;
-  onSubmit: (data: CreateNoteInput) => void;
+  onSubmit: (data: CreateNoteInput, pendingFiles?: File[]) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
+  existingAttachments?: NoteAttachment[];
+  onRemoveAttachment?: (attachmentId: string) => void;
+  onViewAttachment?: (attachment: NoteAttachment) => void;
+  isUploadingAttachments?: boolean;
   testId?: string;
 }
 
@@ -62,6 +68,10 @@ export const NoteForm = memo(function NoteForm({
   onSubmit,
   onCancel,
   isSubmitting = false,
+  existingAttachments = [],
+  onRemoveAttachment,
+  onViewAttachment,
+  isUploadingAttachments = false,
   testId,
 }: NoteFormProps) {
   const isEditMode = !!note;
@@ -77,6 +87,7 @@ export const NoteForm = memo(function NoteForm({
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLinkSelectorOpen, setIsLinkSelectorOpen] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
   // Update form when note changes (edit mode)
   useEffect(() => {
@@ -103,6 +114,14 @@ export const NoteForm = memo(function NoteForm({
     .filter((e): e is Event => !!e)
     .map(e => ({ id: e.id, title: e.title }));
 
+  const handleAddFiles = useCallback((files: File[]) => {
+    setPendingFiles(prev => [...prev, ...files]);
+  }, []);
+
+  const handleRemovePendingFile = useCallback((index: number) => {
+    setPendingFiles(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
 
@@ -121,7 +140,7 @@ export const NoteForm = memo(function NoteForm({
       categoryId: formData.categoryId || null,
       linkedTaskIds: formData.linkedTaskIds,
       linkedEventIds: formData.linkedEventIds,
-    });
+    }, pendingFiles.length > 0 ? pendingFiles : undefined);
   };
 
   const handleLinksConfirm = (taskIds: string[], eventIds: string[]) => {
@@ -181,6 +200,19 @@ export const NoteForm = memo(function NoteForm({
             testId="note-content-editor"
           />
         </div>
+
+        {/* Attachments */}
+        <AttachmentUploader
+          existingAttachments={existingAttachments}
+          pendingFiles={pendingFiles}
+          onAddFiles={handleAddFiles}
+          onRemovePendingFile={handleRemovePendingFile}
+          onRemoveExistingAttachment={onRemoveAttachment}
+          onViewAttachment={onViewAttachment}
+          isUploading={isUploadingAttachments}
+          disabled={isSubmitting}
+          testId="note-form-attachments"
+        />
 
         {/* Linked Items */}
         <div className="space-y-2">

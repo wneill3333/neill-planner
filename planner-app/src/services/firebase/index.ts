@@ -6,7 +6,7 @@
  */
 
 // Core Firebase instances
-export { app, auth, db, firebaseConfig } from './config';
+export { app, auth, db, storage, firebaseConfig } from './config';
 
 // Task service functions
 export {
@@ -71,6 +71,13 @@ export {
   hardDeleteNote,
   restoreNote,
 } from './notes.service';
+
+// Attachment service functions
+export {
+  uploadAttachments,
+  deleteAttachment,
+  deleteAllAttachments,
+} from './attachments.service';
 
 // Reminder service functions
 export {

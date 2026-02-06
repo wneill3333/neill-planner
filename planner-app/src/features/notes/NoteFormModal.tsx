@@ -10,12 +10,12 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { selectAllCategories } from '../categories/categorySlice';
 import { selectSelectedDate, selectAllTasks } from '../tasks/taskSlice';
 import { selectAllEvents } from '../events/eventSlice';
-import { createNoteAsync, updateNoteAsync, deleteNoteAsync } from './noteThunks';
+import { createNoteAsync, updateNoteAsync, deleteNoteAsync, uploadAttachmentsAsync, deleteAttachmentAsync } from './noteThunks';
 import { useAuth } from '../auth';
 import { Modal } from '../../components/common';
 import { NoteForm } from '../../components/notes/NoteForm';
 import { parseISODateString } from '../../utils/firestoreUtils';
-import type { Note, CreateNoteInput } from '../../types';
+import type { Note, CreateNoteInput, NoteAttachment } from '../../types';
 
 // =============================================================================
 // Types
@@ -74,6 +74,8 @@ export function NoteFormModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
 
   const isEditMode = !!note;
 
@@ -84,22 +86,44 @@ export function NoteFormModal({
   /**
    * Handle form submission - create or update note
    */
-  const handleSubmit = useCallback(async (data: CreateNoteInput) => {
+  const handleSubmit = useCallback(async (data: CreateNoteInput, pendingFiles?: File[]) => {
     if (!user) return;
 
     setIsSubmitting(true);
+    setAttachmentError(null);
     try {
+      let result;
       if (isEditMode && note) {
-        await dispatch(updateNoteAsync({
+        result = await dispatch(updateNoteAsync({
           id: note.id,
           ...data,
           userId: user.id,
         })).unwrap();
       } else {
-        await dispatch(createNoteAsync({
+        result = await dispatch(createNoteAsync({
           input: data,
           userId: user.id,
         })).unwrap();
+      }
+
+      // Upload pending attachments if any
+      if (pendingFiles && pendingFiles.length > 0) {
+        setIsUploadingAttachments(true);
+        try {
+          const targetNoteId = isEditMode && note ? note.id : result.id;
+          await dispatch(uploadAttachmentsAsync({
+            noteId: targetNoteId,
+            userId: user.id,
+            files: pendingFiles,
+          })).unwrap();
+        } catch (uploadError) {
+          const msg = uploadError instanceof Error ? uploadError.message : 'Failed to upload attachments';
+          console.error('Failed to upload attachments:', uploadError);
+          setAttachmentError(msg);
+          return; // Don't close modal so user can retry or dismiss
+        } finally {
+          setIsUploadingAttachments(false);
+        }
       }
 
       if (onSuccess) {
@@ -112,6 +136,29 @@ export function NoteFormModal({
       setIsSubmitting(false);
     }
   }, [dispatch, user, note, isEditMode, onSuccess]);
+
+  /**
+   * Handle attachment removal
+   */
+  const handleRemoveAttachment = useCallback(async (attachmentId: string) => {
+    if (!user || !note) return;
+    try {
+      await dispatch(deleteAttachmentAsync({
+        noteId: note.id,
+        userId: user.id,
+        attachmentId,
+      })).unwrap();
+    } catch (error) {
+      console.error('Failed to delete attachment:', error);
+    }
+  }, [dispatch, user, note]);
+
+  /**
+   * Handle attachment view
+   */
+  const handleViewAttachment = useCallback((attachment: NoteAttachment) => {
+    window.open(attachment.downloadUrl, '_blank');
+  }, []);
 
   /**
    * Handle delete confirmation
@@ -147,6 +194,13 @@ export function NoteFormModal({
         testId={testId}
       >
         <div className="space-y-4">
+          {/* Attachment upload error */}
+          {attachmentError && (
+            <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md">
+              Note saved, but attachment upload failed: {attachmentError}
+            </div>
+          )}
+
           {/* Note Form */}
           <NoteForm
             note={note}
@@ -157,6 +211,10 @@ export function NoteFormModal({
             onSubmit={handleSubmit}
             onCancel={onClose}
             isSubmitting={isSubmitting}
+            existingAttachments={note?.attachments || []}
+            onRemoveAttachment={handleRemoveAttachment}
+            onViewAttachment={handleViewAttachment}
+            isUploadingAttachments={isUploadingAttachments}
             testId="note-form-modal-form"
           />
 

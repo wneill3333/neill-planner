@@ -18,3 +18,9 @@ export type { LinkSelectorProps } from './LinkSelector';
 
 export { LinkedItemsDisplay } from './LinkedItemsDisplay';
 export type { LinkedItemsDisplayProps } from './LinkedItemsDisplay';
+
+export { AttachmentThumbnail } from './AttachmentThumbnail';
+export type { AttachmentThumbnailProps } from './AttachmentThumbnail';
+
+export { AttachmentUploader } from './AttachmentUploader';
+export type { AttachmentUploaderProps } from './AttachmentUploader';

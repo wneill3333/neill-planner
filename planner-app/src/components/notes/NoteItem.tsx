@@ -7,6 +7,7 @@
 
 import { memo } from 'react';
 import type { Note } from '../../types';
+import { AttachmentThumbnail } from './AttachmentThumbnail';
 
 // =============================================================================
 // Types
@@ -158,6 +159,25 @@ export const NoteItem = memo(function NoteItem({
         <p className="text-sm text-gray-400 italic">
           No content
         </p>
+      )}
+
+      {/* Attachment Indicator */}
+      {note.attachments && note.attachments.length > 0 && (
+        <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100">
+          {note.attachments.slice(0, 3).map((attachment) => (
+            <AttachmentThumbnail
+              key={attachment.id}
+              attachment={attachment}
+              size="sm"
+              onView={() => window.open(attachment.downloadUrl, '_blank')}
+            />
+          ))}
+          {note.attachments.length > 3 && (
+            <span className="text-xs text-gray-500 ml-1">
+              +{note.attachments.length - 3} more
+            </span>
+          )}
+        </div>
       )}
     </div>
   );

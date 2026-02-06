@@ -29,6 +29,7 @@ import {
   sanitizeString,
   ValidationError,
 } from '../../utils/validation';
+import { deleteAllAttachments } from './attachments.service';
 
 /** Firestore collection name for notes */
 const NOTES_COLLECTION = 'notes';
@@ -190,6 +191,10 @@ function firestoreToNote(doc: QueryDocumentSnapshot<DocumentData>): Note {
     categoryId: data.categoryId || null,
     linkedTaskIds: data.linkedTaskIds || [],
     linkedEventIds: data.linkedEventIds || [],
+    attachments: (data.attachments || []).map((a: Record<string, unknown>) => ({
+      ...a,
+      uploadedAt: typeof a.uploadedAt === 'string' ? new Date(a.uploadedAt) : (a.uploadedAt as { toDate?: () => Date })?.toDate?.() || new Date(),
+    })),
     createdAt: data.createdAt?.toDate() || new Date(),
     updatedAt: data.updatedAt?.toDate() || new Date(),
     deletedAt: data.deletedAt?.toDate() || null,
@@ -224,6 +229,7 @@ export async function createNote(input: CreateNoteInput, userId: string): Promis
     categoryId: input.categoryId ?? null,
     linkedTaskIds: input.linkedTaskIds || [],
     linkedEventIds: input.linkedEventIds || [],
+    attachments: [],
     createdAt: now,
     updatedAt: now,
     deletedAt: null,
@@ -507,6 +513,9 @@ export async function hardDeleteNote(noteId: string, userId: string): Promise<vo
     if (note.userId !== userId) {
       throw new ValidationError('Unauthorized access to note', 'noteId', 'UNAUTHORIZED');
     }
+
+    // Delete all attachments from Storage
+    await deleteAllAttachments(noteId, userId);
 
     await deleteDoc(docRef);
   } catch (error) {

@@ -16,6 +16,8 @@ import {
   deleteNoteAsync,
   restoreNoteAsync,
   hardDeleteNoteAsync,
+  uploadAttachmentsAsync,
+  deleteAttachmentAsync,
 } from './noteThunks';
 
 // =============================================================================
@@ -389,6 +391,46 @@ export const noteSlice = createSlice({
       })
       .addCase(hardDeleteNoteAsync.rejected, (state, action) => {
         state.error = action.payload?.message || 'Failed to permanently delete note';
+        state.syncStatus = 'error';
+      });
+
+    // ==========================================================================
+    // uploadAttachmentsAsync
+    // ==========================================================================
+    builder
+      .addCase(uploadAttachmentsAsync.pending, (state) => {
+        state.syncStatus = 'syncing';
+      })
+      .addCase(uploadAttachmentsAsync.fulfilled, (state, action) => {
+        const { noteId, attachments } = action.payload;
+        const note = state.notes[noteId];
+        if (note) {
+          note.attachments = [...(note.attachments || []), ...attachments];
+        }
+        state.syncStatus = 'synced';
+      })
+      .addCase(uploadAttachmentsAsync.rejected, (state, action) => {
+        state.error = action.payload?.message || 'Failed to upload attachments';
+        state.syncStatus = 'error';
+      });
+
+    // ==========================================================================
+    // deleteAttachmentAsync
+    // ==========================================================================
+    builder
+      .addCase(deleteAttachmentAsync.pending, (state) => {
+        state.syncStatus = 'syncing';
+      })
+      .addCase(deleteAttachmentAsync.fulfilled, (state, action) => {
+        const { noteId, attachmentId } = action.payload;
+        const note = state.notes[noteId];
+        if (note) {
+          note.attachments = (note.attachments || []).filter(a => a.id !== attachmentId);
+        }
+        state.syncStatus = 'synced';
+      })
+      .addCase(deleteAttachmentAsync.rejected, (state, action) => {
+        state.error = action.payload?.message || 'Failed to delete attachment';
         state.syncStatus = 'error';
       });
   },

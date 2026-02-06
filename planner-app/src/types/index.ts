@@ -63,9 +63,9 @@ export {
 // =============================================================================
 // Note Types
 // =============================================================================
-export type { Note, CreateNoteInput, UpdateNoteInput, NotesByDate } from './note.types';
+export type { Note, NoteAttachment, CreateNoteInput, UpdateNoteInput, NotesByDate } from './note.types';
 
-export { DEFAULT_NOTE_VALUES } from './note.types';
+export { ATTACHMENT_LIMITS, DEFAULT_NOTE_VALUES } from './note.types';
 
 // =============================================================================
 // User Types
