@@ -3,11 +3,65 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 6, 2026 (Note Attachments Feature)
+**Last Updated:** February 7, 2026 (Cloud Functions Migration)
 
 ---
 
 ## SESSION LOG
+
+### SESSION: AI Endpoints - Vercel to Firebase Cloud Functions Migration
+**Date:** February 7, 2026
+**Duration:** Cloud Functions deployment and configuration session
+**Status:** COMPLETED
+
+#### Summary
+Successfully converted Vercel serverless functions to Firebase Cloud Functions v2 with Cloud Run hosting. Fixed critical deployment issues including Node.js runtime compatibility, secret management, and hosting rewrite syntax. AI endpoints now live at https://neill-planner.web.app with proper hosting rewrites routing requests to Cloud Run services.
+
+#### Key Achievements
+
+**Infrastructure Changes (5)**
+- Created `planner-app/functions/` directory with independent Node.js project
+- Converted `api/parse-task.ts` → `functions/src/parseTask.ts` (Firebase v2 Cloud Function)
+- Converted `api/generate-note.ts` → `functions/src/generateNote.ts` (Firebase v2 Cloud Function)
+- Created `functions/src/index.ts` entry point exporting both functions
+- Set up Firebase CLI predeploy hook for automatic function compilation
+
+**Configuration Updates (3)**
+- Updated `firebase.json` with functions config block specifying functions directory
+- Added predeploy script to auto-build TypeScript functions before deploy
+- Updated `.gitignore` to exclude `functions/lib/` build output and `functions/node_modules/`
+
+**Issues Encountered & Fixed (3)**
+- **Secret Management:** CLAUDE_API_KEY secret required pre-creation via `firebase functions:secrets:set CLAUDE_API_KEY` before deployment could succeed
+- **Runtime Decommissioned:** Upgraded Node.js from v18 to v20 in functions/package.json (v18 no longer supported)
+- **Hosting Rewrites:** Fixed incorrect v2 Cloud Function rewrite syntax - changed from non-functional `"function": { "functionId": "..." }` to proper `"run": { "serviceId": "parsetask", "region": "us-central1" }` pattern using Cloud Run service IDs
+
+**Code Improvements (2)**
+- Replaced manual CORS handling with built-in `cors` option in `onRequest()` for cleaner code
+- Ensured both functions use `onRequest()` v2 syntax with proper error handling and JSON responses
+
+#### Files Changed
+**Absolute paths:**
+- F:\AI\Planner\planner-app\functions\ (new directory)
+- F:\AI\Planner\planner-app\functions\package.json (new)
+- F:\AI\Planner\planner-app\functions\tsconfig.json (new)
+- F:\AI\Planner\planner-app\functions\src\parseTask.ts (new)
+- F:\AI\Planner\planner-app\functions\src\generateNote.ts (new)
+- F:\AI\Planner\planner-app\functions\src\index.ts (new)
+- F:\AI\Planner\planner-app\firebase.json (modified)
+- F:\AI\Planner\planner-app\.gitignore (modified)
+
+#### Deployment Status
+Both endpoints now accessible via HTTPS at https://neill-planner.web.app:
+- `https://neill-planner.web.app/api/parse-task` - Claude API integration for task parsing
+- `https://neill-planner.web.app/api/generate-note` - Claude API integration for note generation
+
+Hosting rewrites automatically route requests from `/api/*` paths to corresponding Cloud Run services.
+
+#### Commits
+- `5765ff3` - Fix Firebase Cloud Functions deployment for AI endpoints
+
+---
 
 ### SESSION: Note Attachments Feature (Images & PDFs)
 **Date:** February 6, 2026

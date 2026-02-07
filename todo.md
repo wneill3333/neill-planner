@@ -2156,6 +2156,16 @@
 
 # Post-Launch Tasks
 
+- [x] **AI Features - Cloud Functions Migration** ✅ Completed 2026-02-07
+  - [x] Create Firebase Cloud Functions directory structure
+  - [x] Convert parse-task serverless function to Cloud Function v2
+  - [x] Convert generate-note serverless function to Cloud Function v2
+  - [x] Update firebase.json with functions config and predeploy hook
+  - [x] Set CLAUDE_API_KEY secret via Firebase CLI
+  - [x] Fix Node.js runtime (upgrade from v18 to v20)
+  - [x] Fix hosting rewrites to use proper Cloud Run syntax
+  - [x] Verify endpoints live at https://neill-planner.web.app/api/parse-task and /api/generate-note
+
 - [ ] **Monitor for errors**
   - [ ] Set up error tracking (Sentry, etc.)
   - [ ] Monitor Firebase usage
@@ -2220,6 +2230,7 @@ _Use this section to track progress, blockers, and decisions._
 | 2026-02-04 | **Phase 12 Complete: Search, Filters & Polish - 18/18 Steps Complete (100%)**. Implemented comprehensive polishing features: 12.1 Unified Search (SearchBar component in Header, SearchResults dropdown with highlighting and grouping by type, Redux slice/thunks, 109 tests), 12.2 Filter System (FilterControls with multi-select dropdowns for status/category/priority, filter combination with AND logic, reset functionality, 66 tests), 12.3 Settings & Preferences (SettingsPage with theme/font/priority/timezone/notifications options, Firestore persistence via UserSettings, useTheme/useSettings hooks, 69 tests), 12.4 E2E & Deployment (Cypress setup with 50+ E2E test cases across 5 test files, GitHub Actions CI/CD workflow, Vercel config created). Code review fixes applied: XSS vulnerability in SearchResults (safe HTML stripping), memory leak in SearchBar (debounce cleanup), TypeScript 'any' types replaced with proper generics, console.log removed from production selectors, duplicate refs fixed in Header. Test coverage: 2929 unit tests passing across 109 test files, 244 new Phase 12 tests. **PROJECT 100% COMPLETE (279/279 TASKS).** |
 | 2026-02-04 | **Google Calendar Selection Feature Complete**. Implemented calendar selection feature allowing users to choose which Google Calendar to sync with instead of primary only. Added GoogleCalendarListEntry interface, getCalendarList() function to fetch calendars with write access, calendar selection persistence to Firestore via selectedCalendarId field. Enhanced Redux with availableCalendars/selectedCalendarId/isLoadingCalendars state, fetchAvailableCalendars/setSelectedCalendar thunks, new selectors and hooks. Created GoogleCalendarSettings component with dropdown UI and "(Primary)" labels. Integrated into SettingsPage Integrations section. Fixed critical bugs: user?.uid → user?.id (User type uses id not uid), refresh token validation allowing empty strings (client-side OAuth requirement), added Google Identity Services script to index.html. Updated sync functions to accept optional calendarId parameter. Modified 10 files, updated 2 test files. All tests passing. Production-ready. |
 | 2026-02-06 | **Note Attachments Feature Complete** - Images & PDFs. Users can attach images and PDFs to notes with full validation (10MB size limit, image/PDF types only). On mobile, file picker supports taking photos directly from camera. Implemented Firebase Storage security rules with ownership-based access and strict type validation. Created AttachmentUploader component with file validation, grid display, and thumbnail preview. Created AttachmentThumbnail component showing image previews or PDF icons with hover remove buttons. Added storage.rules, attachments.service.ts, NoteAttachment type, upload/delete thunks, and Firestore integration. Modified 15 files total (4 new, 11 modified). Feature passed code review and validation. Production-ready. |
+| 2026-02-07 | **AI Endpoints Migration Complete: Vercel → Firebase Cloud Functions**. Converted parse-task and generate-note serverless functions to Firebase v2 Cloud Functions with Cloud Run hosting. Fixed critical issues: secret management (CLAUDE_API_KEY pre-creation), Node.js v18→v20 runtime upgrade, hosting rewrites syntax correction. Endpoints now live at https://neill-planner.web.app/api/parse-task and /api/generate-note with proper integration into Firebase project. Created functions/ directory with independent package.json/tsconfig.json. Updated firebase.json with functions config and predeploy hook for automatic TypeScript compilation. Commit `5765ff3`. |
 
 ## Blockers
 
@@ -2243,6 +2254,7 @@ _Document key technical decisions._
 | Virtual "None" category with categoryId = null | Prevents duplicate "None" entries in database; seamless Firestore integration; memoized selector ensures consistent ordering; cascade delete sets orphaned tasks to None | 2026-02-04 |
 | Store selectedCalendarId in Firestore credentials | Persists user's calendar choice across sessions; pairs with OAuth token management; allows different users to sync to different calendars | 2026-02-04 |
 | Filter calendars by write access before displaying | Users only see calendars they can modify; prevents sync failures due to read-only calendar selection | 2026-02-04 |
+| Migrate AI endpoints from Vercel to Firebase Cloud Functions | Unified hosting on single Firebase project; Cloud Run provides same performance as Vercel; simpler CI/CD (automatic deploy via predeploy hook); cost efficiency with Firebase free tier; better integration with Firestore security rules | 2026-02-07 |
 
 ---
 
