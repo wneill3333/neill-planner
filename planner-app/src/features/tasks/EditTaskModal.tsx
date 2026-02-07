@@ -378,6 +378,16 @@ export function EditTaskModal({
           const formRecurrenceChanged = !areRecurrencePatternsEqual(originalRecurrence, data.recurrence ?? null);
           if (formRecurrenceChanged && data.recurrence && task.recurringPatternId) {
             try {
+              // Determine if schedule itself changed (not just end date) to trigger full regeneration
+              const scheduleChanged = originalRecurrence !== null && (
+                originalRecurrence.type !== data.recurrence.type ||
+                originalRecurrence.interval !== data.recurrence.interval ||
+                JSON.stringify(originalRecurrence.daysOfWeek?.slice().sort()) !== JSON.stringify(data.recurrence.daysOfWeek?.slice().sort()) ||
+                originalRecurrence.dayOfMonth !== data.recurrence.dayOfMonth ||
+                originalRecurrence.nthWeekday?.n !== data.recurrence.nthWeekday?.n ||
+                originalRecurrence.nthWeekday?.weekday !== data.recurrence.nthWeekday?.weekday
+              );
+
               // Convert undefined to null for Firestore compatibility
               await dispatch(
                 updateRecurringPatternThunk({
@@ -392,6 +402,7 @@ export function EditTaskModal({
                     specificDatesOfMonth: data.recurrence.specificDatesOfMonth ?? null,
                     daysAfterCompletion: data.recurrence.daysAfterCompletion ?? null,
                     endCondition: data.recurrence.endCondition,
+                    regenerateFutureInstances: scheduleChanged,
                   },
                   userId: user.id,
                 })
@@ -434,6 +445,7 @@ export function EditTaskModal({
                 priority: data.priority,
                 categoryId: data.categoryId,
                 scheduledDate: data.scheduledDate,
+                recurrence: data.recurrence,
               },
             })
           ).unwrap();

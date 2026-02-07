@@ -493,6 +493,125 @@ export async function updateRecurringPattern(
       updatedAt: updateData.updatedAt as Date,
     };
 
+    // Handle instance regeneration when end date is extended
+    if (updates.endCondition) {
+      const oldEndDate = existingPattern.endCondition.endDate;
+      const newEndDate = updates.endCondition.endDate
+        ? (updates.endCondition.endDate instanceof Date
+          ? updates.endCondition.endDate
+          : new Date(updates.endCondition.endDate))
+        : null;
+      const oldEndType = existingPattern.endCondition.type;
+      const newEndType = updates.endCondition.type;
+
+      // Case 1: End date extended or changed from 'date' to 'never' - generate new instances
+      const isExtended =
+        (newEndType === 'never' && oldEndType === 'date') ||
+        (newEndType === 'date' && newEndDate && oldEndDate && newEndDate > oldEndDate) ||
+        (newEndType === 'date' && newEndDate && !oldEndDate);
+
+      if (isExtended) {
+        const now = new Date();
+        const fromDate = existingPattern.generatedUntil > now ? existingPattern.generatedUntil : now;
+        const newGeneratedUntil = newEndDate
+          ? (newEndDate < addDays(now, DEFAULT_GENERATION_DAYS) ? newEndDate : addDays(now, DEFAULT_GENERATION_DAYS))
+          : addDays(now, DEFAULT_GENERATION_DAYS);
+
+        if (newGeneratedUntil > fromDate) {
+          console.log(`[PATTERN] Extending instances from ${fromDate.toISOString()} to ${newGeneratedUntil.toISOString()}`);
+          await generateInstancesForPattern(updatedPattern, userId, fromDate, newGeneratedUntil);
+
+          // Update generatedUntil in Firestore
+          await updateDoc(docRef, {
+            generatedUntil: Timestamp.fromDate(newGeneratedUntil),
+          });
+          updatedPattern.generatedUntil = newGeneratedUntil;
+        }
+      }
+
+      // Case 2: End date shortened - soft-delete instances beyond new end date
+      if (newEndType === 'date' && newEndDate) {
+        const isShortened =
+          (oldEndType === 'never') ||
+          (oldEndDate && newEndDate < oldEndDate);
+
+        if (isShortened) {
+          console.log(`[PATTERN] Shortening: deleting instances after ${newEndDate.toISOString()}`);
+          const tasksCollection = collection(db, 'tasks');
+          const q = query(
+            tasksCollection,
+            where('userId', '==', userId),
+            where('recurringPatternId', '==', id),
+            where('deletedAt', '==', null),
+            where('scheduledDate', '>', Timestamp.fromDate(newEndDate))
+          );
+
+          const snapshot = await getDocs(q);
+          if (snapshot.docs.length > 0) {
+            const batch = writeBatch(db);
+            const deleteNow = new Date();
+            for (const taskDoc of snapshot.docs) {
+              batch.update(taskDoc.ref, {
+                deletedAt: Timestamp.fromDate(deleteNow),
+                updatedAt: Timestamp.fromDate(deleteNow),
+              });
+            }
+            await batch.commit();
+            console.log(`[PATTERN] Deleted ${snapshot.docs.length} instances beyond new end date`);
+          }
+        }
+      }
+    }
+
+    // Handle full regeneration if requested
+    if (regenerateFutureInstances) {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      console.log(`[PATTERN] Regenerating future instances from ${today.toISOString()}`);
+
+      // Delete all future instances (from today onward)
+      const tasksCollection = collection(db, 'tasks');
+      const q = query(
+        tasksCollection,
+        where('userId', '==', userId),
+        where('recurringPatternId', '==', id),
+        where('deletedAt', '==', null),
+        where('scheduledDate', '>=', Timestamp.fromDate(today))
+      );
+
+      const snapshot = await getDocs(q);
+      if (snapshot.docs.length > 0) {
+        const batch = writeBatch(db);
+        for (const taskDoc of snapshot.docs) {
+          // Only delete tasks that haven't been completed or modified
+          const data = taskDoc.data();
+          if (data.status === 'in_progress') {
+            batch.update(taskDoc.ref, {
+              deletedAt: Timestamp.fromDate(now),
+              updatedAt: Timestamp.fromDate(now),
+            });
+          }
+        }
+        await batch.commit();
+        console.log(`[PATTERN] Deleted ${snapshot.docs.length} future instances for regeneration`);
+      }
+
+      // Regenerate instances
+      const endDate = updatedPattern.endCondition.endDate;
+      const newGeneratedUntil = endDate
+        ? (endDate < addDays(now, DEFAULT_GENERATION_DAYS) ? endDate : addDays(now, DEFAULT_GENERATION_DAYS))
+        : addDays(now, DEFAULT_GENERATION_DAYS);
+
+      await generateInstancesForPattern(updatedPattern, userId, today, newGeneratedUntil);
+
+      // Update generatedUntil
+      await updateDoc(docRef, {
+        generatedUntil: Timestamp.fromDate(newGeneratedUntil),
+      });
+      updatedPattern.generatedUntil = newGeneratedUntil;
+    }
+
     return updatedPattern;
   } catch (error) {
     console.error('Error updating recurring pattern:', error);
