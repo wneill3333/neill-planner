@@ -8,7 +8,40 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useEffect } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { Mic, MicOff } from 'lucide-react';
+
+// =============================================================================
+// Speech Recognition Types
+// =============================================================================
+
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
+type SpeechRecognitionInstance = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+};
+
+function getSpeechRecognition(): (new () => SpeechRecognitionInstance) | null {
+  const w = window as unknown as Record<string, unknown>;
+  return (w.SpeechRecognition || w.webkitSpeechRecognition) as
+    | (new () => SpeechRecognitionInstance)
+    | null;
+}
 
 // =============================================================================
 // Types
@@ -83,6 +116,75 @@ export function RichTextEditor({
       editor.commands.setContent(content);
     }
   }, [content, editor]);
+
+  // Speech recognition state
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const speechSupported = getSpeechRecognition() !== null;
+
+  const toggleSpeechRecognition = useCallback(() => {
+    if (!editor) return;
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
+      }
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = getSpeechRecognition();
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    let finalTranscript = '';
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+          // Insert finalized text at cursor
+          const textToInsert = finalTranscript;
+          finalTranscript = '';
+          editor.chain().focus().insertContent(textToInsert).run();
+        } else {
+          interim += transcript;
+        }
+      }
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error('Speech recognition error:', event.error);
+      setIsListening(false);
+      recognitionRef.current = null;
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      recognitionRef.current = null;
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  }, [editor, isListening]);
+
+  // Cleanup speech recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+        recognitionRef.current = null;
+      }
+    };
+  }, []);
 
   if (!editor) {
     return null;
@@ -161,6 +263,34 @@ export function RichTextEditor({
         >
           1. List
         </button>
+
+        {speechSupported && (
+          <>
+            <div className="w-px h-6 bg-gray-300 mx-1" aria-hidden="true" />
+            <button
+              type="button"
+              onClick={toggleSpeechRecognition}
+              className={`px-2 py-1 rounded hover:bg-gray-200 transition-colors flex items-center gap-1 ${
+                isListening ? 'bg-red-100 text-red-600' : 'bg-white text-gray-600'
+              }`}
+              title={isListening ? 'Stop voice input' : 'Start voice input'}
+              aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
+              data-testid="toolbar-mic"
+            >
+              {isListening ? (
+                <>
+                  <MicOff className="w-4 h-4" />
+                  <span className="text-xs font-medium flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                    Listening...
+                  </span>
+                </>
+              ) : (
+                <Mic className="w-4 h-4" />
+              )}
+            </button>
+          </>
+        )}
       </div>
 
       {/* Editor Content */}
