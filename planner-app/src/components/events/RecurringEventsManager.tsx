@@ -9,6 +9,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { ConfirmDialog } from '../common/ConfirmDialog';
+import { EventForm } from './EventForm';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { selectRecurringParentEvents } from '../../features/events/eventSlice';
 import {
@@ -18,7 +19,7 @@ import {
 } from '../../features/events/eventThunks';
 import { selectCategoriesMap } from '../../features/categories/categorySlice';
 import { useAuth } from '../../features/auth';
-import type { Event } from '../../types';
+import type { Event, CreateEventInput } from '../../types';
 import { format } from 'date-fns';
 
 // =============================================================================
@@ -98,6 +99,8 @@ export function RecurringEventsManager({
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [clearingExceptionsEventId, setClearingExceptionsEventId] = useState<string | null>(null);
+  const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
 
   // Convert record to sorted array
   const recurringEvents = useMemo(() => {
@@ -105,6 +108,11 @@ export function RecurringEventsManager({
       a.title.localeCompare(b.title)
     );
   }, [recurringParentEvents]);
+
+  // Convert categories map to array for EventForm
+  const categoriesArray = useMemo(() => {
+    return Object.values(categoriesMap);
+  }, [categoriesMap]);
 
   const totalCount = recurringEvents.length;
 
@@ -156,6 +164,43 @@ export function RecurringEventsManager({
       console.error('Failed to clear exceptions:', error);
     } finally {
       setClearingExceptionsEventId(null);
+    }
+  };
+
+  // Handle edit
+  const handleEditClick = (event: Event) => {
+    setEventToEdit(event);
+  };
+
+  const handleEditEventModalClose = () => {
+    setEventToEdit(null);
+    setIsEditSubmitting(false);
+  };
+
+  const handleEventUpdate = async (data: CreateEventInput) => {
+    if (!user || !eventToEdit) return;
+    setIsEditSubmitting(true);
+    try {
+      await dispatch(
+        updateEventAsync({
+          id: eventToEdit.id,
+          userId: user.id,
+          title: data.title,
+          description: data.description,
+          categoryId: data.categoryId,
+          startTime: data.startTime,
+          endTime: data.endTime,
+          location: data.location,
+          isConfidential: data.isConfidential,
+          alternateTitle: data.alternateTitle,
+          recurrence: data.recurrence,
+        })
+      ).unwrap();
+      setEventToEdit(null);
+    } catch (error) {
+      console.error('Failed to update recurring event:', error);
+    } finally {
+      setIsEditSubmitting(false);
     }
   };
 
@@ -234,7 +279,15 @@ export function RecurringEventsManager({
                           </div>
                         )}
                       </div>
-                      <div className="flex-shrink-0">
+                      <div className="flex-shrink-0 flex gap-2">
+                        <Button
+                          variant="secondary"
+                          onClick={() => handleEditClick(event)}
+                          className="text-sm"
+                          aria-label={`Edit event: ${event.title}`}
+                        >
+                          Edit
+                        </Button>
                         <Button
                           variant="danger"
                           onClick={() => handleDeleteClick(event)}
@@ -272,6 +325,24 @@ export function RecurringEventsManager({
         variant="danger"
         isProcessing={isDeleting}
       />
+
+      {/* Edit Event Modal */}
+      {eventToEdit && (
+        <Modal
+          isOpen={!!eventToEdit}
+          onClose={handleEditEventModalClose}
+          title="Edit Recurring Event"
+          size="lg"
+        >
+          <EventForm
+            event={eventToEdit}
+            categories={categoriesArray}
+            onSubmit={handleEventUpdate}
+            onCancel={handleEditEventModalClose}
+            isSubmitting={isEditSubmitting}
+          />
+        </Modal>
+      )}
     </>
   );
 }

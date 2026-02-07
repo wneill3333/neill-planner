@@ -167,6 +167,11 @@ function validateForm(data: FormData): FormErrors {
     errors.alternateTitle = `Alternate title must be ${ALTERNATE_TITLE_MAX_LENGTH} characters or less`;
   }
 
+  // Weekly recurrence requires at least one day selected
+  if (data.recurrence?.type === 'weekly' && (!data.recurrence.daysOfWeek || data.recurrence.daysOfWeek.length === 0)) {
+    errors.title = 'Weekly recurrence requires at least one day selected';
+  }
+
   return errors;
 }
 
@@ -546,6 +551,7 @@ export function EventForm({
             value={formData.recurrence}
             onChange={(pattern) => handleChange('recurrence', pattern)}
             disabled={isSubmitting}
+            eventDate={formData.eventDate}
             testId="event-recurrence-form"
           />
         )}

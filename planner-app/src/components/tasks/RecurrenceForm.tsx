@@ -27,6 +27,8 @@ export interface RecurrenceFormProps {
   onChange: (pattern: RecurrencePattern | null) => void;
   /** Whether the form is disabled */
   disabled?: boolean;
+  /** The date of the event/task, used to auto-select day of week for weekly recurrence */
+  eventDate?: Date | null;
   /** Test ID for testing */
   testId?: string;
 }
@@ -188,6 +190,7 @@ export function RecurrenceForm({
   value,
   onChange,
   disabled = false,
+  eventDate = null,
   testId,
 }: RecurrenceFormProps) {
   const baseId = useId();
@@ -242,11 +245,15 @@ export function RecurrenceForm({
       const newType = e.target.value as RecurrenceType;
       // Use functional update to avoid stale closure
       setFormState((prev) => {
+        // When switching to weekly, auto-select the event's day if daysOfWeek is empty
+        let daysOfWeek = newType === 'weekly' ? prev.daysOfWeek : [];
+        if (newType === 'weekly' && daysOfWeek.length === 0 && eventDate) {
+          daysOfWeek = [eventDate.getDay()];
+        }
         const newState: FormState = {
           ...prev,
           type: newType,
-          // Reset type-specific fields when switching types
-          daysOfWeek: newType === 'weekly' ? prev.daysOfWeek : [],
+          daysOfWeek,
           dayOfMonth: newType === 'monthly' || newType === 'yearly' ? prev.dayOfMonth : null,
           monthOfYear: newType === 'yearly' ? prev.monthOfYear : null,
         };
@@ -254,7 +261,7 @@ export function RecurrenceForm({
         return newState;
       });
     },
-    [onChange]
+    [onChange, eventDate]
   );
 
   // Handle interval change

@@ -3,11 +3,31 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 7, 2026 (Cloud Functions Migration)
+**Last Updated:** February 7, 2026 (Recurring Events Fixes & Edit Buttons)
 
 ---
 
 ## SESSION LOG
+
+### SESSION: Recurring Events Bug Fix & Edit Buttons
+**Date:** February 7, 2026
+**Status:** COMPLETED
+
+#### Summary
+Fixed recurring weekly events not generating future instances (empty `daysOfWeek` array), and added Edit buttons to both Manage Recurring Tasks and Manage Recurring Events modals.
+
+#### Key Changes
+
+**Bug Fix: Weekly Recurring Events Not Showing (3 files)**
+- `RecurrenceForm.tsx` - Added `eventDate` prop; when switching to "weekly" type, auto-selects the event's day of the week if no days are selected
+- `EventForm.tsx` - Passes `eventDate` to RecurrenceForm; added validation preventing weekly recurrence with no days selected
+- Root cause: `generateRecurringEventInstances()` in `recurrenceUtils.ts` returns `[]` when `daysOfWeek` is empty for weekly patterns
+
+**Edit Buttons in Manager Modals (2 files)**
+- `RecurringEventsManager.tsx` - Added Edit button next to Delete for each recurring event; opens EventForm in a modal for inline editing
+- `RecurringTasksManager.tsx` - Added Edit button for both pattern-based and legacy recurring tasks; opens EditTaskModal (patterns find nearest future task instance to edit)
+
+---
 
 ### SESSION: AI Endpoints - Vercel to Firebase Cloud Functions Migration
 **Date:** February 7, 2026

@@ -9,6 +9,7 @@ import { useState, useMemo } from 'react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { ConfirmDialog } from '../common/ConfirmDialog';
+import { EditTaskModal } from '../../features/tasks/EditTaskModal';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   selectRecurringPatternsArray,
@@ -225,6 +226,10 @@ export function RecurringTasksManager({
   const [activeTab, setActiveTab] = useState<'patterns' | 'legacy'>('patterns');
   const [isMigrating, setIsMigrating] = useState(false);
   const [migrationResult, setMigrationResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+
+  // Get all tasks for pattern lookup
+  const allTasks = useAppSelector(state => state.tasks.tasks);
 
   // Group legacy tasks by title to identify duplicates
   const taskGroups = useMemo(() => {
@@ -335,6 +340,27 @@ export function RecurringTasksManager({
     }
   };
 
+  // Handle edit pattern - find a task instance and open edit modal
+  const handleEditPatternClick = (pattern: RecurringPatternType) => {
+    // Find the first task instance generated from this pattern
+    const patternTasks = Object.values(allTasks).filter(
+      t => t.recurringPatternId === pattern.id
+    );
+    if (patternTasks.length > 0) {
+      // Pick the nearest future task or the most recent one
+      const today = new Date().toISOString().split('T')[0];
+      const futureTask = patternTasks
+        .filter(t => t.scheduledDate && t.scheduledDate >= today)
+        .sort((a, b) => (a.scheduledDate || '').localeCompare(b.scheduledDate || ''))[0];
+      setTaskToEdit(futureTask || patternTasks[0]);
+    }
+  };
+
+  // Handle edit legacy task
+  const handleEditLegacyClick = (task: Task) => {
+    setTaskToEdit(task);
+  };
+
   return (
     <>
       <Modal
@@ -441,7 +467,15 @@ export function RecurringTasksManager({
                           ID: {pattern.id}
                         </div>
                       </div>
-                      <div className="flex-shrink-0">
+                      <div className="flex-shrink-0 flex gap-2">
+                        <Button
+                          variant="secondary"
+                          onClick={() => handleEditPatternClick(pattern)}
+                          className="text-sm"
+                          aria-label={`Edit pattern: ${pattern.title}`}
+                        >
+                          Edit
+                        </Button>
                         <Button
                           variant="danger"
                           onClick={() => handleDeletePatternClick(pattern)}
@@ -553,7 +587,15 @@ export function RecurringTasksManager({
                           )}
                           <div className="text-xs text-gray-400 font-mono">ID: {task.id}</div>
                         </div>
-                        <div className="flex-shrink-0">
+                        <div className="flex-shrink-0 flex gap-2">
+                          <Button
+                            variant="secondary"
+                            onClick={() => handleEditLegacyClick(task)}
+                            className="text-sm"
+                            aria-label={`Edit task: ${task.title}`}
+                          >
+                            Edit
+                          </Button>
                           <Button
                             variant="danger"
                             onClick={() => handleDeleteLegacyClick(task)}
@@ -620,6 +662,16 @@ export function RecurringTasksManager({
         variant="danger"
         isProcessing={isDeleting}
       />
+
+      {/* Edit Task Modal */}
+      {taskToEdit && (
+        <EditTaskModal
+          isOpen={!!taskToEdit}
+          onClose={() => setTaskToEdit(null)}
+          task={taskToEdit}
+          onSuccess={() => setTaskToEdit(null)}
+        />
+      )}
     </>
   );
 }
