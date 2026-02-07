@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#3B82F6"/>
+  <g transform="translate(256,256)">
+    <!-- Checkmark circle -->
+    <circle cx="0" cy="-20" r="120" fill="none" stroke="white" stroke-width="24"/>
+    <polyline points="-50,-20 -10,30 60,-50" fill="none" stroke="white" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Lines representing a list/planner -->
+    <line x1="-80" y1="130" x2="80" y2="130" stroke="white" stroke-width="16" stroke-linecap="round"/>
+    <line x1="-60" y1="170" x2="60" y2="170" stroke="white" stroke-width="12" stroke-linecap="round" opacity="0.7"/>
+  </g>
+</svg>

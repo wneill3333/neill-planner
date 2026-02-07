@@ -11,7 +11,7 @@ import { TasksPage } from './features/tasks';
 import { CategoryManagementPage } from './features/categories/CategoryManagementPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { AdminPage } from './features/admin';
-import { Spinner } from './components/common';
+import { Spinner, PWAUpdatePrompt } from './components/common';
 import type { AppView } from './components/layout/Header';
 import type { SnoozeOption } from './types';
 import { NotificationContainer } from './components/notifications';
@@ -125,6 +125,7 @@ function App() {
         onDismiss={handleDismissNotification}
         onSnooze={handleSnoozeNotification}
       />
+      <PWAUpdatePrompt />
     </>
   );
 }

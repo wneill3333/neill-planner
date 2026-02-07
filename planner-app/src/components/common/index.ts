@@ -23,6 +23,7 @@ export { ConfirmDialog } from './ConfirmDialog';
 export { SyncStatusIndicator } from './SyncStatusIndicator';
 export { ConflictDialog } from './ConflictDialog';
 export { ConflictItem } from './ConflictItem';
+export { PWAUpdatePrompt } from './PWAUpdatePrompt';
 
 // Export types
 export type { InputProps } from './Input';
