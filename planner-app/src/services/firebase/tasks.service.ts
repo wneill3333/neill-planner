@@ -110,7 +110,7 @@ function firestoreToTask(doc: QueryDocumentSnapshot<DocumentData>): Task {
     description: data.description || '',
     categoryId: data.categoryId || null,
     priority: data.priority,
-    status: data.status,
+    status: data.status || 'in_progress',
     scheduledDate: data.scheduledDate?.toDate() || new Date(),
     // NEW: Calendar scheduling fields
     startTime: data.startTime || null,
