@@ -16,6 +16,8 @@ import { StatusLegend } from '../../components/tasks';
 import { EditTaskModal } from './EditTaskModal';
 import { NoteListContainer } from '../notes/NoteListContainer';
 import { NoteFormModal } from '../notes/NoteFormModal';
+import { useNotesByRange } from '../notes/hooks';
+import { NoteRangeList } from '../../components/notes';
 import { Tabs, TabPanel, Modal, type Tab } from '../../components/common';
 import { CheckIcon, CalendarIcon, NoteIcon } from '../../components/icons';
 import { hasGapsInPriorityNumbering } from '../../utils/priorityUtils';
@@ -43,6 +45,7 @@ export interface DailyViewProps {
 
 type TabValue = 'tasks' | 'calendar' | 'notes';
 type CalendarViewType = 'day' | 'week' | 'month';
+type NotesViewType = 'day' | 'week' | 'month';
 
 // =============================================================================
 // Component
@@ -89,6 +92,8 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
 
   // Calendar view type state (day/week/month)
   const [calendarViewType, setCalendarViewType] = useState<CalendarViewType>('day');
+  // Notes view type state (day/week/month)
+  const [notesViewType, setNotesViewType] = useState<NotesViewType>('day');
 
   const dispatch = useAppDispatch();
   const { user } = useAuth();
@@ -120,6 +125,17 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
     calendarViewType === 'week' ? weekRange.start : monthRange.start,
     calendarViewType === 'week' ? weekRange.end : monthRange.end,
     user?.id ?? null
+  );
+
+  // Fetch notes for range (used by week and month note views)
+  // Reuse the same week/month range memos as the calendar views
+  const notesRangeStart = notesViewType === 'week' ? weekRange.start : monthRange.start;
+  const notesRangeEnd = notesViewType === 'week' ? weekRange.end : monthRange.end;
+  // Only fetch when not in day view - pass empty userId to skip the fetch
+  const { notes: rangeNotes, loading: rangeNotesLoading } = useNotesByRange(
+    notesRangeStart,
+    notesRangeEnd,
+    notesViewType !== 'day' ? (user?.id ?? '') : ''
   );
 
   // Check if there are gaps in priority numbering that can be cleaned up
@@ -368,7 +384,7 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
         aria-label="Date navigation"
       >
         <DateNavigationContainer
-          navigationStep={activeTab === 'calendar' ? calendarViewType : 'day'}
+          navigationStep={activeTab === 'calendar' ? calendarViewType : activeTab === 'notes' ? notesViewType : 'day'}
         />
       </section>
 
@@ -619,8 +635,59 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
           <TabPanel tabId="notes" isActive={activeTab === 'notes'}>
             {/* Action Buttons Row - Top of notes panel */}
             <div className="flex items-center justify-between gap-2 p-4 pb-2 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-800">Daily Notes</h2>
+              <h2 className="text-lg font-semibold text-gray-800">
+                {notesViewType === 'day' ? 'Daily' : notesViewType === 'week' ? 'Weekly' : 'Monthly'} Notes
+              </h2>
               <div className="flex items-center gap-2">
+                {/* View Switcher - Segmented Button Group */}
+                <div className="flex rounded-lg bg-gray-100 p-0.5" role="group" aria-label="Notes view">
+                  <button
+                    type="button"
+                    onClick={() => setNotesViewType('day')}
+                    className={`
+                      px-3 py-1.5 text-sm font-medium rounded-md transition-colors
+                      ${notesViewType === 'day'
+                        ? 'bg-blue-500 text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200'
+                      }
+                    `}
+                    aria-pressed={notesViewType === 'day'}
+                    data-testid="notes-view-day"
+                  >
+                    Day
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNotesViewType('week')}
+                    className={`
+                      px-3 py-1.5 text-sm font-medium rounded-md transition-colors
+                      ${notesViewType === 'week'
+                        ? 'bg-blue-500 text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200'
+                      }
+                    `}
+                    aria-pressed={notesViewType === 'week'}
+                    data-testid="notes-view-week"
+                  >
+                    Week
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNotesViewType('month')}
+                    className={`
+                      px-3 py-1.5 text-sm font-medium rounded-md transition-colors
+                      ${notesViewType === 'month'
+                        ? 'bg-blue-500 text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200'
+                      }
+                    `}
+                    aria-pressed={notesViewType === 'month'}
+                    data-testid="notes-view-month"
+                  >
+                    Month
+                  </button>
+                </div>
+
                 {/* Add Note Button */}
                 <button
                   type="button"
@@ -650,13 +717,43 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
               </div>
             </div>
 
-            {/* Notes List */}
-            <div className="p-4 pt-2">
-              <NoteListContainer
-                onNoteClick={handleNoteClick}
-                testId="daily-view-note-list"
-              />
-            </div>
+            {/* Notes List - Day View */}
+            {notesViewType === 'day' && (
+              <div className="p-4 pt-2">
+                <NoteListContainer
+                  onNoteClick={handleNoteClick}
+                  testId="daily-view-note-list"
+                />
+              </div>
+            )}
+
+            {/* Notes List - Week View */}
+            {notesViewType === 'week' && (
+              <div className="p-4 pt-2">
+                <NoteRangeList
+                  notes={rangeNotes}
+                  categories={categoriesArray}
+                  onNoteClick={handleNoteClick}
+                  loading={rangeNotesLoading}
+                  emptyLabel="this week"
+                  testId="weekly-note-list"
+                />
+              </div>
+            )}
+
+            {/* Notes List - Month View */}
+            {notesViewType === 'month' && (
+              <div className="p-4 pt-2">
+                <NoteRangeList
+                  notes={rangeNotes}
+                  categories={categoriesArray}
+                  onNoteClick={handleNoteClick}
+                  loading={rangeNotesLoading}
+                  emptyLabel="this month"
+                  testId="monthly-note-list"
+                />
+              </div>
+            )}
           </TabPanel>
         </div>
       </section>

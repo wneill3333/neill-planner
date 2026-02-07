@@ -5,10 +5,10 @@
  * These hooks provide a convenient interface for components to interact with the notes slice.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { selectNotesByDate, selectNoteById, selectNotesLoading, selectNotesError } from './noteSlice';
-import { fetchNotesByDate } from './noteThunks';
+import { selectNotesByDate, selectNotesByDateRange, selectNoteById, selectNotesLoading, selectNotesError } from './noteSlice';
+import { fetchNotesByDate, fetchNotesByDateRange } from './noteThunks';
 import type { Note } from '../../types';
 
 // =============================================================================
@@ -19,6 +19,16 @@ import type { Note } from '../../types';
  * Return type for useNotesByDate hook
  */
 export interface UseNotesByDateResult {
+  notes: Note[];
+  loading: boolean;
+  error: string | null;
+  refetch: () => void;
+}
+
+/**
+ * Return type for useNotesByRange hook
+ */
+export interface UseNotesByRangeResult {
   notes: Note[];
   loading: boolean;
   error: string | null;
@@ -118,5 +128,48 @@ export function useNote(noteId: string): UseNoteResult {
     note,
     loading,
     error,
+  };
+}
+
+/**
+ * Hook to fetch and manage notes for a date range
+ *
+ * Automatically fetches notes when the date range or userId changes.
+ * Returns the notes, loading state, error state, and a refetch function.
+ *
+ * @param startDate - Start of the date range
+ * @param endDate - End of the date range
+ * @param userId - User ID to fetch notes for
+ * @returns Notes data, loading state, error state, and refetch function
+ */
+export function useNotesByRange(startDate: Date, endDate: Date, userId: string): UseNotesByRangeResult {
+  const dispatch = useAppDispatch();
+
+  const startDateStr = useMemo(() => startDate.toISOString().split('T')[0], [startDate]);
+  const endDateStr = useMemo(() => endDate.toISOString().split('T')[0], [endDate]);
+
+  const notes = useAppSelector((state) => selectNotesByDateRange(state, startDateStr, endDateStr));
+  const loading = useAppSelector(selectNotesLoading);
+  const error = useAppSelector(selectNotesError);
+
+  useEffect(() => {
+    if (userId) {
+      dispatch(fetchNotesByDateRange({ userId, startDate, endDate }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, startDateStr, endDateStr, userId]);
+
+  const refetch = useCallback(() => {
+    if (userId) {
+      dispatch(fetchNotesByDateRange({ userId, startDate, endDate }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, startDateStr, endDateStr, userId]);
+
+  return {
+    notes,
+    loading,
+    error,
+    refetch,
   };
 }

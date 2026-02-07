@@ -40,6 +40,15 @@ export interface ThunkError {
   code?: string;
 }
 
+/**
+ * Payload for fetching notes by date range
+ */
+export interface FetchNotesByDateRangePayload {
+  userId: string;
+  startDate: Date;
+  endDate: Date;
+}
+
 // =============================================================================
 // Async Thunks
 // =============================================================================
@@ -77,6 +86,26 @@ export const fetchNotesByDate = createAsyncThunk<
     const notes = await notesService.getNotesByDate(userId, date);
     const dateString = date.toISOString().split('T')[0];
     return { notes, date: dateString };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch notes';
+    return rejectWithValue({ message });
+  }
+});
+
+/**
+ * Fetch notes for a date range
+ *
+ * Retrieves all non-deleted notes within a date range from Firestore.
+ * Used by week and month views.
+ */
+export const fetchNotesByDateRange = createAsyncThunk<
+  Note[],
+  FetchNotesByDateRangePayload,
+  { state: RootState; rejectValue: ThunkError }
+>('notes/fetchNotesByDateRange', async ({ userId, startDate, endDate }, { rejectWithValue }) => {
+  try {
+    const notes = await notesService.getNotesByDateRange(userId, startDate, endDate);
+    return notes;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to fetch notes';
     return rejectWithValue({ message });

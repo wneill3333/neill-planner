@@ -20,6 +20,8 @@ export interface NoteItemProps {
   categoryColor?: string | null;
   /** Click handler for editing note */
   onClick?: (note: Note) => void;
+  /** Whether to show the date alongside the time */
+  showDate?: boolean;
   /** Optional className for styling */
   className?: string;
   /** Test ID for testing */
@@ -52,6 +54,28 @@ function getContentPreview(content: string): string {
   return plainText.substring(0, 100) + '...';
 }
 
+/**
+ * Format a Date to a readable timestamp string down to the minute.
+ * If showDate is true, includes the date portion (e.g., "Feb 6, 2026 2:35 PM").
+ * If showDate is false, shows time only (e.g., "2:35 PM").
+ */
+function formatTimestamp(date: Date, showDate: boolean): string {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) return '';
+  if (showDate) {
+    return date.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  }
+  return date.toLocaleString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 // =============================================================================
 // Component
 // =============================================================================
@@ -79,6 +103,7 @@ export const NoteItem = memo(function NoteItem({
   note,
   categoryColor,
   onClick,
+  showDate = false,
   className = '',
   testId,
 }: NoteItemProps) {
@@ -146,6 +171,11 @@ export const NoteItem = memo(function NoteItem({
           </span>
         )}
       </div>
+
+      {/* Timestamp */}
+      <p className="text-xs text-gray-400 mb-1" data-testid={`${testId || `note-item-${note.id}`}-timestamp`}>
+        {formatTimestamp(note.createdAt, showDate)}
+      </p>
 
       {/* Content Preview */}
       {contentPreview && (

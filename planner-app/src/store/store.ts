@@ -71,6 +71,7 @@ export const store = configureStore({
           'events/fetchRecurringEvents/fulfilled',
           'notes/fetchUserNotes/fulfilled',
           'notes/fetchNotesByDate/fulfilled',
+          'notes/fetchNotesByDateRange/fulfilled',
           'notes/createNote/fulfilled',
           'notes/updateNoteAsync/fulfilled',
           'notes/restoreNote/fulfilled',

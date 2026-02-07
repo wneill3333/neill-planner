@@ -10,6 +10,7 @@ import type { Note, SyncStatus } from '../../types';
 import type { RootState } from '../../store';
 import {
   fetchNotesByDate,
+  fetchNotesByDateRange,
   fetchUserNotes,
   createNoteAsync,
   updateNoteAsync,
@@ -279,6 +280,32 @@ export const noteSlice = createSlice({
       });
 
     // ==========================================================================
+    // fetchNotesByDateRange
+    // ==========================================================================
+    builder
+      .addCase(fetchNotesByDateRange.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.syncStatus = 'syncing';
+      })
+      .addCase(fetchNotesByDateRange.fulfilled, (state, action) => {
+        state.loading = false;
+        state.syncStatus = 'synced';
+
+        // Add all notes to state (merges with existing)
+        for (const note of action.payload) {
+          state.notes[note.id] = note;
+          const dateString = getDateString(note.date);
+          addNoteToDateIndex(state.noteIdsByDate, dateString, note.id);
+        }
+      })
+      .addCase(fetchNotesByDateRange.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || 'Failed to fetch notes';
+        state.syncStatus = 'error';
+      });
+
+    // ==========================================================================
     // createNoteAsync
     // ==========================================================================
     builder
@@ -477,6 +504,36 @@ export const selectNotesByDate = createSelector(
   (notes, noteIdsByDate, date): Note[] => {
     const noteIds = noteIdsByDate[date] || [];
     return noteIds.map((id) => notes[id]).filter((note): note is Note => !!note);
+  }
+);
+
+/**
+ * Select notes within a date range
+ */
+export const selectNotesByDateRange = createSelector(
+  [
+    (state: RootState) => state.notes.notes,
+    (state: RootState) => state.notes.noteIdsByDate,
+    (_state: RootState, startDate: string) => startDate,
+    (_state: RootState, _startDate: string, endDate: string) => endDate,
+  ],
+  (notes, noteIdsByDate, startDate, endDate): Note[] => {
+    const result: Note[] = [];
+    for (const [dateKey, noteIds] of Object.entries(noteIdsByDate)) {
+      if (dateKey >= startDate && dateKey <= endDate) {
+        for (const id of noteIds) {
+          const note = notes[id];
+          if (note) result.push(note);
+        }
+      }
+    }
+    // Sort by date ascending, then createdAt descending within same date
+    return result.sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      if (dateA !== dateB) return dateA - dateB;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
   }
 );
 

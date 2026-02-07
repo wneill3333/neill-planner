@@ -1,11 +1,11 @@
 /**
- * NoteList Component
+ * NoteRangeList Component
  *
- * Displays a list of notes for the selected date.
- * Shows empty state when no notes are present.
+ * Displays notes grouped by date for week and month views.
+ * Each date group shows a date header followed by the notes for that date.
  */
 
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { NoteItem } from './NoteItem';
 import type { Note, Category } from '../../types';
 
@@ -13,17 +13,17 @@ import type { Note, Category } from '../../types';
 // Types
 // =============================================================================
 
-export interface NoteListProps {
-  /** Notes to display */
+export interface NoteRangeListProps {
+  /** Notes to display (should be pre-sorted by date) */
   notes: Note[];
   /** Categories for color mapping */
   categories: Category[];
   /** Click handler for editing a note */
   onNoteClick?: (note: Note) => void;
-  /** Whether to show dates on note timestamps (for week/month views) */
-  showDate?: boolean;
   /** Loading state */
   loading?: boolean;
+  /** Label for the empty state (e.g., "this week", "this month") */
+  emptyLabel?: string;
   /** Optional className for styling */
   className?: string;
   /** Test ID for testing */
@@ -34,52 +34,69 @@ export interface NoteListProps {
 // Helpers
 // =============================================================================
 
-/**
- * Get category color by ID
- */
 function getCategoryColor(categoryId: string | null, categories: Category[]): string | null {
   if (!categoryId) return null;
   const category = categories.find(c => c.id === categoryId);
   return category?.color || null;
 }
 
+function formatDateHeader(date: Date): string {
+  return date.toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+function getDateKey(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
+
+interface NoteGroup {
+  dateKey: string;
+  dateLabel: string;
+  notes: Note[];
+}
+
 // =============================================================================
 // Component
 // =============================================================================
 
-/**
- * NoteList - Display list of notes
- *
- * Features:
- * - Displays notes as clickable cards
- * - Shows category colors via left border
- * - Empty state when no notes exist
- * - Loading state support
- *
- * @example
- * ```tsx
- * <NoteList
- *   notes={notes}
- *   categories={categories}
- *   onNoteClick={handleEditNote}
- * />
- * ```
- */
-export const NoteList = memo(function NoteList({
+export const NoteRangeList = memo(function NoteRangeList({
   notes,
   categories,
   onNoteClick,
-  showDate = false,
   loading = false,
+  emptyLabel = 'this period',
   className = '',
   testId,
-}: NoteListProps) {
+}: NoteRangeListProps) {
+  // Group notes by date
+  const groups = useMemo((): NoteGroup[] => {
+    const map = new Map<string, Note[]>();
+    for (const note of notes) {
+      const key = getDateKey(note.date);
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
+      map.get(key)!.push(note);
+    }
+
+    // Sort groups by date key ascending
+    const sortedKeys = [...map.keys()].sort();
+    return sortedKeys.map(key => ({
+      dateKey: key,
+      dateLabel: formatDateHeader(map.get(key)![0].date),
+      notes: map.get(key)!,
+    }));
+  }, [notes]);
+
   // Loading state
   if (loading) {
     return (
       <div
         className={`flex items-center justify-center py-12 ${className}`}
-        data-testid={testId || 'note-list-loading'}
+        data-testid={testId ? `${testId}-loading` : 'note-range-list-loading'}
         aria-live="polite"
         aria-busy="true"
       >
@@ -89,9 +106,7 @@ export const NoteList = memo(function NoteList({
             role="status"
             aria-label="Loading notes"
           />
-          <p className="mt-2 text-sm text-gray-600">
-            Loading notes...
-          </p>
+          <p className="mt-2 text-sm text-gray-600">Loading notes...</p>
         </div>
       </div>
     );
@@ -102,7 +117,7 @@ export const NoteList = memo(function NoteList({
     return (
       <div
         className={`flex items-center justify-center py-12 ${className}`}
-        data-testid={testId || 'note-list-empty'}
+        data-testid={testId ? `${testId}-empty` : 'note-range-list-empty'}
       >
         <div className="text-center">
           <svg
@@ -120,7 +135,7 @@ export const NoteList = memo(function NoteList({
             />
           </svg>
           <h3 className="mt-2 text-sm font-medium text-gray-900">
-            No notes for this date
+            No notes for {emptyLabel}
           </h3>
           <p className="mt-1 text-sm text-gray-500">
             Get started by creating a new note.
@@ -130,23 +145,34 @@ export const NoteList = memo(function NoteList({
     );
   }
 
-  // Notes list
+  // Grouped notes list
   return (
     <div
-      className={`space-y-3 ${className}`}
-      data-testid={testId || 'note-list'}
+      className={`space-y-4 ${className}`}
+      data-testid={testId || 'note-range-list'}
       role="list"
       aria-label="Notes list"
     >
-      {notes.map((note) => (
-        <NoteItem
-          key={note.id}
-          note={note}
-          categoryColor={getCategoryColor(note.categoryId, categories)}
-          onClick={onNoteClick}
-          showDate={showDate}
-          testId={`note-item-${note.id}`}
-        />
+      {groups.map((group) => (
+        <div key={group.dateKey} data-testid={`note-group-${group.dateKey}`}>
+          {/* Date Header */}
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2 px-1">
+            {group.dateLabel}
+          </h3>
+          {/* Notes for this date */}
+          <div className="space-y-2">
+            {group.notes.map((note) => (
+              <NoteItem
+                key={note.id}
+                note={note}
+                categoryColor={getCategoryColor(note.categoryId, categories)}
+                onClick={onNoteClick}
+                showDate={false}
+                testId={`note-item-${note.id}`}
+              />
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   );

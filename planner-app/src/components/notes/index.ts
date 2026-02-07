@@ -10,6 +10,9 @@ export type { NoteItemProps } from './NoteItem';
 export { NoteList } from './NoteList';
 export type { NoteListProps } from './NoteList';
 
+export { NoteRangeList } from './NoteRangeList';
+export type { NoteRangeListProps } from './NoteRangeList';
+
 export { NoteForm } from './NoteForm';
 export type { NoteFormProps } from './NoteForm';
 
