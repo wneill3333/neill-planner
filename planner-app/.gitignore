@@ -38,3 +38,7 @@ cypress/downloads
 .vercel
 .firebase
 .vite
+
+# Firebase Functions build output
+functions/lib/
+functions/node_modules/

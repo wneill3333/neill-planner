@@ -30,6 +30,10 @@ import { selectCategoriesMap, selectAllCategories } from '../categories/category
 import { setSelectedDate } from './taskSlice';
 import { TimeBlockCalendar, EventForm, WeekView, MonthView } from '../../components/events';
 import { normalizeToDateString } from '../../utils/dateUtils';
+import { openVoiceNote, clearNoteAi } from '../ai/aiSlice';
+import { VoiceNoteRecorder } from '../../components/ai/VoiceNoteRecorder';
+import { ParsedNotePreview } from '../../components/ai/ParsedNotePreview';
+import { ErrorBoundary } from '../../components/common/ErrorBoundary';
 import type { Task, Note, Event, CreateEventInput } from '../../types';
 
 // =============================================================================
@@ -688,6 +692,33 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
                   </button>
                 </div>
 
+                {/* Voice Note Button */}
+                <button
+                  type="button"
+                  onClick={() => dispatch(openVoiceNote())}
+                  className="
+                    flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium
+                    text-white bg-violet-600
+                    border border-violet-700 rounded-md
+                    hover:bg-violet-700
+                    focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2
+                    transition-colors duration-150
+                  "
+                  aria-label="Create note from voice"
+                  data-testid="voice-note-button"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-14 0M12 19v2m0-18a3 3 0 00-3 3v4a3 3 0 006 0V6a3 3 0 00-3-3z" />
+                  </svg>
+                  Voice Note
+                </button>
+
                 {/* Add Note Button */}
                 <button
                   type="button"
@@ -864,6 +895,14 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
           </div>
         </Modal>
       )}
+      {/* Voice Note AI Modals - wrapped in error boundary to prevent crashes from taking down DailyView */}
+      <ErrorBoundary
+        fallback={(_error, _errorInfo) => null}
+        onError={() => dispatch(clearNoteAi())}
+      >
+        <VoiceNoteRecorder />
+        <ParsedNotePreview />
+      </ErrorBoundary>
     </div>
   );
 }

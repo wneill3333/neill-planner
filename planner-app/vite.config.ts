@@ -76,5 +76,12 @@ export default defineConfig({
       usePolling: true,
       interval: 1000,
     },
+    // Proxy API calls to local dev server
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+    },
   },
 })

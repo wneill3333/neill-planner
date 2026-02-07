@@ -6,6 +6,9 @@
   "storage": {
     "rules": "storage.rules"
   },
+  "functions": {
+    "source": "functions"
+  },
   "hosting": {
     "public": "dist",
     "ignore": [
@@ -14,6 +17,14 @@
       "**/node_modules/**"
     ],
     "rewrites": [
+      {
+        "source": "/api/parse-task",
+        "function": "parseTask"
+      },
+      {
+        "source": "/api/generate-note",
+        "function": "generateNote"
+      },
       {
         "source": "**",
         "destination": "/index.html"

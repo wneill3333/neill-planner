@@ -201,3 +201,8 @@ export {
   APP_VERSION,
   BACKUP_FOLDER_NAME,
 } from './googleDrive.types';
+
+// =============================================================================
+// AI Types
+// =============================================================================
+export type { ParseTaskRequest, ParsedTaskData, GenerateNoteRequest, ParsedNoteData } from './ai.types';

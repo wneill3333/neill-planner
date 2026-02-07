@@ -18,6 +18,7 @@ import settingsReducer from '../features/settings/settingsSlice';
 import searchReducer from '../features/search/searchSlice';
 import adminReducer from '../features/admin/adminSlice';
 import backupReducer from '../features/backup/backupSlice';
+import aiReducer from '../features/ai/aiSlice';
 
 // =============================================================================
 // Root Reducer
@@ -39,6 +40,7 @@ const rootReducer = combineReducers({
   search: searchReducer,
   admin: adminReducer,
   backup: backupReducer,
+  ai: aiReducer,
 });
 
 // =============================================================================

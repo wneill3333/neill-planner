@@ -12,6 +12,7 @@ import { CategoryManagementPage } from './features/categories/CategoryManagement
 import { SettingsPage } from './features/settings/SettingsPage';
 import { AdminPage } from './features/admin';
 import { Spinner, PWAUpdatePrompt } from './components/common';
+import { NaturalLanguageInput, ParsedTaskPreview } from './components/ai';
 import type { AppView } from './components/layout/Header';
 import type { SnoozeOption } from './types';
 import { NotificationContainer } from './components/notifications';
@@ -126,6 +127,8 @@ function App() {
         onSnooze={handleSnoozeNotification}
       />
       <PWAUpdatePrompt />
+      <NaturalLanguageInput />
+      <ParsedTaskPreview />
     </>
   );
 }

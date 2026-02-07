@@ -113,7 +113,7 @@ export function RichTextEditor({
   // Update editor content when content prop changes
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content);
+      editor.commands.setContent(content || '');
     }
   }, [content, editor]);
 
