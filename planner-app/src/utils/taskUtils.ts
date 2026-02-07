@@ -146,12 +146,12 @@ export function isTaskComplete(task: Task): boolean {
 }
 
 /**
- * Check if a task is deleted (soft delete)
+ * Check if a task is cancelled or soft-deleted
  * @param task - The task to check
- * @returns true if the task is deleted
+ * @returns true if the task is cancelled or has a deletedAt timestamp
  */
-export function isTaskDeleted(task: Task): boolean {
-  return task.status === 'delete' || task.deletedAt !== null;
+export function isTaskCancelled(task: Task): boolean {
+  return task.status === 'cancelled' || task.deletedAt !== null;
 }
 
 /**
@@ -187,7 +187,7 @@ export function countTasksByStatus(tasks: Task[]): Record<TaskStatus, number> {
     in_progress: 0,
     forward: 0,
     complete: 0,
-    delete: 0,
+    cancelled: 0,
     delegate: 0,
   };
 

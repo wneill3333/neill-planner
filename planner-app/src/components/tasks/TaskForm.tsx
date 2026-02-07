@@ -73,7 +73,7 @@ const STATUS_OPTIONS: SelectOption[] = [
   { value: 'in_progress', label: `${TaskStatusSymbols.in_progress} ${TaskStatusLabels.in_progress}` },
   { value: 'complete', label: `${TaskStatusSymbols.complete} ${TaskStatusLabels.complete}` },
   { value: 'forward', label: `${TaskStatusSymbols.forward} ${TaskStatusLabels.forward}` },
-  { value: 'delete', label: `${TaskStatusSymbols.delete} ${TaskStatusLabels.delete}` },
+  { value: 'cancelled', label: `${TaskStatusSymbols.cancelled} ${TaskStatusLabels.cancelled}` },
   { value: 'delegate', label: `${TaskStatusSymbols.delegate} ${TaskStatusLabels.delegate}` },
 ];
 

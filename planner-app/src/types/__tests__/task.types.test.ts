@@ -72,7 +72,7 @@ describe('Task Types', () => {
       expect(TaskStatusSymbols.in_progress).toBe('●');
       expect(TaskStatusSymbols.forward).toBe('➜');
       expect(TaskStatusSymbols.complete).toBe('✔');
-      expect(TaskStatusSymbols.delete).toBe('✘');
+      expect(TaskStatusSymbols.cancelled).toBe('✘');
       expect(TaskStatusSymbols.delegate).toBe('◯');
     });
 
@@ -80,7 +80,7 @@ describe('Task Types', () => {
       expect(TaskStatusLabels.in_progress).toBe('In Progress');
       expect(TaskStatusLabels.forward).toBe('Forward');
       expect(TaskStatusLabels.complete).toBe('Complete');
-      expect(TaskStatusLabels.delete).toBe('Delete');
+      expect(TaskStatusLabels.cancelled).toBe('Cancelled');
       expect(TaskStatusLabels.delegate).toBe('Delegate');
     });
 
@@ -393,7 +393,7 @@ describe('Type Safety', () => {
       'in_progress',
       'forward',
       'complete',
-      'delete',
+      'cancelled',
       'delegate',
     ];
     expect(validStatuses).toHaveLength(5);

@@ -684,13 +684,9 @@ export const updateRecurringInstanceStatus = createAsyncThunk<
         userId
       );
 
-      // Return the task with the new status for UI purposes
-      // The actual status on the parent task document remains unchanged
-      // but the UI should show the modified status for this date
-      return {
-        ...updatedTask,
-        status: newStatus, // Override for UI display
-      };
+      // Return the updated task as-is (status field unchanged on parent)
+      // The selector applies instanceModifications per-date to show the correct status
+      return updatedTask;
     }
 
     // Case 2 & 3: This is a recurring instance (virtual or materialized)

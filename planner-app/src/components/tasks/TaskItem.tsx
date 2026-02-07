@@ -95,7 +95,8 @@ function TaskItemComponent({
 }: TaskItemProps) {
   const isComplete = isTaskComplete(task);
   const isForwarded = task.status === 'forward';
-  const isDimmed = isComplete || isForwarded;
+  const isCancelled = task.status === 'cancelled';
+  const isDimmed = isComplete || isForwarded || isCancelled;
   const isRecurring = isTaskRecurring(task);
   const priorityLabel = formatPriorityLabel(task);
 

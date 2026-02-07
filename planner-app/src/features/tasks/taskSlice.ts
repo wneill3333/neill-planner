@@ -1322,12 +1322,9 @@ export const selectTasksWithRecurringInstances = createSelector(
     // Combine regular tasks and numbered instances
     const allTasks = [...regularTasks, ...numberedInstances];
 
-    // Filter out tasks with 'delete' status - they should not be displayed
-    const visibleTasks = allTasks.filter((task) => task.status !== 'delete');
-
     // Deduplicate by task ID (prefer first occurrence - regular tasks over generated instances)
     const seenIds = new Set<string>();
-    const uniqueByIdTasks = visibleTasks.filter((task) => {
+    const uniqueByIdTasks = allTasks.filter((task) => {
       if (seenIds.has(task.id)) {
         return false;
       }

@@ -13,14 +13,14 @@ import { TaskStatusSymbols } from '../types';
 
 /**
  * Defines the order in which statuses cycle when clicking
- * in_progress -> complete -> forward -> delegate -> delete -> in_progress
+ * in_progress -> complete -> forward -> delegate -> cancelled -> in_progress
  */
 export const STATUS_ORDER: TaskStatus[] = [
   'in_progress',
   'complete',
   'forward',
   'delegate',
-  'delete',
+  'cancelled',
 ];
 
 /**
@@ -56,7 +56,7 @@ export const STATUS_LABELS: Record<TaskStatus, string> = {
   in_progress: 'In Progress',
   forward: 'Forwarded',
   complete: 'Complete',
-  delete: 'Deleted',
+  cancelled: 'Cancelled',
   delegate: 'Delegated',
 } as const;
 
@@ -93,7 +93,7 @@ export const STATUS_COLORS: Record<TaskStatus, string> = {
   in_progress: '#3B82F6', // Blue
   forward: '#8B5CF6', // Purple
   complete: '#22C55E', // Green
-  delete: '#EF4444', // Red
+  cancelled: '#9CA3AF', // Gray
   delegate: '#F97316', // Orange
 } as const;
 
@@ -104,7 +104,7 @@ export const STATUS_COLOR_CLASSES: Record<TaskStatus, { bg: string; text: string
   in_progress: { bg: 'bg-blue-500', text: 'text-blue-600', border: 'border-blue-500' },
   forward: { bg: 'bg-purple-500', text: 'text-purple-600', border: 'border-purple-500' },
   complete: { bg: 'bg-green-500', text: 'text-green-600', border: 'border-green-500' },
-  delete: { bg: 'bg-red-500', text: 'text-red-600', border: 'border-red-500' },
+  cancelled: { bg: 'bg-gray-400', text: 'text-gray-500', border: 'border-gray-400' },
   delegate: { bg: 'bg-orange-500', text: 'text-orange-600', border: 'border-orange-500' },
 } as const;
 
@@ -137,7 +137,7 @@ export const STATUS_DESCRIPTIONS: Record<TaskStatus, string> = {
   in_progress: 'Task is active and in progress',
   forward: 'Task has been moved to another day',
   complete: 'Task has been completed',
-  delete: 'Task has been marked for deletion',
+  cancelled: 'Task has been cancelled',
   delegate: 'Task has been delegated to someone else',
 } as const;
 
@@ -160,7 +160,7 @@ export function getStatusDescription(status: TaskStatus): string {
  * @returns true if the status is complete, delete, or delegate
  */
 export function isClosedStatus(status: TaskStatus): boolean {
-  return status === 'complete' || status === 'delete' || status === 'delegate';
+  return status === 'complete' || status === 'cancelled' || status === 'delegate';
 }
 
 /**

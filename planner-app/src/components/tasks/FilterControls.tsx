@@ -37,7 +37,7 @@ export interface FilterControlsProps {
 }
 
 // All available statuses for filtering
-const ALL_STATUSES: TaskStatus[] = ['in_progress', 'complete', 'forward', 'delegate', 'delete'];
+const ALL_STATUSES: TaskStatus[] = ['in_progress', 'complete', 'forward', 'delegate', 'cancelled'];
 
 // =============================================================================
 // Component

@@ -210,15 +210,6 @@ export function TaskListContainer({
   const handleStatusClick = useCallback(
     (task: Task) => {
       const nextStatus = getNextStatus(task.status);
-
-      // Intercept delete status for any recurring task (instance OR parent)
-      const isRecurring = task.isRecurringInstance || task.recurrence !== null;
-      if (nextStatus === 'delete' && isRecurring) {
-        setRecurringDeleteTask(task);
-        setShowRecurringDeleteDialog(true);
-        return;
-      }
-
       handleStatusChange(task, nextStatus);
     },
     [handleStatusChange]

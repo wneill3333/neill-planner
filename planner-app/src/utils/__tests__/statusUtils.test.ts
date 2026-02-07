@@ -35,7 +35,7 @@ describe('STATUS_ORDER', () => {
     expect(STATUS_ORDER).toContain('complete');
     expect(STATUS_ORDER).toContain('forward');
     expect(STATUS_ORDER).toContain('delegate');
-    expect(STATUS_ORDER).toContain('delete');
+    expect(STATUS_ORDER).toContain('cancelled');
   });
 
   it('should start with in_progress', () => {
@@ -60,12 +60,12 @@ describe('getNextStatus', () => {
     expect(getNextStatus('forward')).toBe('delegate');
   });
 
-  it('should cycle delegate to delete', () => {
-    expect(getNextStatus('delegate')).toBe('delete');
+  it('should cycle delegate to cancelled', () => {
+    expect(getNextStatus('delegate')).toBe('cancelled');
   });
 
-  it('should cycle delete back to in_progress', () => {
-    expect(getNextStatus('delete')).toBe('in_progress');
+  it('should cycle cancelled back to in_progress', () => {
+    expect(getNextStatus('cancelled')).toBe('in_progress');
   });
 
   it('should complete full cycle', () => {
@@ -90,8 +90,8 @@ describe('getNextStatus', () => {
 // =============================================================================
 
 describe('getPreviousStatus', () => {
-  it('should go backwards from in_progress to delete', () => {
-    expect(getPreviousStatus('in_progress')).toBe('delete');
+  it('should go backwards from in_progress to cancelled', () => {
+    expect(getPreviousStatus('in_progress')).toBe('cancelled');
   });
 
   it('should go backwards from complete to in_progress', () => {
@@ -106,8 +106,8 @@ describe('getPreviousStatus', () => {
     expect(getPreviousStatus('delegate')).toBe('forward');
   });
 
-  it('should go backwards from delete to delegate', () => {
-    expect(getPreviousStatus('delete')).toBe('delegate');
+  it('should go backwards from cancelled to delegate', () => {
+    expect(getPreviousStatus('cancelled')).toBe('delegate');
   });
 
   it('should be inverse of getNextStatus', () => {
@@ -128,7 +128,7 @@ describe('STATUS_LABELS', () => {
     expect(STATUS_LABELS.in_progress).toBe('In Progress');
     expect(STATUS_LABELS.forward).toBe('Forwarded');
     expect(STATUS_LABELS.complete).toBe('Complete');
-    expect(STATUS_LABELS.delete).toBe('Deleted');
+    expect(STATUS_LABELS.cancelled).toBe('Cancelled');
     expect(STATUS_LABELS.delegate).toBe('Delegated');
   });
 });
@@ -138,7 +138,7 @@ describe('getStatusLabel', () => {
     expect(getStatusLabel('in_progress')).toBe('In Progress');
     expect(getStatusLabel('forward')).toBe('Forwarded');
     expect(getStatusLabel('complete')).toBe('Complete');
-    expect(getStatusLabel('delete')).toBe('Deleted');
+    expect(getStatusLabel('cancelled')).toBe('Cancelled');
     expect(getStatusLabel('delegate')).toBe('Delegated');
   });
 });
@@ -160,8 +160,8 @@ describe('getStatusSymbol', () => {
     expect(getStatusSymbol('complete')).toBe('✔');
   });
 
-  it('should return correct symbol for delete', () => {
-    expect(getStatusSymbol('delete')).toBe('✘');
+  it('should return correct symbol for cancelled', () => {
+    expect(getStatusSymbol('cancelled')).toBe('✘');
   });
 
   it('should return correct symbol for delegate', () => {
@@ -178,7 +178,7 @@ describe('STATUS_COLORS', () => {
     expect(STATUS_COLORS.in_progress).toBe('#3B82F6'); // Blue
     expect(STATUS_COLORS.forward).toBe('#8B5CF6'); // Purple
     expect(STATUS_COLORS.complete).toBe('#22C55E'); // Green
-    expect(STATUS_COLORS.delete).toBe('#EF4444'); // Red
+    expect(STATUS_COLORS.cancelled).toBe('#9CA3AF'); // Gray
     expect(STATUS_COLORS.delegate).toBe('#F97316'); // Orange
   });
 
@@ -192,7 +192,7 @@ describe('getStatusColor', () => {
     expect(getStatusColor('in_progress')).toBe('#3B82F6');
     expect(getStatusColor('forward')).toBe('#8B5CF6');
     expect(getStatusColor('complete')).toBe('#22C55E');
-    expect(getStatusColor('delete')).toBe('#EF4444');
+    expect(getStatusColor('cancelled')).toBe('#9CA3AF');
     expect(getStatusColor('delegate')).toBe('#F97316');
   });
 });
@@ -214,10 +214,10 @@ describe('STATUS_COLOR_CLASSES', () => {
       text: 'text-green-600',
       border: 'border-green-500',
     });
-    expect(STATUS_COLOR_CLASSES.delete).toEqual({
-      bg: 'bg-red-500',
-      text: 'text-red-600',
-      border: 'border-red-500',
+    expect(STATUS_COLOR_CLASSES.cancelled).toEqual({
+      bg: 'bg-gray-400',
+      text: 'text-gray-500',
+      border: 'border-gray-400',
     });
     expect(STATUS_COLOR_CLASSES.delegate).toEqual({
       bg: 'bg-orange-500',
@@ -250,7 +250,7 @@ describe('STATUS_DESCRIPTIONS', () => {
     expect(STATUS_DESCRIPTIONS.in_progress).toBe('Task is active and in progress');
     expect(STATUS_DESCRIPTIONS.forward).toBe('Task has been moved to another day');
     expect(STATUS_DESCRIPTIONS.complete).toBe('Task has been completed');
-    expect(STATUS_DESCRIPTIONS.delete).toBe('Task has been marked for deletion');
+    expect(STATUS_DESCRIPTIONS.cancelled).toBe('Task has been cancelled');
     expect(STATUS_DESCRIPTIONS.delegate).toBe('Task has been delegated to someone else');
   });
 });
@@ -272,8 +272,8 @@ describe('isClosedStatus', () => {
     expect(isClosedStatus('complete')).toBe(true);
   });
 
-  it('should return true for delete status', () => {
-    expect(isClosedStatus('delete')).toBe(true);
+  it('should return true for cancelled status', () => {
+    expect(isClosedStatus('cancelled')).toBe(true);
   });
 
   it('should return true for delegate status', () => {
@@ -302,8 +302,8 @@ describe('isActiveStatus', () => {
     expect(isActiveStatus('complete')).toBe(false);
   });
 
-  it('should return false for delete status', () => {
-    expect(isActiveStatus('delete')).toBe(false);
+  it('should return false for cancelled status', () => {
+    expect(isActiveStatus('cancelled')).toBe(false);
   });
 
   it('should return false for delegate status', () => {
@@ -326,7 +326,7 @@ describe('getAllStatuses', () => {
     expect(statuses).toContain('complete');
     expect(statuses).toContain('forward');
     expect(statuses).toContain('delegate');
-    expect(statuses).toContain('delete');
+    expect(statuses).toContain('cancelled');
   });
 
   it('should return a new array (not the original)', () => {

@@ -159,7 +159,7 @@ export function validatePriorityNumber(num: unknown): asserts num is number {
  * Validate task status
  */
 export function validateTaskStatus(status: unknown): asserts status is TaskStatus {
-  const validStatuses: TaskStatus[] = ['in_progress', 'forward', 'complete', 'delete', 'delegate'];
+  const validStatuses: TaskStatus[] = ['in_progress', 'forward', 'complete', 'cancelled', 'delegate'];
 
   if (typeof status !== 'string' || !validStatuses.includes(status as TaskStatus)) {
     throw new ValidationError(

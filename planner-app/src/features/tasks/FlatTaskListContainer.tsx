@@ -11,7 +11,7 @@ import { useAuth } from '../auth';
 import { useSelectedDateTasks } from './hooks';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { useAnnouncement } from '../../hooks';
-import { updateTaskAsync, forwardTaskAsync, deleteTask, batchUpdateTasksAsync, deleteRecurringInstanceOnly, deleteRecurringFuture, editRecurringInstanceOnly, completeAfterCompletionTask } from './taskThunks';
+import { updateTaskAsync, forwardTaskAsync, deleteTask, batchUpdateTasksAsync, deleteRecurringInstanceOnly, deleteRecurringFuture, editRecurringInstanceOnly, completeAfterCompletionTask, updateRecurringInstanceStatus } from './taskThunks';
 import { selectRecurringPatterns } from './taskSlice';
 import { selectHideCompletedTasks } from '../filters/filterSlice';
 import { FlatTaskList, DraggableFlatTaskList, ForwardDateModal, RecurringDeleteDialog } from '../../components/tasks';
@@ -161,7 +161,7 @@ export function FlatTaskListContainer({
   // Filter out completed/forwarded/delegated tasks if toggle is active
   const visibleTasks = useMemo(
     () => hideCompleted
-      ? sortedTasks.filter(t => t.status !== 'complete' && t.status !== 'forward' && t.status !== 'delegate')
+      ? sortedTasks.filter(t => t.status !== 'complete' && t.status !== 'forward' && t.status !== 'delegate' && t.status !== 'cancelled')
       : sortedTasks,
     [hideCompleted, sortedTasks]
   );
@@ -203,6 +203,17 @@ export function FlatTaskListContainer({
               parentTaskId: task.recurringParentId,
               instanceDate: task.instanceDate,
               updates: { status: newStatus },
+            })
+          ).unwrap();
+          announce(`Task status updated to ${statusLabel}`);
+        } else if (task.recurrence !== null) {
+          // Legacy recurring parent task: store as instance modification so
+          // only this day is affected, not future occurrences
+          await dispatch(
+            updateRecurringInstanceStatus({
+              userId,
+              task,
+              newStatus,
             })
           ).unwrap();
           announce(`Task status updated to ${statusLabel}`);

@@ -19,7 +19,7 @@ import {
   getStatusColor,
   formatPriorityLabel,
   isTaskComplete,
-  isTaskDeleted,
+  isTaskCancelled,
   isTaskRecurring,
   getNonEmptyPriorityGroups,
   countTasksByStatus,
@@ -118,7 +118,7 @@ describe('Status Constants', () => {
       expect(STATUS_COLORS.in_progress).toBe('#3B82F6'); // Blue
       expect(STATUS_COLORS.forward).toBe('#8B5CF6'); // Purple
       expect(STATUS_COLORS.complete).toBe('#22C55E'); // Green
-      expect(STATUS_COLORS.delete).toBe('#EF4444'); // Red
+      expect(STATUS_COLORS.cancelled).toBe('#9CA3AF'); // Gray
       expect(STATUS_COLORS.delegate).toBe('#F97316'); // Orange
     });
 
@@ -271,8 +271,8 @@ describe('getStatusSymbol', () => {
     expect(getStatusSymbol('complete')).toBe('✔');
   });
 
-  it('should return correct symbol for delete', () => {
-    expect(getStatusSymbol('delete')).toBe('✘');
+  it('should return correct symbol for cancelled', () => {
+    expect(getStatusSymbol('cancelled')).toBe('✘');
   });
 
   it('should return correct symbol for delegate', () => {
@@ -308,7 +308,7 @@ describe('getStatusColor', () => {
     expect(getStatusColor('in_progress')).toBe('#3B82F6');
     expect(getStatusColor('forward')).toBe('#8B5CF6');
     expect(getStatusColor('complete')).toBe('#22C55E');
-    expect(getStatusColor('delete')).toBe('#EF4444');
+    expect(getStatusColor('cancelled')).toBe('#9CA3AF');
     expect(getStatusColor('delegate')).toBe('#F97316');
   });
 });
@@ -339,25 +339,25 @@ describe('isTaskComplete', () => {
   it('should return false for non-completed tasks', () => {
     expect(isTaskComplete(createMockTask({ status: 'in_progress' }))).toBe(false);
     expect(isTaskComplete(createMockTask({ status: 'forward' }))).toBe(false);
-    expect(isTaskComplete(createMockTask({ status: 'delete' }))).toBe(false);
+    expect(isTaskComplete(createMockTask({ status: 'cancelled' }))).toBe(false);
     expect(isTaskComplete(createMockTask({ status: 'delegate' }))).toBe(false);
   });
 });
 
-describe('isTaskDeleted', () => {
-  it('should return true for tasks with delete status', () => {
-    const task = createMockTask({ status: 'delete' });
-    expect(isTaskDeleted(task)).toBe(true);
+describe('isTaskCancelled', () => {
+  it('should return true for tasks with cancelled status', () => {
+    const task = createMockTask({ status: 'cancelled' });
+    expect(isTaskCancelled(task)).toBe(true);
   });
 
   it('should return true for tasks with deletedAt timestamp', () => {
     const task = createMockTask({ status: 'in_progress', deletedAt: new Date() });
-    expect(isTaskDeleted(task)).toBe(true);
+    expect(isTaskCancelled(task)).toBe(true);
   });
 
   it('should return false for active tasks', () => {
     const task = createMockTask({ status: 'in_progress', deletedAt: null });
-    expect(isTaskDeleted(task)).toBe(false);
+    expect(isTaskCancelled(task)).toBe(false);
   });
 });
 
@@ -430,7 +430,7 @@ describe('countTasksByStatus', () => {
     expect(result.in_progress).toBe(0);
     expect(result.forward).toBe(0);
     expect(result.complete).toBe(0);
-    expect(result.delete).toBe(0);
+    expect(result.cancelled).toBe(0);
     expect(result.delegate).toBe(0);
   });
 
@@ -440,7 +440,7 @@ describe('countTasksByStatus', () => {
       createMockTask({ id: '2', status: 'in_progress' }),
       createMockTask({ id: '3', status: 'complete' }),
       createMockTask({ id: '4', status: 'forward' }),
-      createMockTask({ id: '5', status: 'delete' }),
+      createMockTask({ id: '5', status: 'cancelled' }),
       createMockTask({ id: '6', status: 'delegate' }),
       createMockTask({ id: '7', status: 'complete' }),
     ];
@@ -450,7 +450,7 @@ describe('countTasksByStatus', () => {
     expect(result.in_progress).toBe(2);
     expect(result.forward).toBe(1);
     expect(result.complete).toBe(2);
-    expect(result.delete).toBe(1);
+    expect(result.cancelled).toBe(1);
     expect(result.delegate).toBe(1);
   });
 });

@@ -38,7 +38,7 @@ export interface TaskPriority {
 /**
  * Task status representing current state
  */
-export type TaskStatus = 'in_progress' | 'forward' | 'complete' | 'delete' | 'delegate';
+export type TaskStatus = 'in_progress' | 'forward' | 'complete' | 'cancelled' | 'delegate';
 
 /**
  * Visual symbols for each task status
@@ -47,7 +47,7 @@ export const TaskStatusSymbols: Record<TaskStatus, string> = {
   in_progress: '●',
   forward: '➜',
   complete: '✔',
-  delete: '✘',
+  cancelled: '✘',
   delegate: '◯',
 } as const;
 
@@ -58,7 +58,7 @@ export const TaskStatusLabels: Record<TaskStatus, string> = {
   in_progress: 'In Progress',
   forward: 'Forward',
   complete: 'Complete',
-  delete: 'Delete',
+  cancelled: 'Cancelled',
   delegate: 'Delegate',
 } as const;
 

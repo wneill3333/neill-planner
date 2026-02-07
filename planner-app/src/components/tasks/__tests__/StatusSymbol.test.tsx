@@ -30,8 +30,8 @@ describe('StatusSymbol', () => {
       expect(screen.getByTestId('status-symbol')).toHaveTextContent('✔');
     });
 
-    it('should render delete status symbol', () => {
-      render(<StatusSymbol status="delete" />);
+    it('should render cancelled status symbol', () => {
+      render(<StatusSymbol status="cancelled" />);
       expect(screen.getByTestId('status-symbol')).toHaveTextContent('✘');
     });
 
@@ -45,7 +45,7 @@ describe('StatusSymbol', () => {
         { status: 'in_progress', symbol: '●' },
         { status: 'forward', symbol: '➜' },
         { status: 'complete', symbol: '✔' },
-        { status: 'delete', symbol: '✘' },
+        { status: 'cancelled', symbol: '✘' },
         { status: 'delegate', symbol: '◯' },
       ];
 
@@ -61,7 +61,7 @@ describe('StatusSymbol', () => {
         { status: 'in_progress', color: 'rgb(59, 130, 246)' }, // #3B82F6
         { status: 'forward', color: 'rgb(139, 92, 246)' }, // #8B5CF6
         { status: 'complete', color: 'rgb(34, 197, 94)' }, // #22C55E
-        { status: 'delete', color: 'rgb(239, 68, 68)' }, // #EF4444
+        { status: 'cancelled', color: 'rgb(156, 163, 175)' }, // #9CA3AF
         { status: 'delegate', color: 'rgb(249, 115, 22)' }, // #F97316
       ];
 
@@ -308,8 +308,8 @@ describe('StatusSymbol', () => {
         { status: 'in_progress', nextLabel: 'Complete' },
         { status: 'complete', nextLabel: 'Forwarded' },
         { status: 'forward', nextLabel: 'Delegated' },
-        { status: 'delegate', nextLabel: 'Deleted' },
-        { status: 'delete', nextLabel: 'In Progress' },
+        { status: 'delegate', nextLabel: 'Cancelled' },
+        { status: 'cancelled', nextLabel: 'In Progress' },
       ];
 
       for (const { status, nextLabel } of statusTransitions) {

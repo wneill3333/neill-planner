@@ -86,7 +86,7 @@ describe('TaskItem', () => {
         { status: 'in_progress' as const, symbol: '●' },
         { status: 'forward' as const, symbol: '➜' },
         { status: 'complete' as const, symbol: '✔' },
-        { status: 'delete' as const, symbol: '✘' },
+        { status: 'cancelled' as const, symbol: '✘' },
         { status: 'delegate' as const, symbol: '◯' },
       ];
 

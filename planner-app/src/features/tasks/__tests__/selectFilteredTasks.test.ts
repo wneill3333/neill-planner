@@ -202,7 +202,7 @@ describe('selectFilteredTasks', () => {
     });
 
     it('should return empty array when no tasks match status filter', () => {
-      const state = createMockRootState(mockTasks, ['delete']);
+      const state = createMockRootState(mockTasks, ['cancelled']);
       const result = selectFilteredTasks(state, '2024-01-15');
 
       expect(result).toHaveLength(0);
