@@ -9,11 +9,15 @@ Before we move to the next phase and complete it in one shot.  You will coordina
 You do not need to ask permissions to create/edit/delete files.
 
 
-npx vite build && firebase deploy --only hosting
+App-Key for API
+(stored in Firebase secrets - do not commit to git)
 
-805078437907
-https://805078437907805078437907.web.app
+Upgrades to App:
+Redo UI. Waste alot of room. Change the active tab color to something different. it is hard to tell what tab is active. 
+Manage Recurring events form - like we have manage recurring tasks.
+Attaching files to notes not working.  Need to be able to view and delete these files.
+Search need to be redone.
 
 
-Under monthly recurring, remove specific dates of the month.
-Under yearly recurring user needs to add a specific date ie Feb 10th each year
+I want to note that shows that I pay my property taxes and the category is home and in the notes say I paid it online and to make sure to attach the file
+

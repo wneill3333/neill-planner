@@ -18,7 +18,7 @@ import {
   selectRecurringParentEvents,
 } from './eventSlice';
 import { fetchEventsByDate, fetchRecurringEvents, fetchUserEvents } from './eventThunks';
-import { generateRecurringInstances } from '../../utils/recurrenceUtils';
+import { generateRecurringEventInstances } from '../../utils/recurrenceUtils';
 import { startOfDay, eachDayOfInterval, isSameDay } from 'date-fns';
 import type { Event } from '../../types';
 
@@ -336,7 +336,7 @@ export function useEventsByRange(
     if (recurringParentEvents) {
       for (const parentEvent of Object.values(recurringParentEvents)) {
         // Generate instances for each day in the range
-        const instances = generateRecurringInstances(parentEvent, normalizedStart, normalizedEnd);
+        const instances = generateRecurringEventInstances(parentEvent, normalizedStart, normalizedEnd);
 
         // Filter out instances that already have materialized events
         for (const instance of instances) {

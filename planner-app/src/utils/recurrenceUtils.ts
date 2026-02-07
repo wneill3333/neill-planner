@@ -33,6 +33,7 @@ import type {
   RecurringPattern,
   NthWeekday,
 } from '../types/task.types';
+import type { Event } from '../types/event.types';
 import { normalizeToDateString, toDateObject } from './dateUtils';
 
 /**
@@ -562,6 +563,194 @@ export function generateRecurringInstances(
       `Reached maximum recurring instances limit (${MAX_RECURRING_INSTANCES}) for task ${task.id}. ` +
         `This may indicate an issue with the recurrence pattern or date range.`
     );
+  }
+
+  return instances;
+}
+
+/**
+ * Generate recurring event instances within a date range
+ *
+ * Like generateRecurringInstances but for Event objects, which use
+ * startTime/endTime instead of scheduledDate.
+ *
+ * @param event - The parent recurring event with recurrence pattern
+ * @param rangeStart - Start of date range (inclusive)
+ * @param rangeEnd - End of date range (inclusive)
+ * @returns Array of event instances, one for each occurrence in the range
+ */
+export function generateRecurringEventInstances(
+  event: Event,
+  rangeStart: Date,
+  rangeEnd: Date
+): Event[] {
+  if (!event.recurrence) {
+    return [];
+  }
+
+  if (!event.startTime) {
+    return [];
+  }
+
+  const pattern = event.recurrence;
+
+  // Validate pattern configuration
+  if (pattern.interval <= 0) {
+    return [];
+  }
+
+  if (pattern.type === 'weekly' && (!pattern.daysOfWeek || pattern.daysOfWeek.length === 0)) {
+    return [];
+  }
+
+  if (pattern.type === 'monthly' && (pattern.dayOfMonth === null || pattern.dayOfMonth < 1 || pattern.dayOfMonth > 31)) {
+    return [];
+  }
+
+  if (pattern.type === 'yearly') {
+    if (pattern.monthOfYear === null || pattern.monthOfYear < 1 || pattern.monthOfYear > 12) {
+      return [];
+    }
+    if (pattern.dayOfMonth === null || pattern.dayOfMonth < 1 || pattern.dayOfMonth > 31) {
+      return [];
+    }
+  }
+
+  const instances: Event[] = [];
+  const normalizedRangeStart = startOfDay(rangeStart);
+  const normalizedRangeEnd = startOfDay(rangeEnd);
+
+  // Use the event's startTime as the recurrence anchor date
+  const eventStartDateString = normalizeToDateString(event.startTime);
+  if (!eventStartDateString) {
+    return [];
+  }
+  const eventStartDate = toDateObject(eventStartDateString);
+
+  // Calculate event duration in milliseconds for shifting endTime
+  const durationMs = new Date(event.endTime).getTime() - new Date(event.startTime).getTime();
+
+  // Extract time-of-day from the original event's startTime
+  const originalStart = new Date(event.startTime);
+  const startHours = originalStart.getHours();
+  const startMinutes = originalStart.getMinutes();
+
+  // Create exception date set for O(1) lookup
+  const exceptionDates = new Set(
+    pattern.exceptions.map((d) => normalizeToDateString(d)).filter(Boolean)
+  );
+
+  // If range is entirely before event start date, return empty
+  if (isAfter(eventStartDate, normalizedRangeEnd)) {
+    return [];
+  }
+
+  // For occurrence-based end conditions, count occurrences before rangeStart
+  let occurrenceCount = 0;
+  if (pattern.endCondition.type === 'occurrences' && isBefore(eventStartDate, normalizedRangeStart)) {
+    let countDate = eventStartDate;
+
+    if (pattern.type === 'weekly' && pattern.daysOfWeek && pattern.daysOfWeek.length > 0) {
+      const dayOfWeek = getDay(countDate);
+      if (!pattern.daysOfWeek.includes(dayOfWeek)) {
+        const next = getNextOccurrence(pattern, countDate);
+        if (next) countDate = next;
+      }
+    }
+
+    while (isBefore(countDate, normalizedRangeStart)) {
+      const dateKey = normalizeToDateString(countDate);
+      if (!exceptionDates.has(dateKey)) {
+        occurrenceCount++;
+      }
+      if (pattern.endCondition.maxOccurrences && occurrenceCount >= pattern.endCondition.maxOccurrences) {
+        return [];
+      }
+      const next = getNextOccurrence(pattern, countDate);
+      if (!next) break;
+      countDate = next;
+    }
+  }
+
+  // Start from event start date or range start, whichever is later
+  let currentDate = isBefore(eventStartDate, normalizedRangeStart)
+    ? normalizedRangeStart
+    : eventStartDate;
+
+  // For weekly recurrence, find the first valid day on or after currentDate
+  if (pattern.type === 'weekly') {
+    if (isAfter(currentDate, eventStartDate)) {
+      let candidate = currentDate;
+      let found = false;
+
+      for (let i = 0; i < 7 * pattern.interval; i++) {
+        const dayOfWeek = getDay(candidate);
+        if (pattern.daysOfWeek.includes(dayOfWeek)) {
+          currentDate = candidate;
+          found = true;
+          break;
+        }
+        candidate = addDays(candidate, 1);
+      }
+
+      if (!found) {
+        const next = getNextOccurrence(pattern, eventStartDate);
+        if (next) currentDate = next;
+      }
+    } else {
+      const dayOfWeek = getDay(currentDate);
+      if (!pattern.daysOfWeek.includes(dayOfWeek)) {
+        const next = getNextOccurrence(pattern, currentDate);
+        if (next) currentDate = next;
+      }
+    }
+  } else {
+    // For non-weekly patterns, advance to the first occurrence on or after currentDate
+    if (isBefore(eventStartDate, currentDate)) {
+      let candidate = eventStartDate;
+      while (isBefore(candidate, currentDate)) {
+        const next = getNextOccurrence(pattern, candidate);
+        if (!next) break;
+        candidate = next;
+      }
+      currentDate = candidate;
+    }
+  }
+
+  // Generate instances
+  while (
+    !isAfter(currentDate, normalizedRangeEnd) &&
+    !hasReachedEndCondition(pattern.endCondition, occurrenceCount, currentDate) &&
+    instances.length < MAX_RECURRING_INSTANCES
+  ) {
+    const dateKey = normalizeToDateString(currentDate);
+
+    if (!exceptionDates.has(dateKey)) {
+      // Build instance startTime preserving the original time-of-day
+      const instanceStartTime = new Date(currentDate);
+      instanceStartTime.setHours(startHours, startMinutes, 0, 0);
+
+      // Build instance endTime by adding the original duration
+      const instanceEndTime = new Date(instanceStartTime.getTime() + durationMs);
+
+      const instance: Event = {
+        ...event,
+        id: `${event.id}_${dateKey}`,
+        startTime: instanceStartTime,
+        endTime: instanceEndTime,
+        instanceDate: new Date(currentDate),
+        isRecurringInstance: true,
+        recurringParentId: event.id,
+        recurrence: null, // Instances don't have their own recurrence
+      };
+
+      instances.push(instance);
+      occurrenceCount++;
+    }
+
+    const next = getNextOccurrence(pattern, currentDate);
+    if (!next) break;
+    currentDate = next;
   }
 
   return instances;

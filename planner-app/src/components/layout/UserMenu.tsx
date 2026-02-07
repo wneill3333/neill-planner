@@ -23,6 +23,8 @@ export interface UserMenuProps {
   onAdminClick?: () => void;
   /** Callback when manage recurring tasks is clicked */
   onManageRecurringClick?: () => void;
+  /** Callback when manage recurring events is clicked */
+  onManageRecurringEventsClick?: () => void;
 }
 
 // =============================================================================
@@ -68,7 +70,7 @@ function getUserInitials(displayName: string | null, email: string | null): stri
  * <UserMenu />
  * ```
  */
-export function UserMenu({ className, testId, onSettingsClick, onAdminClick, onManageRecurringClick }: UserMenuProps = {}) {
+export function UserMenu({ className, testId, onSettingsClick, onAdminClick, onManageRecurringClick, onManageRecurringEventsClick }: UserMenuProps = {}) {
   const { user, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -122,6 +124,11 @@ export function UserMenu({ className, testId, onSettingsClick, onAdminClick, onM
     onManageRecurringClick?.();
     setIsOpen(false);
   }, [onManageRecurringClick]);
+
+  const handleManageRecurringEventsClick = useCallback(() => {
+    onManageRecurringEventsClick?.();
+    setIsOpen(false);
+  }, [onManageRecurringEventsClick]);
 
   const handleSignOut = useCallback(async () => {
     try {
@@ -267,6 +274,44 @@ export function UserMenu({ className, testId, onSettingsClick, onAdminClick, onM
                   />
                 </svg>
                 Manage Recurring Tasks
+              </div>
+            </button>
+
+            {/* Manage Recurring Events */}
+            <button
+              type="button"
+              onClick={handleManageRecurringEventsClick}
+              className="
+                w-full px-4 py-2 text-left text-sm text-gray-700
+                hover:bg-gray-100
+                focus:outline-none focus:bg-gray-100
+                transition-colors duration-150
+              "
+              role="menuitem"
+              data-testid="manage-recurring-events-button"
+            >
+              <div className="flex items-center gap-2">
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9"
+                  />
+                </svg>
+                Manage Recurring Events
               </div>
             </button>
 

@@ -9,7 +9,7 @@ import { createSlice, createSelector, type PayloadAction } from '@reduxjs/toolki
 import { startOfDay } from 'date-fns';
 import type { Event, SyncStatus } from '../../types';
 import type { RootState } from '../../store';
-import { generateRecurringInstances } from '../../utils/recurrenceUtils';
+import { generateRecurringEventInstances } from '../../utils/recurrenceUtils';
 import {
   fetchUserEvents,
   fetchEventsByDate,
@@ -512,7 +512,7 @@ export const selectEventsWithRecurringInstances = createSelector(
       }
 
       // Generate instances for this single date
-      const instances = generateRecurringInstances(parentEvent, dateObj, dateObj);
+      const instances = generateRecurringEventInstances(parentEvent, dateObj, dateObj);
       recurringInstances.push(...instances);
     }
 

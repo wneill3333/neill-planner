@@ -8,3 +8,4 @@ export { EventForm } from './EventForm';
 export { TimeBlockCalendar } from './TimeBlockCalendar';
 export { WeekView } from './WeekView';
 export { MonthView } from './MonthView';
+export { RecurringEventsManager } from './RecurringEventsManager';

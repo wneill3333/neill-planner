@@ -12,6 +12,7 @@ import { SyncStatusIndicator } from '../common/SyncStatusIndicator';
 import { SearchBar } from '../common/SearchBar';
 import { SearchResults } from '../common/SearchResults';
 import { RecurringTasksManager } from '../tasks/RecurringTasksManager';
+import { RecurringEventsManager } from '../events/RecurringEventsManager';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   selectSearchQuery,
@@ -63,6 +64,7 @@ export function Header({ currentView = 'tasks', onNavigate, className, testId }:
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isRecurringManagerOpen, setIsRecurringManagerOpen] = useState(false);
+  const [isRecurringEventsManagerOpen, setIsRecurringEventsManagerOpen] = useState(false);
   const desktopSearchRef = useRef<HTMLDivElement>(null);
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const dispatch = useAppDispatch();
@@ -89,6 +91,10 @@ export function Header({ currentView = 'tasks', onNavigate, className, testId }:
 
   const handleManageRecurringClick = () => {
     setIsRecurringManagerOpen(true);
+  };
+
+  const handleManageRecurringEventsClick = () => {
+    setIsRecurringEventsManagerOpen(true);
   };
 
   // Handle search query change
@@ -259,6 +265,7 @@ export function Header({ currentView = 'tasks', onNavigate, className, testId }:
               onSettingsClick={handleSettingsClick}
               onAdminClick={authUser?.role === 'admin' ? handleAdminClick : undefined}
               onManageRecurringClick={handleManageRecurringClick}
+              onManageRecurringEventsClick={handleManageRecurringEventsClick}
             />
           </div>
         </div>
@@ -351,6 +358,12 @@ export function Header({ currentView = 'tasks', onNavigate, className, testId }:
       <RecurringTasksManager
         isOpen={isRecurringManagerOpen}
         onClose={() => setIsRecurringManagerOpen(false)}
+      />
+
+      {/* Recurring Events Manager Modal */}
+      <RecurringEventsManager
+        isOpen={isRecurringEventsManagerOpen}
+        onClose={() => setIsRecurringEventsManagerOpen(false)}
       />
     </header>
   );
