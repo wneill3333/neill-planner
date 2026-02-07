@@ -284,41 +284,21 @@ function validateParsedResponse(parsed: unknown): ParsedTaskData {
 }
 
 // =============================================================================
-// CORS
-// =============================================================================
-
-const ALLOWED_ORIGINS = [
-  "https://neill-planner.web.app",
-  "https://neill-planner.firebaseapp.com",
-  "http://localhost:5173",
-  "http://localhost:3000",
-];
-
-function setCorsHeaders(req: Request, res: Response): boolean {
-  const origin = req.headers.origin;
-  if (origin && ALLOWED_ORIGINS.includes(origin)) {
-    res.set("Access-Control-Allow-Origin", origin);
-  }
-  res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.set("Access-Control-Max-Age", "86400");
-
-  if (req.method === "OPTIONS") {
-    res.status(204).send("");
-    return true;
-  }
-  return false;
-}
-
-// =============================================================================
 // Cloud Function
 // =============================================================================
 
 export const parseTask = onRequest(
-  { secrets: [claudeApiKey], region: "us-central1" },
+  {
+    secrets: [claudeApiKey],
+    region: "us-central1",
+    cors: [
+      "https://neill-planner.web.app",
+      "https://neill-planner.firebaseapp.com",
+      "http://localhost:5173",
+      "http://localhost:3000",
+    ],
+  },
   async (req: Request, res: Response) => {
-    if (setCorsHeaders(req, res)) return;
-
     if (req.method !== "POST") {
       const errorResponse: ErrorResponse = {
         success: false,
