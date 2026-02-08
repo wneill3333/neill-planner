@@ -3,11 +3,59 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 7, 2026 (Hyperlinks & Icons: TipTap Link Extension, Icon Updates, Firestore Rules)
+**Last Updated:** February 7, 2026 (Journal Categories: Assignment, Color Indicators, Category Integration)
 
 ---
 
 ## SESSION LOG
+### SESSION: Journal Category Support
+**Date:** February 7, 2026
+**Status:** COMPLETED
+
+#### Summary
+Added category assignment capability to journals with visual category color indicators displayed as left borders on journal cards and category names in detail headers. Integrated existing category system with journal creation/editing workflow.
+
+#### Key Achievements
+
+**Type System Updates (1)**
+- `src/types/journal.types.ts` - Added `categoryId: string | null` field to Journal, CreateJournalInput, and UpdateJournalInput interfaces; added `categoryId: null` to DEFAULT_JOURNAL_VALUES
+
+**Firebase Service Integration (1)**
+- `src/services/firebase/journals.service.ts` - Updated `firestoreToJournal()` to read categoryId from Firestore documents; updated `createJournal()` and `updateJournal()` to persist and return categoryId field
+
+**Journal Form UI (1)**
+- `src/components/journals/JournalForm.tsx` - Added `categories` prop; integrated CategorySelect dropdown between Description and Form Actions; included categoryId in form submission data
+
+**Modal Container (1)**
+- `src/features/journals/JournalFormModal.tsx` - Added Redux integration via `useAppSelector` and `selectAllCategories`; passes categories array to JournalForm component
+
+**Visual Indicators - Journal List (2)**
+- `src/components/journals/JournalList.tsx` - Added `categoriesById` prop; resolves category color for each journal before rendering
+- `src/components/journals/JournalItem.tsx` - Added `categoryColor` prop; displays 4px colored left border on card when journal has a category assigned
+
+**Visual Indicators - Journal Detail (2)**
+- `src/components/journals/JournalDetail.tsx` - Added `categoryColor` and `categoryName` props; displays category information (colored dot + name) beneath journal title in detail header
+- `src/features/journals/JournalDetailContainer.tsx` - Added Redux selector integration via `selectCategoryById`; resolves category details and passes to JournalDetail component
+
+#### Files Changed
+**Absolute paths:**
+- F:\AI\Planner\planner-app\src\types\journal.types.ts (modified)
+- F:\AI\Planner\planner-app\src\services\firebase\journals.service.ts (modified)
+- F:\AI\Planner\planner-app\src\components\journals\JournalForm.tsx (modified)
+- F:\AI\Planner\planner-app\src\features\journals\JournalFormModal.tsx (modified)
+- F:\AI\Planner\planner-app\src\components\journals\JournalList.tsx (modified)
+- F:\AI\Planner\planner-app\src\components\journals\JournalItem.tsx (modified)
+- F:\AI\Planner\planner-app\src\components\journals\JournalDetail.tsx (modified)
+- F:\AI\Planner\planner-app\src\features\journals\JournalDetailContainer.tsx (modified)
+
+#### Deployment Status
+Built and deployed to Firebase Hosting: https://neill-planner.web.app
+
+#### Commits
+- Will be created as part of archival process
+
+---
+
 ### SESSION: Note Attachments - Upload, Viewer, Delete & Sharing
 **Date:** February 7, 2026
 **Status:** COMPLETED
