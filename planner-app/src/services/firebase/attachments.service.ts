@@ -232,18 +232,14 @@ export async function deleteAttachment(
     throw new ValidationError('Attachment not found', 'attachmentId', 'NOT_FOUND');
   }
 
-  // Delete from Storage
+  // Delete from Storage (best-effort: don't block Firestore cleanup on failure)
   try {
     const storageRef = ref(storage, attachment.storagePath);
     await deleteObject(storageRef);
   } catch (error: unknown) {
-    // If file doesn't exist in storage, continue with Firestore cleanup
     const firebaseError = error as { code?: string };
     if (firebaseError?.code !== 'storage/object-not-found') {
-      console.error('Error deleting file from Storage:', error);
-      throw new Error(
-        `Failed to delete file from Storage: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      console.warn('Storage delete failed (will still remove metadata):', error);
     }
   }
 

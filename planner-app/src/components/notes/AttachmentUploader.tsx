@@ -130,7 +130,6 @@ export const AttachmentUploader = memo(function AttachmentUploader({
         ref={fileInputRef}
         type="file"
         accept="image/*,application/pdf"
-        capture="environment"
         multiple
         onChange={handleFileSelect}
         className="hidden"
@@ -208,9 +207,8 @@ export const AttachmentUploader = memo(function AttachmentUploader({
                     bg-gray-500 text-white
                     flex items-center justify-center
                     text-xs font-bold leading-none
-                    opacity-0 group-hover:opacity-100
                     hover:bg-gray-600
-                    focus:outline-none focus:opacity-100
+                    focus:outline-none
                     transition-opacity duration-150
                     shadow-sm
                   "

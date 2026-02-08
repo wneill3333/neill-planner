@@ -5,9 +5,10 @@
  * Shows title, content preview, category color, and linked items indicator.
  */
 
-import { memo } from 'react';
-import type { Note } from '../../types';
+import { memo, useState } from 'react';
+import type { Note, NoteAttachment } from '../../types';
 import { AttachmentThumbnail } from './AttachmentThumbnail';
+import { AttachmentViewer } from './AttachmentViewer';
 
 // =============================================================================
 // Types
@@ -107,6 +108,7 @@ export const NoteItem = memo(function NoteItem({
   className = '',
   testId,
 }: NoteItemProps) {
+  const [viewingAttachment, setViewingAttachment] = useState<NoteAttachment | null>(null);
   const hasLinks = note.linkedTaskIds.length > 0 || note.linkedEventIds.length > 0;
   const contentPreview = note.content ? getContentPreview(note.content) : '';
 
@@ -199,7 +201,10 @@ export const NoteItem = memo(function NoteItem({
               key={attachment.id}
               attachment={attachment}
               size="sm"
-              onView={() => window.open(attachment.downloadUrl, '_blank')}
+              onView={(a) => {
+                // Prevent the NoteItem click from firing
+                setViewingAttachment(a);
+              }}
             />
           ))}
           {note.attachments.length > 3 && (
@@ -208,6 +213,16 @@ export const NoteItem = memo(function NoteItem({
             </span>
           )}
         </div>
+      )}
+
+      {/* Attachment Viewer (view-only, no delete from list) */}
+      {viewingAttachment && (
+        <AttachmentViewer
+          attachment={viewingAttachment}
+          attachments={note.attachments || []}
+          onClose={() => setViewingAttachment(null)}
+          onNavigate={setViewingAttachment}
+        />
       )}
     </div>
   );

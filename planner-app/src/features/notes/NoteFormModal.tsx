@@ -11,9 +11,11 @@ import { selectAllCategories } from '../categories/categorySlice';
 import { selectSelectedDate, selectAllTasks } from '../tasks/taskSlice';
 import { selectAllEvents } from '../events/eventSlice';
 import { createNoteAsync, updateNoteAsync, deleteNoteAsync, uploadAttachmentsAsync, deleteAttachmentAsync } from './noteThunks';
+import { selectNoteById } from './noteSlice';
 import { useAuth } from '../auth';
 import { Modal } from '../../components/common';
 import { NoteForm } from '../../components/notes/NoteForm';
+import { AttachmentViewer } from '../../components/notes/AttachmentViewer';
 import { parseISODateString } from '../../utils/firestoreUtils';
 import type { Note, CreateNoteInput, NoteAttachment } from '../../types';
 
@@ -24,7 +26,9 @@ import type { Note, CreateNoteInput, NoteAttachment } from '../../types';
 export interface NoteFormModalProps {
   /** Whether modal is open */
   isOpen: boolean;
-  /** Note to edit (null for create mode) */
+  /** Note ID to edit - reads live data from Redux (preferred) */
+  noteId?: string | null;
+  /** Note to edit (fallback if noteId not provided) */
   note?: Note | null;
   /** Callback when modal should close */
   onClose: () => void;
@@ -59,7 +63,8 @@ export interface NoteFormModalProps {
  */
 export function NoteFormModal({
   isOpen,
-  note = null,
+  noteId = null,
+  note: noteProp = null,
   onClose,
   onSuccess,
   testId,
@@ -67,6 +72,9 @@ export function NoteFormModal({
   const dispatch = useAppDispatch();
   const { user } = useAuth();
   const categories = useAppSelector(selectAllCategories);
+  // Read live note from Redux by ID so UI stays in sync after mutations
+  const reduxNote = useAppSelector((state) => noteId ? selectNoteById(state, noteId) : undefined);
+  const note = reduxNote ?? noteProp;
   const selectedDate = useAppSelector(selectSelectedDate);
   const tasks = useAppSelector(selectAllTasks);
   const events = useAppSelector(selectAllEvents);
@@ -76,6 +84,7 @@ export function NoteFormModal({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
+  const [viewingAttachment, setViewingAttachment] = useState<NoteAttachment | null>(null);
 
   const isEditMode = !!note;
 
@@ -157,7 +166,7 @@ export function NoteFormModal({
    * Handle attachment view
    */
   const handleViewAttachment = useCallback((attachment: NoteAttachment) => {
-    window.open(attachment.downloadUrl, '_blank');
+    setViewingAttachment(attachment);
   }, []);
 
   /**
@@ -270,6 +279,17 @@ export function NoteFormModal({
           </div>
         </div>
       </Modal>
+
+      {/* Attachment Viewer */}
+      {viewingAttachment && (
+        <AttachmentViewer
+          attachment={viewingAttachment}
+          attachments={note?.attachments || []}
+          onClose={() => setViewingAttachment(null)}
+          onNavigate={setViewingAttachment}
+          onDelete={handleRemoveAttachment}
+        />
+      )}
     </>
   );
 }

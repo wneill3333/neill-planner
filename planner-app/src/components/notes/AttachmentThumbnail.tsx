@@ -29,7 +29,8 @@ export const AttachmentThumbnail = memo(function AttachmentThumbnail({
   const sizeClasses = size === 'sm' ? 'w-8 h-8' : 'w-20 h-20';
   const iconTextSize = size === 'sm' ? 'text-[10px]' : 'text-xs';
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (onView) {
       onView(attachment);
     }
@@ -87,9 +88,8 @@ export const AttachmentThumbnail = memo(function AttachmentThumbnail({
             bg-red-500 text-white
             flex items-center justify-center
             text-xs font-bold leading-none
-            opacity-0 group-hover:opacity-100
             hover:bg-red-600
-            focus:outline-none focus:opacity-100
+            focus:outline-none
             transition-opacity duration-150
             shadow-sm
           "

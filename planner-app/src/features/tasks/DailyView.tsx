@@ -85,7 +85,7 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
   const [isReordering, setIsReordering] = useState(false);
   const [isCreateNoteModalOpen, setIsCreateNoteModalOpen] = useState(false);
   const [isEditNoteModalOpen, setIsEditNoteModalOpen] = useState(false);
-  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
 
   // Event modal state
   const [isCreateEventModalOpen, setIsCreateEventModalOpen] = useState(false);
@@ -197,7 +197,7 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
    * Handle note click - opens edit note modal with selected note
    */
   const handleNoteClick = useCallback((note: Note) => {
-    setSelectedNote(note);
+    setSelectedNoteId(note.id);
     setIsEditNoteModalOpen(true);
   }, []);
 
@@ -205,7 +205,7 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
    * Handle edit note modal close - clears selected note and closes modal
    */
   const handleEditNoteModalClose = useCallback(() => {
-    setSelectedNote(null);
+    setSelectedNoteId(null);
     setIsEditNoteModalOpen(false);
   }, []);
 
@@ -827,10 +827,10 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
       />
 
       {/* Edit Note Modal */}
-      {isEditNoteModalOpen && selectedNote && (
+      {isEditNoteModalOpen && selectedNoteId && (
         <NoteFormModal
           isOpen={isEditNoteModalOpen}
-          note={selectedNote}
+          noteId={selectedNoteId}
           onClose={handleEditNoteModalClose}
           onSuccess={handleEditNoteModalClose}
           testId="daily-view-edit-note-modal"
