@@ -10,6 +10,15 @@ service firebase.storage {
                     && (request.resource.contentType.matches('image/.*') || request.resource.contentType == 'application/pdf');
     }
 
+    // Journal entry attachments
+    match /journals/{userId}/{entryId}/{fileName} {
+      allow read, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null
+                    && request.auth.uid == userId
+                    && request.resource.size < 10 * 1024 * 1024
+                    && (request.resource.contentType.matches('image/.*') || request.resource.contentType == 'application/pdf');
+    }
+
     // Default deny
     match /{allPaths=**} {
       allow read, write: if false;

@@ -240,7 +240,7 @@ export function Header({ currentView = 'tasks', onNavigate, className, testId }:
               value={query}
               onChange={handleSearchChange}
               onClear={handleSearchClear}
-              placeholder="Search tasks, events, notes..."
+              placeholder="Search tasks, events, notes, journals..."
               isSearching={isSearching}
             />
             {isSearchOpen && (
@@ -249,6 +249,7 @@ export function Header({ currentView = 'tasks', onNavigate, className, testId }:
                 tasks={results.tasks}
                 events={results.events}
                 notes={results.notes}
+                journals={results.journals}
                 isSearching={isSearching}
                 onTaskClick={handleTaskClick}
                 onEventClick={handleEventClick}
@@ -283,7 +284,7 @@ export function Header({ currentView = 'tasks', onNavigate, className, testId }:
                 value={query}
                 onChange={handleSearchChange}
                 onClear={handleSearchClear}
-                placeholder="Search tasks, events, notes..."
+                placeholder="Search tasks, events, notes, journals..."
                 isSearching={isSearching}
               />
               {isSearchOpen && (

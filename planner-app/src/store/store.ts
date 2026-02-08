@@ -19,6 +19,7 @@ import searchReducer from '../features/search/searchSlice';
 import adminReducer from '../features/admin/adminSlice';
 import backupReducer from '../features/backup/backupSlice';
 import aiReducer from '../features/ai/aiSlice';
+import journalReducer from '../features/journals/journalSlice';
 
 // =============================================================================
 // Root Reducer
@@ -41,6 +42,7 @@ const rootReducer = combineReducers({
   admin: adminReducer,
   backup: backupReducer,
   ai: aiReducer,
+  journals: journalReducer,
 });
 
 // =============================================================================
@@ -94,6 +96,14 @@ export const store = configureStore({
           'backup/createBackup/fulfilled',
           'backup/fetchBackupList/fulfilled',
           'backup/restore/fulfilled',
+          'journals/fetchUserJournals/fulfilled',
+          'journals/createJournal/fulfilled',
+          'journals/updateJournal/fulfilled',
+          'journals/fetchJournalEntries/fulfilled',
+          'journals/createJournalEntry/fulfilled',
+          'journals/updateJournalEntry/fulfilled',
+          'journals/uploadJournalEntryAttachments/fulfilled',
+          'journals/deleteJournalEntryAttachment/fulfilled',
         ],
         // Ignore these paths in the state (Date objects in tasks, categories, and events)
         ignoredPaths: [
@@ -108,6 +118,8 @@ export const store = configureStore({
           'backup.backups',
           'backup.lastBackupResult',
           'backup.lastRestoreResult',
+          'journals.journals',
+          'journals.entries',
         ],
         // Ignore Date values in action payloads
         ignoredActionPaths: [

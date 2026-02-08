@@ -68,6 +68,20 @@ export type { Note, NoteAttachment, CreateNoteInput, UpdateNoteInput, NotesByDat
 export { ATTACHMENT_LIMITS, DEFAULT_NOTE_VALUES } from './note.types';
 
 // =============================================================================
+// Journal Types
+// =============================================================================
+export type {
+  Journal,
+  JournalEntry,
+  CreateJournalInput,
+  UpdateJournalInput,
+  CreateJournalEntryInput,
+  UpdateJournalEntryInput,
+} from './journal.types';
+
+export { DEFAULT_JOURNAL_VALUES, DEFAULT_JOURNAL_ENTRY_VALUES } from './journal.types';
+
+// =============================================================================
 // User Types
 // =============================================================================
 export type {

@@ -6,11 +6,12 @@
  */
 
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import type { Task, Event, Note } from '../../types';
+import type { Task, Event, Note, Journal } from '../../types';
 import type { RootState } from '../../store';
 import { selectAllTasks } from '../tasks/taskSlice';
 import { selectAllEvents } from '../events/eventSlice';
 import { selectAllNotes } from '../notes/noteSlice';
+import { selectAllJournals } from '../journals/journalSlice';
 import type { SearchResults } from './searchSlice';
 
 // =============================================================================
@@ -100,6 +101,21 @@ function searchNotes(notes: Note[], query: string): Note[] {
   });
 }
 
+/**
+ * Search journals by title and description
+ */
+function searchJournals(journals: Journal[], query: string): Journal[] {
+  if (!query.trim()) return [];
+
+  return journals.filter((journal) => {
+    // Exclude soft-deleted journals
+    if (journal.deletedAt) return false;
+
+    // Search in title and description
+    return matchesQuery(journal.title, query) || matchesQuery(journal.description, query);
+  });
+}
+
 // =============================================================================
 // Async Thunks
 // =============================================================================
@@ -129,6 +145,7 @@ export const searchAll = createAsyncThunk<
         tasks: [],
         events: [],
         notes: [],
+        journals: [],
       };
     }
 
@@ -136,16 +153,19 @@ export const searchAll = createAsyncThunk<
     const allTasks = selectAllTasks(state);
     const allEvents = selectAllEvents(state);
     const allNotes = selectAllNotes(state);
+    const allJournals = selectAllJournals(state);
 
     // Search each collection
     const taskResults = searchTasks(allTasks, query);
     const eventResults = searchEvents(allEvents, query);
     const noteResults = searchNotes(allNotes, query);
+    const journalResults = searchJournals(allJournals, query);
 
     return {
       tasks: taskResults,
       events: eventResults,
       notes: noteResults,
+      journals: journalResults,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Search failed';
@@ -162,4 +182,5 @@ export const searchHelpers = {
   searchTasks,
   searchEvents,
   searchNotes,
+  searchJournals,
 };

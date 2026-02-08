@@ -6,7 +6,7 @@
  */
 
 import { useMemo, type ReactElement } from 'react';
-import type { Task, Event, Note } from '../../types';
+import type { Task, Event, Note, Journal } from '../../types';
 import { formatDisplayDate } from '../../utils/dateUtils';
 import { getStatusSymbol } from '../../utils/taskUtils';
 
@@ -23,6 +23,8 @@ export interface SearchResultsProps {
   events: Event[];
   /** Note results */
   notes: Note[];
+  /** Journal results */
+  journals?: Journal[];
   /** Whether search is in progress */
   isSearching?: boolean;
   /** Callback when a task is clicked */
@@ -31,6 +33,8 @@ export interface SearchResultsProps {
   onEventClick?: (event: Event) => void;
   /** Callback when a note is clicked */
   onNoteClick?: (note: Note) => void;
+  /** Callback when a journal is clicked */
+  onJournalClick?: (journal: Journal) => void;
   /** Callback when results panel should close */
   onClose?: () => void;
   /** Optional className for styling */
@@ -263,6 +267,59 @@ function NoteResultItem({ note, query, onClick }: NoteResultItemProps) {
   );
 }
 
+interface JournalResultItemProps {
+  journal: Journal;
+  query: string;
+  onClick?: (journal: Journal) => void;
+}
+
+function JournalResultItem({ journal, query, onClick }: JournalResultItemProps) {
+  const handleClick = () => {
+    onClick?.(journal);
+  };
+
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={handleClick}
+        className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors duration-150 focus:outline-none focus:bg-gray-50"
+        data-testid="journal-result-item"
+      >
+        <div className="flex items-start gap-2">
+          <svg
+            className="w-5 h-5 text-teal-500 flex-shrink-0 mt-0.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+            />
+          </svg>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900">
+              {highlightMatch(journal.title, query)}
+            </p>
+            {journal.description && (
+              <p className="mt-1 text-sm text-gray-600">
+                {highlightMatch(truncateText(journal.description), query)}
+              </p>
+            )}
+            <p className="mt-1 text-xs text-gray-500">
+              {journal.entryCount} {journal.entryCount === 1 ? 'entry' : 'entries'}
+            </p>
+          </div>
+        </div>
+      </button>
+    </li>
+  );
+}
+
 // =============================================================================
 // Main Component
 // =============================================================================
@@ -294,14 +351,16 @@ export function SearchResults({
   tasks,
   events,
   notes,
+  journals = [],
   isSearching = false,
   onTaskClick,
   onEventClick,
   onNoteClick,
+  onJournalClick,
   className = '',
   testId = 'search-results',
 }: SearchResultsProps) {
-  const totalResults = tasks.length + events.length + notes.length;
+  const totalResults = tasks.length + events.length + notes.length + journals.length;
   const hasResults = totalResults > 0;
 
   // Don't show anything if no query
@@ -370,6 +429,12 @@ export function SearchResults({
           <ResultSection title="Notes" count={notes.length}>
             {notes.map((note) => (
               <NoteResultItem key={note.id} note={note} query={query} onClick={onNoteClick} />
+            ))}
+          </ResultSection>
+
+          <ResultSection title="Journals" count={journals.length}>
+            {journals.map((journal) => (
+              <JournalResultItem key={journal.id} journal={journal} query={query} onClick={onJournalClick} />
             ))}
           </ResultSection>
         </div>

@@ -12,6 +12,7 @@ import searchReducer from '../searchSlice';
 import taskReducer from '../../tasks/taskSlice';
 import eventReducer from '../../events/eventSlice';
 import noteReducer from '../../notes/noteSlice';
+import journalReducer from '../../journals/journalSlice';
 
 // =============================================================================
 // Test Data
@@ -266,6 +267,7 @@ describe('searchAll thunk', () => {
         tasks: taskReducer,
         events: eventReducer,
         notes: noteReducer,
+        journals: journalReducer,
       },
       preloadedState: {
         tasks: {

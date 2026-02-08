@@ -19,7 +19,7 @@ import { NoteFormModal } from '../notes/NoteFormModal';
 import { useNotesByRange } from '../notes/hooks';
 import { NoteRangeList } from '../../components/notes';
 import { Tabs, TabPanel, Modal, type Tab } from '../../components/common';
-import { CheckIcon, CalendarIcon, NoteIcon } from '../../components/icons';
+import { CheckIcon, CalendarIcon, NoteIcon, JournalIcon } from '../../components/icons';
 import { hasGapsInPriorityNumbering } from '../../utils/priorityUtils';
 import { parseISODateString } from '../../utils/firestoreUtils';
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
@@ -34,7 +34,11 @@ import { openVoiceNote, clearNoteAi } from '../ai/aiSlice';
 import { VoiceNoteRecorder } from '../../components/ai/VoiceNoteRecorder';
 import { ParsedNotePreview } from '../../components/ai/ParsedNotePreview';
 import { ErrorBoundary } from '../../components/common/ErrorBoundary';
-import type { Task, Note, Event, CreateEventInput } from '../../types';
+import { JournalListContainer } from '../journals/JournalListContainer';
+import { JournalDetailContainer } from '../journals/JournalDetailContainer';
+import { JournalFormModal } from '../journals/JournalFormModal';
+import { setSelectedJournal, selectSelectedJournalId, selectSelectedJournal } from '../journals/journalSlice';
+import type { Task, Note, Event, Journal, CreateEventInput } from '../../types';
 
 // =============================================================================
 // Types
@@ -47,7 +51,7 @@ export interface DailyViewProps {
   testId?: string;
 }
 
-type TabValue = 'tasks' | 'calendar' | 'notes';
+type TabValue = 'tasks' | 'calendar' | 'notes' | 'journals';
 type CalendarViewType = 'day' | 'week' | 'month';
 type NotesViewType = 'day' | 'week' | 'month';
 
@@ -87,6 +91,10 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
   const [isEditNoteModalOpen, setIsEditNoteModalOpen] = useState(false);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
 
+  // Journal modal state
+  const [isCreateJournalModalOpen, setIsCreateJournalModalOpen] = useState(false);
+  const [isEditJournalModalOpen, setIsEditJournalModalOpen] = useState(false);
+
   // Event modal state
   const [isCreateEventModalOpen, setIsCreateEventModalOpen] = useState(false);
   const [isEditEventModalOpen, setIsEditEventModalOpen] = useState(false);
@@ -105,6 +113,10 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
   const tasks = useAppSelector(selectTasksForSelectedDate);
   const syncStatus = useAppSelector(selectTasksSyncStatus);
   const hideCompleted = useAppSelector(selectHideCompletedTasks);
+
+  // Journal selectors
+  const selectedJournalId = useAppSelector(selectSelectedJournalId);
+  const selectedJournal = useAppSelector(selectSelectedJournal);
 
   // Event and category selectors
   // Use parseISODateString to create local midnight (new Date("2026-02-05") would be UTC midnight!)
@@ -166,6 +178,11 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
         label: 'Notes',
         icon: <NoteIcon />,
       },
+      {
+        id: 'journals',
+        label: 'Journals',
+        icon: <JournalIcon />,
+      },
     ],
     []
   );
@@ -214,6 +231,27 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
    */
   const handleOpenCreateNoteModal = useCallback(() => {
     setIsCreateNoteModalOpen(true);
+  }, []);
+
+  /**
+   * Handle journal selection - sets selected journal in Redux
+   */
+  const handleJournalSelect = useCallback((journal: Journal) => {
+    dispatch(setSelectedJournal(journal.id));
+  }, [dispatch]);
+
+  /**
+   * Handle back to journals list - clears selected journal
+   */
+  const handleBackToJournals = useCallback(() => {
+    dispatch(setSelectedJournal(null));
+  }, [dispatch]);
+
+  /**
+   * Handle edit journal - opens edit modal
+   */
+  const handleEditJournal = useCallback(() => {
+    setIsEditJournalModalOpen(true);
   }, []);
 
   /**
@@ -356,7 +394,7 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
    */
   const handleTabChange = useCallback((tabId: string) => {
     // Runtime validation to ensure type safety
-    if (tabId === 'tasks' || tabId === 'calendar' || tabId === 'notes') {
+    if (tabId === 'tasks' || tabId === 'calendar' || tabId === 'notes' || tabId === 'journals') {
       setActiveTab(tabId);
     } else {
       console.warn(`Invalid tab ID: ${tabId}`);
@@ -786,6 +824,62 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
               </div>
             )}
           </TabPanel>
+
+          {/* Journals Panel */}
+          <TabPanel tabId="journals" isActive={activeTab === 'journals'}>
+            {/* Action Buttons Row - Top of journals panel */}
+            <div className="flex items-center justify-between gap-2 p-4 pb-2 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-800">
+                {selectedJournalId ? (selectedJournal?.title || 'Journal') : 'Journals'}
+              </h2>
+              <div className="flex items-center gap-2">
+                {!selectedJournalId && (
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateJournalModalOpen(true)}
+                    className="
+                      flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium
+                      text-white bg-teal-600
+                      border border-teal-700 rounded-md
+                      hover:bg-teal-700
+                      focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2
+                      transition-colors duration-150
+                    "
+                    aria-label="Create new journal"
+                    data-testid="create-journal-button"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Create Journal
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Journal Content */}
+            <div className="p-4 pt-2">
+              {!selectedJournalId ? (
+                <JournalListContainer
+                  onJournalSelect={handleJournalSelect}
+                  testId="daily-view-journal-list"
+                />
+              ) : (
+                <JournalDetailContainer
+                  journalId={selectedJournalId}
+                  onBack={handleBackToJournals}
+                  onEdit={handleEditJournal}
+                  testId="daily-view-journal-detail"
+                />
+              )}
+            </div>
+          </TabPanel>
         </div>
       </section>
 
@@ -895,6 +989,25 @@ export function DailyView({ className, testId }: DailyViewProps = {}) {
           </div>
         </Modal>
       )}
+      {/* Create Journal Modal */}
+      <JournalFormModal
+        isOpen={isCreateJournalModalOpen}
+        onClose={() => setIsCreateJournalModalOpen(false)}
+        onSuccess={() => setIsCreateJournalModalOpen(false)}
+        testId="daily-view-create-journal-modal"
+      />
+
+      {/* Edit Journal Modal */}
+      {isEditJournalModalOpen && selectedJournal && (
+        <JournalFormModal
+          isOpen={isEditJournalModalOpen}
+          journal={selectedJournal}
+          onClose={() => setIsEditJournalModalOpen(false)}
+          onSuccess={() => setIsEditJournalModalOpen(false)}
+          testId="daily-view-edit-journal-modal"
+        />
+      )}
+
       {/* Voice Note AI Modals - wrapped in error boundary to prevent crashes from taking down DailyView */}
       <ErrorBoundary
         fallback={(_error, _errorInfo) => null}

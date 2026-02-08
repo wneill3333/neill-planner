@@ -99,6 +99,7 @@ describe('searchSlice - Initial State', () => {
         tasks: [],
         events: [],
         notes: [],
+        journals: [],
       },
       isSearching: false,
       error: null,
@@ -114,7 +115,7 @@ describe('searchSlice - Reducers', () => {
   it('should handle setQuery', () => {
     const initialState: SearchState = {
       query: '',
-      results: { tasks: [], events: [], notes: [] },
+      results: { tasks: [], events: [], notes: [], journals: [] },
       isSearching: false,
       error: null,
     };
@@ -127,7 +128,7 @@ describe('searchSlice - Reducers', () => {
   it('should clear results when query is empty', () => {
     const initialState: SearchState = {
       query: 'old query',
-      results: { tasks: [mockTask], events: [mockEvent], notes: [mockNote] },
+      results: { tasks: [mockTask], events: [mockEvent], notes: [mockNote], journals: [] },
       isSearching: false,
       error: 'some error',
     };
@@ -135,14 +136,14 @@ describe('searchSlice - Reducers', () => {
     const state = searchReducer(initialState, setQuery(''));
 
     expect(state.query).toBe('');
-    expect(state.results).toEqual({ tasks: [], events: [], notes: [] });
+    expect(state.results).toEqual({ tasks: [], events: [], notes: [], journals: [] });
     expect(state.error).toBe(null);
   });
 
   it('should handle clearSearch', () => {
     const initialState: SearchState = {
       query: 'test query',
-      results: { tasks: [mockTask], events: [mockEvent], notes: [mockNote] },
+      results: { tasks: [mockTask], events: [mockEvent], notes: [mockNote], journals: [] },
       isSearching: true,
       error: 'some error',
     };
@@ -150,7 +151,7 @@ describe('searchSlice - Reducers', () => {
     const state = searchReducer(initialState, clearSearch());
 
     expect(state.query).toBe('');
-    expect(state.results).toEqual({ tasks: [], events: [], notes: [] });
+    expect(state.results).toEqual({ tasks: [], events: [], notes: [], journals: [] });
     expect(state.isSearching).toBe(false);
     expect(state.error).toBe(null);
   });
@@ -158,7 +159,7 @@ describe('searchSlice - Reducers', () => {
   it('should handle setError', () => {
     const initialState: SearchState = {
       query: '',
-      results: { tasks: [], events: [], notes: [] },
+      results: { tasks: [], events: [], notes: [], journals: [] },
       isSearching: false,
       error: null,
     };
@@ -171,7 +172,7 @@ describe('searchSlice - Reducers', () => {
   it('should clear error with setError(null)', () => {
     const initialState: SearchState = {
       query: '',
-      results: { tasks: [], events: [], notes: [] },
+      results: { tasks: [], events: [], notes: [], journals: [] },
       isSearching: false,
       error: 'existing error',
     };
@@ -190,7 +191,7 @@ describe('searchSlice - Thunk Handling', () => {
   it('should handle searchAll.pending', () => {
     const initialState: SearchState = {
       query: 'test',
-      results: { tasks: [], events: [], notes: [] },
+      results: { tasks: [], events: [], notes: [], journals: [] },
       isSearching: false,
       error: 'old error',
     };
@@ -204,7 +205,7 @@ describe('searchSlice - Thunk Handling', () => {
   it('should handle searchAll.fulfilled', () => {
     const initialState: SearchState = {
       query: 'test',
-      results: { tasks: [], events: [], notes: [] },
+      results: { tasks: [], events: [], notes: [], journals: [] },
       isSearching: true,
       error: null,
     };
@@ -228,7 +229,7 @@ describe('searchSlice - Thunk Handling', () => {
   it('should handle searchAll.rejected', () => {
     const initialState: SearchState = {
       query: 'test',
-      results: { tasks: [], events: [], notes: [] },
+      results: { tasks: [], events: [], notes: [], journals: [] },
       isSearching: true,
       error: null,
     };
@@ -250,7 +251,7 @@ describe('searchSlice - Thunk Handling', () => {
   it('should handle searchAll.rejected with default error message', () => {
     const initialState: SearchState = {
       query: 'test',
-      results: { tasks: [], events: [], notes: [] },
+      results: { tasks: [], events: [], notes: [], journals: [] },
       isSearching: true,
       error: null,
     };
@@ -282,6 +283,7 @@ describe('searchSlice - Selectors', () => {
         tasks: [mockTask],
         events: [mockEvent],
         notes: [mockNote],
+        journals: [],
       },
       isSearching: true,
       error: 'test error',
@@ -297,6 +299,7 @@ describe('searchSlice - Selectors', () => {
       tasks: [mockTask],
       events: [mockEvent],
       notes: [mockNote],
+      journals: [],
     });
   });
 
@@ -316,7 +319,7 @@ describe('searchSlice - Selectors', () => {
     const emptyState = {
       search: {
         query: 'test',
-        results: { tasks: [], events: [], notes: [] },
+        results: { tasks: [], events: [], notes: [], journals: [] },
         isSearching: false,
         error: null,
       },
@@ -333,7 +336,7 @@ describe('searchSlice - Selectors', () => {
     const emptyState = {
       search: {
         query: 'test',
-        results: { tasks: [], events: [], notes: [] },
+        results: { tasks: [], events: [], notes: [], journals: [] },
         isSearching: false,
         error: null,
       },

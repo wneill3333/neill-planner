@@ -6,7 +6,7 @@
  */
 
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { Task, Event, Note } from '../../types';
+import type { Task, Event, Note, Journal } from '../../types';
 import type { RootState } from '../../store';
 import { searchAll } from './searchThunks';
 
@@ -21,6 +21,7 @@ export interface SearchResults {
   tasks: Task[];
   events: Event[];
   notes: Note[];
+  journals: Journal[];
 }
 
 /**
@@ -47,6 +48,7 @@ const initialState: SearchState = {
     tasks: [],
     events: [],
     notes: [],
+    journals: [],
   },
   isSearching: false,
   error: null,
@@ -78,6 +80,7 @@ const searchSlice = createSlice({
           tasks: [],
           events: [],
           notes: [],
+          journals: [],
         };
         state.error = null;
       }
@@ -92,6 +95,7 @@ const searchSlice = createSlice({
         tasks: [],
         events: [],
         notes: [],
+        journals: [],
       };
       state.isSearching = false;
       state.error = null;
@@ -157,16 +161,16 @@ export const selectSearchError = (state: RootState): string | null => state.sear
  * Select whether there are any search results
  */
 export const selectHasResults = (state: RootState): boolean => {
-  const { tasks, events, notes } = state.search.results;
-  return tasks.length > 0 || events.length > 0 || notes.length > 0;
+  const { tasks, events, notes, journals } = state.search.results;
+  return tasks.length > 0 || events.length > 0 || notes.length > 0 || journals.length > 0;
 };
 
 /**
  * Select total count of search results
  */
 export const selectResultsCount = (state: RootState): number => {
-  const { tasks, events, notes } = state.search.results;
-  return tasks.length + events.length + notes.length;
+  const { tasks, events, notes, journals } = state.search.results;
+  return tasks.length + events.length + notes.length + journals.length;
 };
 
 /**
@@ -183,6 +187,11 @@ export const selectEventResults = (state: RootState): Event[] => state.search.re
  * Select note results
  */
 export const selectNoteResults = (state: RootState): Note[] => state.search.results.notes;
+
+/**
+ * Select journal results
+ */
+export const selectJournalResults = (state: RootState): Journal[] => state.search.results.journals;
 
 // =============================================================================
 // Reducer
