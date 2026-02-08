@@ -3,7 +3,7 @@
 **Project Name:** Neill Planner - Franklin-Covey Productivity Application
 **Repository:** F:\AI\AI-Neill\neill-planner\
 **Created:** January 24, 2026
-**Last Updated:** February 7, 2026 (Note Attachments: Upload, Viewer, Delete & Sharing)
+**Last Updated:** February 7, 2026 (Hyperlinks & Icons: TipTap Link Extension, Icon Updates, Firestore Rules)
 
 ---
 
@@ -51,22 +51,41 @@ Fixed desktop file upload, created fullscreen AttachmentViewer lightbox componen
 **Component Updates (1)**
 - DailyView.tsx - Updated to pass noteId prop instead of stale note object to NoteFormModal
 
+**Clickable Hyperlinks in Notes (1)**
+- RichTextEditor.tsx - Added @tiptap/extension-link with autolink (auto-detects URLs), openOnClick (opens in new tab), blue/underlined styling, and toolbar button to manually insert/remove links
+
+**Updated Icons and Firestore Rules (1)**
+- Committed pending favicon and icon changes (favicon-16x16.png, favicon-32x32.png, favicon.ico, updated icon-192x192.png, icon-512x512.png, apple-touch-icon-180x180.png)
+- Updated and deployed firestore.rules to Firebase
+- Updated index.html for icon references
+
 #### Files Changed
 **Absolute paths:**
 - F:\AI\Planner\planner-app\src\components\notes\AttachmentUploader.tsx (modified)
 - F:\AI\Planner\planner-app\src\components\notes\AttachmentThumbnail.tsx (modified)
 - F:\AI\Planner\planner-app\src\components\notes\AttachmentViewer.tsx (NEW)
 - F:\AI\Planner\planner-app\src\components\notes\NoteItem.tsx (modified)
+- F:\AI\Planner\planner-app\src\components\common\RichTextEditor.tsx (modified)
 - F:\AI\Planner\planner-app\src\features\notes\NoteFormModal.tsx (modified)
 - F:\AI\Planner\planner-app\src\features\tasks\DailyView.tsx (modified)
 - F:\AI\Planner\planner-app\src\services\firebase\attachments.service.ts (modified)
 - F:\AI\Planner\planner-app\cors.json (NEW)
+- F:\AI\Planner\planner-app\firestore.rules (modified)
+- F:\AI\Planner\planner-app\index.html (modified)
+- F:\AI\Planner\planner-app\public\icons\apple-touch-icon-180x180.png (modified)
+- F:\AI\Planner\planner-app\public\icons\icon-192x192.png (modified)
+- F:\AI\Planner\planner-app\public\icons\icon-512x512.png (modified)
+- F:\AI\Planner\planner-app\public\favicon-16x16.png (NEW)
+- F:\AI\Planner\planner-app\public\favicon-32x32.png (NEW)
+- F:\AI\Planner\planner-app\public\favicon.ico (NEW)
 
 #### Deployment Status
 Built and deployed to Firebase Hosting: https://neill-planner.web.app
 
 #### Commits
 - `07441ca` - Fix note attachments: upload, viewer, delete, and sharing
+- `8935db0` - Add clickable hyperlinks in notes via TipTap Link extension
+- `aaa0e75` - Update app icons, favicons, and firestore rules
 
 ---
 
