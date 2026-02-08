@@ -281,6 +281,29 @@ service cloud.firestore {
     }
 
     // =============================================================================
+    // Reminders Collection
+    // =============================================================================
+
+    match /reminders/{reminderId} {
+      // Users can read their own reminders
+      allow read: if isAuthenticated() &&
+                     resource.data.userId == request.auth.uid;
+
+      // Users can create reminders for themselves
+      allow create: if isAuthenticated() &&
+                       request.resource.data.userId == request.auth.uid;
+
+      // Users can update their own reminders
+      allow update: if isAuthenticated() &&
+                       resource.data.userId == request.auth.uid &&
+                       request.resource.data.userId == request.auth.uid;
+
+      // Users can delete their own reminders
+      allow delete: if isAuthenticated() &&
+                       resource.data.userId == request.auth.uid;
+    }
+
+    // =============================================================================
     // Google Calendar Credentials Collection
     // =============================================================================
 
