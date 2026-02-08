@@ -7,6 +7,7 @@
 
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Mic, MicOff } from 'lucide-react';
@@ -93,6 +94,15 @@ export function RichTextEditor({
   const editor = useEditor({
     extensions: [
       StarterKit,
+      Link.configure({
+        openOnClick: true,
+        autolink: true,
+        HTMLAttributes: {
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          class: 'text-blue-600 underline hover:text-blue-800 cursor-pointer',
+        },
+      }),
       Placeholder.configure({
         placeholder,
       }),
@@ -234,6 +244,28 @@ export function RichTextEditor({
           data-testid="toolbar-strike"
         >
           S
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (editor.isActive('link')) {
+              editor.chain().focus().unsetLink().run();
+            } else {
+              const url = window.prompt('Enter URL:');
+              if (url) {
+                editor.chain().focus().setLink({ href: url }).run();
+              }
+            }
+          }}
+          className={`px-3 py-1 text-sm rounded hover:bg-gray-200 transition-colors ${
+            editor.isActive('link') ? 'bg-gray-300' : 'bg-white'
+          }`}
+          title="Insert Link (select text first)"
+          aria-label="Insert Link"
+          data-testid="toolbar-link"
+        >
+          🔗
         </button>
 
         <div className="w-px h-6 bg-gray-300 mx-1" aria-hidden="true" />
